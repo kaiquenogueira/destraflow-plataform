@@ -108,7 +108,7 @@ export async function getRecentMessages(limit: number = 10) {
         select: { id: true, name: true, whatsapp: true },
     });
 
-    const contactMap = new Map(contacts.map((c) => [c.id, c]));
+    const contactMap = new Map(contacts.map((c: { id: number; name: string | null; whatsapp: string | null }) => [c.id, c]));
 
     return messages.map((msg) => ({
         ...msg,
