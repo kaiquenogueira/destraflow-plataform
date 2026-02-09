@@ -102,7 +102,7 @@ export async function getRecentMessages(limit: number = 10) {
     });
 
     // Enriquecer com dados do contato
-    const contactIds = [...new Set(messages.map((m) => m.userId).filter(Boolean))];
+    const contactIds = [...new Set(messages.map((m: { userId: number | null }) => m.userId).filter(Boolean))];
     const contacts = await tenantPrisma.whatsAppContact.findMany({
         where: { id: { in: contactIds as number[] } },
         select: { id: true, name: true, whatsapp: true },
