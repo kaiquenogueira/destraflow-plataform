@@ -105,21 +105,22 @@ async function handleMessageUpsert(
                 name: data.pushName || phone,
             },
         });
+    }
 
-        // Auto-criar Lead se não existir
-        const existingLead = await tenant.tenantPrisma.lead.findFirst({
-            where: { phone },
+    // Garante que o Lead existe (mesmo se o contato já existia)
+    const existingLead = await tenant.tenantPrisma.lead.findFirst({
+        where: { phone },
+    });
+
+    if (!existingLead) {
+        await tenant.tenantPrisma.lead.create({
+            data: {
+                name: contact.name || data.pushName || phone,
+                phone,
+                tag: "COLD",
+                interest: "Via WhatsApp",
+            },
         });
-
-        if (!existingLead) {
-            await tenant.tenantPrisma.lead.create({
-                data: {
-                    name: data.pushName || phone,
-                    phone,
-                    tag: "COLD",
-                },
-            });
-        }
     }
 
     // Salvar histórico de chat

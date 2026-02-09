@@ -45,7 +45,7 @@ async function getTenantDashboardData(userId: string) {
             evolutionInstance: true,
             evolutionApiKey: true,
         },
-    });
+    }) as { databaseUrl: string | null; evolutionInstance: string | null; evolutionApiKey: string | null } | null;
 
     if (!user?.databaseUrl) {
         return {

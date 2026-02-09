@@ -52,7 +52,7 @@ export async function createCampaign(
 
     // 3. Criar mensagens na fila para cada lead
     if (leads.length > 0) {
-        const messages = leads.map((lead) => ({
+        const messages = leads.map((lead: { id: string; name: string; phone: string; interest: string | null }) => ({
             campaignId: campaign.id,
             leadId: lead.id,
             payload: processTemplate(validated.template, lead),
