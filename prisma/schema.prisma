@@ -1,0 +1,173 @@
+// Schema unificado - Contém modelos do CRM central e do tenant
+// O banco central (crm) terá apenas crm_users
+// Os bancos dos tenants terão leads, campaigns, campaign_messages
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// TABELA CENTRAL: Operadores/Admins do CRM
+// ============================================
+
+enum UserRole {
+  ADMIN  // Pode gerenciar usuários
+  USER   // Acessa apenas seus dados
+}
+
+model CrmUser {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String    // Hash bcrypt
+  name          String
+  role          UserRole  @default(USER)
+  databaseUrl   String?   @map("database_url") // URL do banco do cliente
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // Configuração Evolution API
+  evolutionInstance String? @map("evolution_instance")
+  evolutionApiKey   String? @map("evolution_api_key")
+  
+  @@map("crm_users")
+}
+
+// ============================================
+// TABELAS DO TENANT (banco do cliente)
+// ============================================
+
+enum LeadTag {
+  COLD     // Frio
+  WARM     // Morno
+  HOT      // Quente
+  LOST     // Perdido
+  CUSTOMER // Cliente
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   // Formato: +5511999999999
+  interest  String?  // Campo de texto livre
+  tag       LeadTag  @default(COLD)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  messages  CampaignMessage[]
+  
+  @@index([tag])
+  @@index([phone])
+  @@map("leads")
+}
+
+enum CampaignStatus {
+  DRAFT      // Rascunho
+  SCHEDULED  // Agendada
+  PROCESSING // Em processamento
+  COMPLETED  // Finalizada
+  CANCELLED  // Cancelada
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  template    String         // Corpo da mensagem com {{variáveis}}
+  targetTag   LeadTag?       @map("target_tag") // Segmentação por tag (null = todos)
+  scheduledAt DateTime       @map("scheduled_at") // Data/hora agendamento
+  status      CampaignStatus @default(SCHEDULED)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  messages    CampaignMessage[]
+  
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("campaigns")
+}
+
+enum MessageStatus {
+  PENDING    // Aguardando envio
+  PROCESSING // Sendo enviado
+  SENT       // Enviado com sucesso
+  FAILED     // Falha no envio
+}
+
+model CampaignMessage {
+  id          String        @id @default(cuid())
+  payload     String        // Mensagem completa processada
+  scheduledAt DateTime      @map("scheduled_at") // Quando deve ser enviada
+  sentAt      DateTime?     @map("sent_at") // Quando foi realmente enviada
+  status      MessageStatus @default(PENDING)
+  error       String?       // Mensagem de erro se FAILED
+  priority    Int           @default(0) // 0=normal, 1=alta (unitário)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  campaignId  String?       @map("campaign_id") // Null para envios unitários
+  campaign    Campaign?     @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  
+  leadId      String        @map("lead_id")
+  lead        Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([priority])
+  @@map("campaign_messages")
+}
+
+// ============================================
+// TABELAS EXISTENTES (opcional - se existir no tenant)
+// ============================================
+
+model WhatsAppContact {
+  id            Int       @id @default(autoincrement())
+  createdAt     DateTime? @default(now()) @map("created_at")
+  whatsapp      String?
+  name          String?
+  isManual      Boolean?  @map("is_manual")
+  isManualData  String?   @map("is_manual_data")
+  manualBy      String?   @map("manual_by")
+  threadId      String?   @map("thread_id")
+  threadData    String?   @map("thread_data")
+  tokensIn      Int?      @map("tokens_in")
+  tokensOut     Int?      @map("tokens_out")
+  tokensCache   Int?      @map("tokens_cache")
+
+  @@map("users")
+}
+
+model ChatHistory {
+  id          Int       @id @default(autoincrement())
+  userId      Int?      @map("user_id")
+  sessionId   String?   @map("session_id")
+  threadId    String?   @map("thread_id")
+  createdAt   DateTime? @default(now()) @map("created_at")
+  message     Json?
+  tokensIn    Int?      @map("tokens_in")
+  tokensOut   Int?      @map("tokens_out")
+  tokensCache Int?      @map("tokens_cache")
+  reasoning   String?
+
+  @@map("chat_histories")
+}
+
+model ExternalNotification {
+  id               Int       @id @default(autoincrement())
+  instance         String    @db.VarChar(100)
+  numeroAgent      String    @map("numero_agent") @db.VarChar(20)
+  numeroCliente    String    @map("numero_cliente") @db.VarChar(20)
+  notificationType String    @map("notification_type") @db.VarChar(100)
+  message          String
+  userData         String?   @map("user_data")
+  criadoEm         DateTime? @default(now()) @map("criado_em")
+
+  @@map("external_notification")
+}
