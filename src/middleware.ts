@@ -1,11 +1,44 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
+// Mapa simples para Rate Limiting em memória (Nota: em serverless/edge, isso é volátil)
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+
+function isRateLimited(ip: string) {
+    const now = Date.now();
+    const WINDOW_MS = 60 * 1000; // 1 minuto
+    const MAX_REQUESTS = 60; // 60 requisições por minuto por IP
+
+    const record = rateLimitMap.get(ip) || { count: 0, lastReset: now };
+
+    if (now - record.lastReset > WINDOW_MS) {
+        record.count = 0;
+        record.lastReset = now;
+    }
+
+    record.count++;
+    rateLimitMap.set(ip, record);
+
+    return record.count > MAX_REQUESTS;
+}
+
 export default withAuth(
     function middleware(req) {
+        // 1. Rate Limiting
+        const ip = req.headers.get("x-forwarded-for") || (req as any).ip || "unknown";
+        if (isRateLimited(ip)) {
+            return new NextResponse("Too Many Requests", { status: 429 });
+        }
+
         const token = req.nextauth.token;
         const isAuth = !!token;
         const isAuthPage = req.nextUrl.pathname.startsWith("/login");
+        const isWebhook = req.nextUrl.pathname.startsWith("/api/webhook");
+
+        // Permitir Webhook sem auth (mas com rate limit já aplicado acima)
+        if (isWebhook) {
+            return null;
+        }
 
         if (isAuthPage) {
             if (isAuth) {
@@ -34,14 +67,23 @@ export default withAuth(
     },
     {
         callbacks: {
-            async authorized() {
-                // This is required for the middleware to run
-                return true;
+            authorized: ({ req, token }) => {
+                // Permitir acesso ao webhook sem autenticação
+                if (req.nextUrl.pathname.startsWith("/api/webhook")) {
+                    return true;
+                }
+                // Rotas de login também são públicas
+                if (req.nextUrl.pathname.startsWith("/login")) {
+                    return true;
+                }
+                // Demais rotas exigem token
+                return !!token;
             },
         },
     }
 );
 
 export const config = {
-    matcher: ["/dashboard/:path*", "/admin/:path*", "/login"],
+    // Adicionado /api/webhook para ser processado pelo middleware (para rate limit)
+    matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/api/webhook/:path*"],
 };

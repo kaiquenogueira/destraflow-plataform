@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
             if (authHeader !== WEBHOOK_SECRET) {
                 return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
             }
+        } else {
+            console.warn("⚠️ SECURITY WARNING: EVOLUTION_WEBHOOK_SECRET is not set! The webhook is vulnerable to unauthorized access.");
         }
 
         const body = await request.json();

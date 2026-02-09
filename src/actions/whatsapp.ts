@@ -5,6 +5,7 @@ import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
 import { revalidatePath } from "next/cache";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 async function getCurrentUserId(): Promise<string> {
     const session = await getServerSession(authConfig);
@@ -30,8 +31,8 @@ async function getUserEvolutionConfig() {
     }
 
     return {
-        instanceName: user.evolutionInstance,
-        apiKey: user.evolutionApiKey || undefined,
+        instanceName: decrypt(user.evolutionInstance),
+        apiKey: user.evolutionApiKey ? decrypt(user.evolutionApiKey) : undefined,
     };
 }
 
@@ -99,8 +100,8 @@ export async function saveEvolutionConfig(
     await prisma.crmUser.update({
         where: { id: userId },
         data: {
-            evolutionInstance: instanceName,
-            evolutionApiKey: apiKey || null,
+            evolutionInstance: encrypt(instanceName),
+            evolutionApiKey: apiKey ? encrypt(apiKey) : null,
         },
     });
 

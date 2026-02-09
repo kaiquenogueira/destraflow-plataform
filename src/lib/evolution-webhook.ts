@@ -3,6 +3,7 @@
  */
 
 import { prisma, getTenantPrisma } from "@/lib/prisma";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 // Tipos de eventos da Evolution API
 interface EvolutionEvent {
@@ -46,9 +47,27 @@ interface ConnectionData {
  * Encontra o tenant baseado na instância Evolution
  */
 async function findTenantByInstance(instance: string) {
-    const user = await prisma.crmUser.findFirst({
-        where: { evolutionInstance: instance },
-        select: { id: true, databaseUrl: true },
+    // Tenta encontrar a instância criptografada
+    // Como a criptografia é probabilística (IV aleatório), não podemos buscar por igualdade direta
+    // Precisamos buscar todos os usuários e verificar a instância (lento, mas necessário com essa arquitetura)
+    // OU, idealmente, ter um hash determinístico para busca, mas para agora vamos iterar.
+    // P.S. Em produção com muitos usuários, isso deve ser otimizado (hash da instância).
+    
+    // Solução temporária: Buscar todos e descriptografar (ineficiente para muitos usuários)
+    // Solução melhor para agora: Manter um campo "instanceHash" ou similar? O usuário não pediu alteração de schema.
+    // Vou fazer uma busca em memória por enquanto, assumindo poucos tenants.
+    
+    const users = await prisma.crmUser.findMany({
+        select: { id: true, databaseUrl: true, evolutionInstance: true },
+    });
+
+    const user = users.find(u => {
+        if (!u.evolutionInstance) return false;
+        try {
+            return decrypt(u.evolutionInstance) === instance;
+        } catch {
+            return false;
+        }
     });
 
     if (!user?.databaseUrl) {
@@ -57,7 +76,7 @@ async function findTenantByInstance(instance: string) {
 
     return {
         userId: user.id,
-        tenantPrisma: getTenantPrisma(user.databaseUrl),
+        tenantPrisma: getTenantPrisma(decrypt(user.databaseUrl)),
     };
 }
 

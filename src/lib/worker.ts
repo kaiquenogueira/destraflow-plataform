@@ -9,6 +9,7 @@
 
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
+import { decrypt } from "@/lib/encryption";
 
 export interface WorkerResult {
     processed: number;
@@ -141,11 +142,15 @@ export async function processAllTenantMessages(): Promise<{
         if (!user.databaseUrl || !user.evolutionInstance) continue;
 
         try {
-            const tenantPrisma = getTenantPrisma(user.databaseUrl);
+            const databaseUrl = decrypt(user.databaseUrl);
+            const evolutionInstance = decrypt(user.evolutionInstance);
+            const evolutionApiKey = user.evolutionApiKey ? decrypt(user.evolutionApiKey) : null;
+
+            const tenantPrisma = getTenantPrisma(databaseUrl);
             const result = await processTenanMessages(
                 tenantPrisma,
-                user.evolutionInstance,
-                user.evolutionApiKey
+                evolutionInstance,
+                evolutionApiKey
             );
             results[user.name] = result;
         } catch (error) {
@@ -182,7 +187,8 @@ export async function updateCampaignStatuses(): Promise<number> {
     for (const user of users) {
         if (!user.databaseUrl) continue;
 
-        const tenantPrisma = getTenantPrisma(user.databaseUrl);
+        const databaseUrl = decrypt(user.databaseUrl);
+        const tenantPrisma = getTenantPrisma(databaseUrl);
 
         // Buscar campanhas PROCESSING que não têm mais mensagens PENDING
         const campaigns = await tenantPrisma.campaign.findMany({

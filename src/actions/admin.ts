@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { z } from "zod";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 async function requireAdmin() {
     const session = await getServerSession(authConfig);
@@ -51,8 +52,7 @@ export async function getUsers() {
             email: true,
             name: true,
             role: true,
-            databaseUrl: true,
-            evolutionInstance: true,
+            // Dados sensíveis removidos da listagem
             createdAt: true,
             updatedAt: true,
         },
@@ -83,7 +83,13 @@ export async function getUserById(id: string) {
         throw new Error("Usuário não encontrado");
     }
 
-    return user;
+    // Descriptografar dados sensíveis para edição
+    return {
+        ...user,
+        databaseUrl: decrypt(user.databaseUrl || ""),
+        evolutionInstance: decrypt(user.evolutionInstance || ""),
+        evolutionApiKey: decrypt(user.evolutionApiKey || ""),
+    };
 }
 
 export async function createUser(data: z.infer<typeof createUserSchema>) {
@@ -108,9 +114,9 @@ export async function createUser(data: z.infer<typeof createUserSchema>) {
             password: hashedPassword,
             name: validated.name,
             role: validated.role,
-            databaseUrl: validated.databaseUrl || null,
-            evolutionInstance: validated.evolutionInstance || null,
-            evolutionApiKey: validated.evolutionApiKey || null,
+            databaseUrl: encrypt(validated.databaseUrl || ""),
+            evolutionInstance: encrypt(validated.evolutionInstance || ""),
+            evolutionApiKey: encrypt(validated.evolutionApiKey || ""),
         },
     });
 
@@ -127,6 +133,17 @@ export async function updateUser(data: z.infer<typeof updateUserSchema>) {
     const dataToUpdate: Record<string, unknown> = { ...updateData };
     if (password) {
         dataToUpdate.password = await hash(password, 10);
+    }
+
+    // Criptografar dados sensíveis se fornecidos
+    if (updateData.databaseUrl) {
+        dataToUpdate.databaseUrl = encrypt(updateData.databaseUrl);
+    }
+    if (updateData.evolutionInstance) {
+        dataToUpdate.evolutionInstance = encrypt(updateData.evolutionInstance);
+    }
+    if (updateData.evolutionApiKey) {
+        dataToUpdate.evolutionApiKey = encrypt(updateData.evolutionApiKey);
     }
 
     await prisma.crmUser.update({

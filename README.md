@@ -54,6 +54,10 @@ Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js, desenhada p
     ```
 
     Edite o arquivo `.env` com suas credenciais do banco de dados e segredos.
+    
+    > **Nota de Segurança**: Para gerar chaves seguras, você pode usar o comando `openssl`:
+    > - `openssl rand -base64 32` (para Secrets)
+    > - `openssl rand -hex 32` (para Chave de Criptografia)
 
 4.  **Configure o Banco de Dados**
 
@@ -71,6 +75,37 @@ Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js, desenhada p
     ```
 
     Acesse [http://localhost:3000](http://localhost:3000).
+
+## 🔒 Segurança
+
+A plataforma implementa diversas camadas de segurança para proteger dados e infraestrutura:
+
+### 1. Criptografia de Dados Sensíveis
+Dados críticos de configuração dos tenants (como `databaseUrl` e chaves de API) são criptografados antes de serem persistidos no banco de dados usando **AES-256-GCM**.
+*   Utilize a variável `DATA_ENCRYPTION_KEY` para definir a chave mestra (32 bytes em hex).
+*   A descriptografia ocorre apenas em memória no servidor, no momento exato do uso.
+
+### 2. Rate Limiting
+O Middleware da aplicação implementa proteção contra abuso (Rate Limiting) baseada em IP.
+*   Limite padrão: **60 requisições/minuto** por IP.
+*   Aplica-se a rotas de login, admin, dashboard e webhooks.
+
+### 3. Proteção de Webhook
+O endpoint de recebimento de mensagens (`/api/webhook/evolution`) é protegido por um segredo compartilhado.
+*   Configure `EVOLUTION_WEBHOOK_SECRET` no `.env`.
+*   O mesmo valor deve ser configurado no header `x-webhook-secret` na Evolution API.
+
+## 🚀 Deploy
+
+### Vercel (Recomendado)
+
+1.  Faça o push do código para seu repositório Git.
+2.  Importe o projeto na Vercel.
+3.  Configure as **Environment Variables** (baseado no `.env.example`).
+    *   **Importante**: Não esqueça de gerar e adicionar a `DATA_ENCRYPTION_KEY`.
+4.  O script `postinstall` configurado no `package.json` irá gerar o cliente Prisma automaticamente.
+
+---
 
 ## 📂 Estrutura do Projeto
 

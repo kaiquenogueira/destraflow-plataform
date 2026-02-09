@@ -1,17 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { LeadList } from "@/components/leads/lead-list";
 import { getLeads } from "@/actions/leads";
-import { TAG_LABELS, type LeadTag } from "@/types";
-import { Plus, Search, AlertTriangle } from "lucide-react";
+import { type LeadTag } from "@/types";
+import { Plus, AlertTriangle } from "lucide-react";
+import { Pagination } from "@/components/ui/custom-pagination";
+import { LeadFilters } from "@/components/leads/lead-filters";
 
 interface LeadsPageProps {
     searchParams: Promise<{ search?: string; tag?: string; page?: string }>;
@@ -70,54 +64,19 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-                <form className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        name="search"
-                        placeholder="Buscar por nome ou telefone..."
-                        defaultValue={search}
-                        className="pl-10 h-12"
-                    />
-                </form>
-                <form>
-                    <Select name="tag" defaultValue={tag || "all"}>
-                        <SelectTrigger className="w-full sm:w-[180px] h-12">
-                            <SelectValue placeholder="Todas as tags" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todas as tags</SelectItem>
-                            {Object.entries(TAG_LABELS).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>
-                                    {label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </form>
-            </div>
+            <LeadFilters />
 
             {/* List */}
             <LeadList leads={data.leads} />
 
             {/* Pagination */}
-            {data.pages > 1 && (
-                <div className="flex justify-center gap-2">
-                    {Array.from({ length: data.pages }, (_, i) => i + 1).map((p) => (
-                        <Link
-                            key={p}
-                            href={`/leads?page=${p}${search ? `&search=${search}` : ""}${tag ? `&tag=${tag}` : ""}`}
-                        >
-                            <Button
-                                variant={p === data.currentPage ? "default" : "outline"}
-                                size="sm"
-                            >
-                                {p}
-                            </Button>
-                        </Link>
-                    ))}
-                </div>
-            )}
+            <div className="py-4">
+                <Pagination
+                    currentPage={data.currentPage}
+                    totalPages={data.pages}
+                    createUrl={(page) => `/leads?page=${page}${search ? `&search=${search}` : ""}${tag ? `&tag=${tag}` : ""}`}
+                />
+            </div>
         </div>
     );
 }
