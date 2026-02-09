@@ -1,118 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DestraFlow Platform
 
-## Getting Started
+Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js, desenhada para fornecer funcionalidades de CRM e automação de atendimentos via WhatsApp (Evolution API).
 
-First, run the development server:
+## 🚀 Funcionalidades
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+-   **Multi-tenancy Híbrido**: Arquitetura "Database-per-tenant" para isolamento de dados e escalabilidade.
+-   **CRM & Gestão de Leads**: Gerenciamento completo de contatos, funil de vendas e tags.
+-   **Automação de WhatsApp**: Integração com Evolution API para envio e recebimento de mensagens.
+-   **Campanhas em Massa**: Criação e agendamento de disparos de mensagens para segmentos de leads.
+-   **Painel Administrativo**: Gestão de usuários, tenants e configurações globais.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠 Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+-   **Framework**: [Next.js 15+](https://nextjs.org/) (App Router)
+-   **Linguagem**: [TypeScript](https://www.typescriptlang.org/)
+-   **Banco de Dados**: [PostgreSQL](https://www.postgresql.org/)
+-   **ORM**: [Prisma](https://www.prisma.io/)
+-   **Estilização**: [Tailwind CSS](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
+-   **Autenticação**: [NextAuth.js](https://next-auth.js.org/)
+-   **Integração**: [Evolution API](https://github.com/EvolutionAPI/evolution-api)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📋 Pré-requisitos
 
-## Learn More
+-   Node.js 18+
+-   PostgreSQL (Local ou Cloud)
+-   Instância da Evolution API (para funcionalidades de WhatsApp)
 
-To learn more about Next.js, take a look at the following resources:
+## ⚡ Instalação e Configuração
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1.  **Clone o repositório**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    ```bash
+    git clone https://github.com/seu-usuario/destraflow-plataform-1.git
+    cd destraflow-plataform-1
+    ```
 
-## Deploy on Vercel
+2.  **Instale as dependências**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+    ```bash
+    npm install
+    # ou
+    yarn install
+    # ou
+    pnpm install
+    ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3.  **Configure as Variáveis de Ambiente**
 
+    Crie um arquivo `.env` na raiz do projeto baseando-se no exemplo:
 
-Análise de Arquitetura do Projeto DestraFlow
-Visão Geral
-O projeto é uma plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js, desenhada para fornecer funcionalidades de CRM e automação de atendimentos via WhatsApp (Evolution API).
+    ```bash
+    cp .env.example .env
+    ```
 
-Arquitetura de Dados (Multi-tenancy Híbrido)
-1. Banco de Dados Central (CRM Operacional)
-Responsabilidade: Gerenciamento de usuários da plataforma (seus clientes), autenticação e roteamento de tenants.
-Tabela Principal: CrmUser
-databaseUrl: Define onde estão os dados isolados deste cliente.
-evolutionInstance / apiKey: Configurações da instância de WhatsApp deste cliente.
-Modelo de Isolamento: "Database-per-tenant" (Banco por cliente). O databaseUrl pode apontar para o mesmo banco central (isolamento lógico se usasse schema, mas aqui parece físico ou lógico via URL) ou bancos fisicamente separados.
-2. Banco de Dados do Tenant (Dados do Cliente)
-Responsabilidade: Armazenar os dados de negócio do seu cliente (Leads, Conversas, Campanhas).
-Tabelas Principais:
-Lead
-: A entidade central do CRM. É aqui que o seu cliente gerencia os contatos.
-Campaign / CampaignMessage: Módulo de disparos em massa.
-WhatsAppContact (mapeado como users): Tabela legada/operacional do bot/Evolution API. Armazena quem entrou em contato via WhatsApp.
-ChatHistory: Histórico de mensagens.
-Fluxos de Dados Críticos
-Fluxo de Entrada (Webhook)
-Origem: Evolution API recebe mensagem do WhatsApp.
-Identificação: O sistema busca o tenant dono da instância (
-findTenantByInstance
-).
-Persistência Atual:
-Busca/Cria WhatsAppContact (users).
-Salva ChatHistory.
-Ponto de Atenção: Atualmente, a criação de 
-Lead
- (a entidade CRM) só ocorre se o WhatsAppContact for novo. Contatos antigos não viram Leads automaticamente.
-Fluxo de Visualização (Dashboard)
-Autenticação: O usuário loga (NextAuth).
-Contexto: O middleware/lib 
-tenant.ts
- identifica o banco do usuário logado.
-Consulta: As páginas consultam o banco do tenant.
-A página de Leads consulta a tabela 
-Lead
-.
-Problema Atual: Como existe um descompasso entre a tabela técnica users (bot) e a tabela de negócio 
-leads
- (CRM), o usuário vê zero leads, mesmo tendo contatos no bot.
-Avaliação da Proposta de CRM
-A estrutura está correta e bem pavimentada para escalar.
+    Edite o arquivo `.env` com suas credenciais do banco de dados e segredos.
 
-Pontos Fortes
-Isolamento de Dados: A abordagem de databaseUrl por usuário permite que você tenha clientes pequenos num banco compartilhado e mova clientes grandes para bancos dedicados sem mudar o código.
-Separação de Preocupações:
-WhatsAppContact = Dados brutos, técnicos, perfil do WhatsApp (foto, pushname).
-Lead
- = Dados de negócio, qualificação (tags, funil, anotações).
-Essa separação é vital. Nem todo contato de WhatsApp é um Lead qualificado, mas todo Lead deve estar vinculado a um contato.
-Pontos de Melhoria (Roadmap Imediato)
-Sincronização Bidirecional: O 
-Lead
- precisa ser a fonte da verdade para o CRM. O WhatsAppContact é apenas um canal. É necessário garantir que qualquer interação relevante crie/atualize o Lead.
-Unificação de Identidade: No futuro, um Lead pode ter email, telefone, instagram. O modelo atual amarra muito ao telefone (o que é ok para MVP focado em WhatsApp).
-Plano de Ação (Refinado)
-Migração Inicial (Saneamento)
+4.  **Configure o Banco de Dados**
 
-Script para varrer todos os bancos de tenant.
-Transformar todos os WhatsAppContact existentes em 
-Lead
- (Tag: COLD ou INBOX).
-Ajuste no Webhook (Evolução)
+    Gere o cliente do Prisma e envie o schema para o banco:
 
-Quando chegar mensagem de alguém que já é WhatsAppContact mas não tem 
-Lead
-: Criar o Lead.
-Garantir que o 
-Lead
- sempre exista para interações ativas.
-Visualização Unificada
+    ```bash
+    npx prisma generate
+    npx prisma db push
+    ```
 
-Na tela de Leads, permitir ver o histórico de conversas (vincular 
-Lead
- -> WhatsAppContact -> ChatHistory).
-Conclusão
-Sua infraestrutura suporta perfeitamente o objetivo. O problema atual é apenas de sincronização de dados entre a camada "Bot" e a nova camada "CRM". O plano de migração resolverá isso.
+5.  **Inicie o Servidor de Desenvolvimento**
+
+    ```bash
+    npm run dev
+    ```
+
+    Acesse [http://localhost:3000](http://localhost:3000).
+
+## 📂 Estrutura do Projeto
+
+-   `src/app`: Páginas e rotas da aplicação (App Router).
+-   `src/components`: Componentes React reutilizáveis (UI, Layouts, Features).
+-   `src/lib`: Bibliotecas utilitárias, configurações do Prisma, Auth e lógica de Tenant.
+-   `src/actions`: Server Actions para mutações de dados.
+-   `prisma/schema.prisma`: Definição do esquema do banco de dados.
+-   `scripts`: Scripts auxiliares para migrações e verificações.
+
+## 🏗 Arquitetura
+
+### Modelo de Dados (Multi-tenancy)
+
+O sistema utiliza uma abordagem híbrida onde existe um banco central para autenticação e roteamento, e bancos dedicados (ou esquemas lógicos) para cada tenant.
+
+1.  **Banco de Dados Central (CRM Operacional)**
+    *   **Responsabilidade**: Gerenciamento de usuários da plataforma, autenticação e roteamento de tenants.
+    *   **Tabela Principal**: `CrmUser`
+    *   **Configuração**: Armazena a `databaseUrl` que define onde estão os dados isolados do cliente.
+
+2.  **Banco de Dados do Tenant (Dados do Cliente)**
+    *   **Responsabilidade**: Armazenar os dados de negócio (Leads, Conversas, Campanhas).
+    *   **Tabelas Principais**:
+        *   `Lead`: Entidade central do CRM.
+        *   `Campaign`: Módulo de disparos.
+        *   `WhatsAppContact` / `ChatHistory`: Dados brutos da integração com WhatsApp.
+
+### Fluxos de Dados
+
+*   **Entrada (Webhook)**: A Evolution API recebe mensagens e o sistema identifica o tenant proprietário para persistir a mensagem no banco correto.
+*   **Visualização**: O middleware e a lib `tenant.ts` identificam o banco do usuário logado para realizar as consultas no contexto correto.
+
+## 📝 Scripts Disponíveis
+
+-   `npm run dev`: Inicia o servidor de desenvolvimento.
+-   `npm run build`: Compila a aplicação para produção.
+-   `npm run start`: Inicia o servidor de produção.
+-   `npm run lint`: Executa a verificação de código com ESLint.
+
+---
+
+Desenvolvido com ❤️ pela equipe DestraFlow.
