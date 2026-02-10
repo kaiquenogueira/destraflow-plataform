@@ -32,9 +32,11 @@ model CrmUser {
   
   // Configuração Evolution API
   evolutionInstance String? @map("evolution_instance")
+  evolutionInstanceHash String? @map("evolution_instance_hash") // Hash SHA-256 para busca rápida
   evolutionApiKey   String? @map("evolution_api_key")
   evolutionPhone    String? @map("evolution_phone") // Número do WhatsApp conectado
   
+  @@index([evolutionInstanceHash])
   @@map("crm_users")
 }
 

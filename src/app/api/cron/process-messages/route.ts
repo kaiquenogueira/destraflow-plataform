@@ -19,6 +19,10 @@ import { processAllTenantMessages, updateCampaignStatuses } from "@/lib/worker";
 // Chave de segurança para evitar chamadas não autorizadas
 const CRON_SECRET = process.env.CRON_SECRET;
 
+// Configuração para Vercel (Pro plan): aumentar timeout para 5 minutos
+export const maxDuration = 300;
+export const dynamic = 'force-dynamic'; // Garantir que não seja estático
+
 export async function GET(request: NextRequest) {
     // Verificar autorização
     const authHeader = request.headers.get("authorization");

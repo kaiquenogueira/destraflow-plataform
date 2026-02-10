@@ -1,23 +1,23 @@
-import "server-only";
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes, createHash } from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
-const KEY_HEX = process.env.DATA_ENCRYPTION_KEY;
-
-if (!KEY_HEX) {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("DATA_ENCRYPTION_KEY is not defined in environment variables");
-  }
-  console.warn("⚠️ DATA_ENCRYPTION_KEY not found. Encryption will fail in production.");
-}
 
 const getKey = () => {
-    if (!KEY_HEX) {
+    const key = process.env.DATA_ENCRYPTION_KEY;
+    if (!key) {
         throw new Error("DATA_ENCRYPTION_KEY is missing");
     }
-    return Buffer.from(KEY_HEX, "hex");
+    return Buffer.from(key, "hex");
 };
+
+/**
+ * Gera um hash SHA-256 de uma string (para busca exata sem revelar o dado)
+ */
+export function hashString(text: string): string {
+    if (!text) return "";
+    return createHash("sha256").update(text).digest("hex");
+}
 
 /**
  * Criptografa uma string

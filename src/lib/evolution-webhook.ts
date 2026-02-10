@@ -3,7 +3,7 @@
  */
 
 import { prisma, getTenantPrisma } from "@/lib/prisma";
-import { encrypt, decrypt } from "@/lib/encryption";
+import { encrypt, decrypt, hashString } from "@/lib/encryption";
 
 // Tipos de eventos da Evolution API
 interface EvolutionEvent {
@@ -64,27 +64,50 @@ async function findTenantByInstance(instance: string) {
         }
     }
 
-    // 2. Se não estiver em cache, busca no banco (lento)
-    // Tenta encontrar a instância criptografada
-    // Como a criptografia é probabilística (IV aleatório), não podemos buscar por igualdade direta
-    // Precisamos buscar todos os usuários e verificar a instância (lento, mas necessário com essa arquitetura)
-    // OU, idealmente, ter um hash determinístico para busca, mas para agora vamos iterar.
-    // P.S. Em produção com muitos usuários, isso deve ser otimizado (hash da instância).
+    // 2. Se não estiver em cache, busca no banco (otimizado via hash)
+    const instanceHash = hashString(instance);
     
-    const users = await prisma.crmUser.findMany({
-        select: { id: true, databaseUrl: true, evolutionInstance: true },
-    });
-
-    const user = users.find(u => {
-        if (!u.evolutionInstance) return false;
-        try {
-            return decrypt(u.evolutionInstance) === instance;
-        } catch {
-            return false;
-        }
+    const user = await prisma.crmUser.findFirst({
+        where: { evolutionInstanceHash: instanceHash },
+        select: { id: true, databaseUrl: true },
     });
 
     if (!user?.databaseUrl) {
+        // Fallback para migração gradual: se não achar pelo hash, tenta o método antigo (scan)
+        // Isso garante que não quebra enquanto roda a migração
+        const allUsers = await prisma.crmUser.findMany({
+             where: { evolutionInstanceHash: null }, // Só busca quem não tem hash ainda
+             select: { id: true, databaseUrl: true, evolutionInstance: true },
+        });
+
+        const found = allUsers.find(u => {
+            if (!u.evolutionInstance) return false;
+            try {
+                return decrypt(u.evolutionInstance) === instance;
+            } catch {
+                return false;
+            }
+        });
+
+        if (found?.databaseUrl) {
+            // Auto-heal: Salva o hash para a próxima vez ser rápido
+            await prisma.crmUser.update({
+                where: { id: found.id },
+                data: { evolutionInstanceHash: instanceHash }
+            });
+            
+            // Retorna o usuário encontrado
+            instanceUserCache.set(instance, {
+                userId: found.id,
+                encryptedDatabaseUrl: found.databaseUrl
+            });
+
+            return {
+                userId: found.id,
+                tenantPrisma: getTenantPrisma(decrypt(found.databaseUrl)),
+            };
+        }
+
         return null;
     }
 

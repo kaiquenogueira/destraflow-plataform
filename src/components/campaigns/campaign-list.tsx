@@ -101,22 +101,30 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                             <Badge variant="outline">{TAG_LABELS[campaign.targetTag]}</Badge>
                         )}
 
-                        {campaign.status === "SCHEDULED" && (
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                className="w-full"
-                                onClick={() => handleCancel(campaign.id)}
-                                disabled={cancelling === campaign.id}
-                            >
-                                {cancelling === campaign.id ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <X className="mr-2 h-4 w-4" />
-                                )}
-                                Cancelar
-                            </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                            <Link href={`/campaigns/${campaign.id}`} className="w-full">
+                                <Button variant="outline" size="sm" className="w-full">
+                                    Ver Detalhes
+                                </Button>
+                            </Link>
+
+                            {campaign.status === "SCHEDULED" && (
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleCancel(campaign.id)}
+                                    disabled={cancelling === campaign.id}
+                                >
+                                    {cancelling === campaign.id ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <X className="mr-2 h-4 w-4" />
+                                    )}
+                                    Cancelar
+                                </Button>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
             ))}

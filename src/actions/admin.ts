@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { z } from "zod";
-import { encrypt, decrypt } from "@/lib/encryption";
+import { encrypt, decrypt, hashString } from "@/lib/encryption";
 
 async function requireAdmin() {
     const session = await getServerSession(authConfig);
@@ -120,6 +120,7 @@ export async function createUser(data: z.infer<typeof createUserSchema>) {
             role: validated.role,
             databaseUrl: encrypt(validated.databaseUrl || ""),
             evolutionInstance: encrypt(validated.evolutionInstance || ""),
+            evolutionInstanceHash: validated.evolutionInstance ? hashString(validated.evolutionInstance) : null,
             evolutionApiKey: encrypt(validated.evolutionApiKey || ""),
             evolutionPhone: validated.evolutionPhone,
         },
@@ -146,6 +147,7 @@ export async function updateUser(data: z.infer<typeof updateUserSchema>) {
     }
     if (updateData.evolutionInstance) {
         dataToUpdate.evolutionInstance = encrypt(updateData.evolutionInstance);
+        dataToUpdate.evolutionInstanceHash = hashString(updateData.evolutionInstance);
     }
     if (updateData.evolutionApiKey) {
         dataToUpdate.evolutionApiKey = encrypt(updateData.evolutionApiKey);

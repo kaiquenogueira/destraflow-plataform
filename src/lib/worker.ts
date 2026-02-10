@@ -51,7 +51,7 @@ async function processTenanMessages(
             { priority: "desc" }, // Prioridade alta primeiro
             { scheduledAt: "asc" }, // Mais antigos primeiro
         ],
-        take: 50, // Processar em batches
+        take: 10, // Processar em batches menores para evitar timeout com o delay aumentado
     });
 
     if (pendingMessages.length === 0) {
@@ -152,8 +152,12 @@ async function processTenanMessages(
             result.errors.push(`Message ${message.id}: ${errorMessage}`);
         }
 
-        // Rate limiting - aguardar 1s entre mensagens
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Rate limiting - aguardar tempo aleatório entre 3s e 7s para evitar bloqueios do WhatsApp
+        // Comportamento mais humano para evitar detecção de automação
+        const minDelay = 3000;
+        const maxDelay = 7000;
+        const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+        await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
     return result;
