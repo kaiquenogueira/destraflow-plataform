@@ -53,6 +53,8 @@ export async function getUsers() {
             email: true,
             name: true,
             role: true,
+            databaseUrl: true,
+            evolutionInstance: true,
             // Dados sensíveis removidos da listagem
             createdAt: true,
             updatedAt: true,
