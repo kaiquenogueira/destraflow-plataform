@@ -22,7 +22,12 @@ const createCampaignSchema = z.object({
     template: z.string().min(10, "Template deve ter pelo menos 10 caracteres"),
     targetTag: z.enum(["COLD", "WARM", "HOT", "LOST", "CUSTOMER"]).optional(),
     leadIds: z.array(z.string()).optional(),
-    scheduledAt: z.coerce.date(),
+    scheduledAt: z.coerce.date().refine((date) => {
+        // Permitir uma margem de erro de alguns segundos para latência de rede, 
+        // mas garantir que seja pelo menos ~10 minutos no futuro.
+        // Usando 9.5 minutos para evitar rejeições por milissegundos na borda.
+        return date.getTime() > Date.now() + (9.5 * 60 * 1000);
+    }, "A campanha deve ser agendada com no mínimo 10 minutos de antecedência"),
 });
 
 export async function getLeadsForCampaignSelection() {
@@ -30,6 +35,17 @@ export async function getLeadsForCampaignSelection() {
     if (!context) return [];
     
     const leads = await context.tenantPrisma.lead.findMany({
+        where: {
+            messages: {
+                none: {
+                    campaign: {
+                        status: {
+                            in: ["SCHEDULED", "PROCESSING", "COMPLETED"]
+                        }
+                    }
+                }
+            }
+        },
         include: {
             messages: {
                 select: {

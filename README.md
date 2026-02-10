@@ -1,24 +1,26 @@
 # DestraFlow Platform
 
-Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js, desenhada para fornecer funcionalidades de CRM e automação de atendimentos via WhatsApp (Evolution API).
+Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js 16 (App Router), desenhada para fornecer funcionalidades de CRM e automação de atendimentos via WhatsApp (Evolution API).
 
 ## 🚀 Funcionalidades
 
 -   **Multi-tenancy Híbrido**: Arquitetura "Database-per-tenant" para isolamento de dados e escalabilidade.
--   **CRM & Gestão de Leads**: Gerenciamento completo de contatos, funil de vendas e tags.
--   **Automação de WhatsApp**: Integração com Evolution API para envio e recebimento de mensagens.
--   **Campanhas em Massa**: Criação e agendamento de disparos de mensagens para segmentos de leads.
+-   **CRM & Gestão de Leads**: Gerenciamento completo de contatos, funil de vendas e tags (Frio, Morno, Quente, etc.).
+-   **Automação de WhatsApp**: Integração com Evolution API para envio e recebimento de mensagens, com suporte a QR Code.
+-   **Campanhas em Massa**: Criação e agendamento de disparos de mensagens para segmentos de leads, com processamento em background.
 -   **Painel Administrativo**: Gestão de usuários, tenants e configurações globais.
+-   **Templates de Mensagem**: Criação e gestão de templates reutilizáveis para campanhas.
 
 ## 🛠 Tech Stack
 
--   **Framework**: [Next.js 15+](https://nextjs.org/) (App Router)
+-   **Framework**: [Next.js 16.1.6](https://nextjs.org/) (App Router)
 -   **Linguagem**: [TypeScript](https://www.typescriptlang.org/)
 -   **Banco de Dados**: [PostgreSQL](https://www.postgresql.org/)
--   **ORM**: [Prisma](https://www.prisma.io/)
--   **Estilização**: [Tailwind CSS](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
--   **Autenticação**: [NextAuth.js](https://next-auth.js.org/)
+-   **ORM**: [Prisma v7.3.0](https://www.prisma.io/)
+-   **Estilização**: [Tailwind CSS v4](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
+-   **Autenticação**: [NextAuth.js v4](https://next-auth.js.org/) (Credentials Provider)
 -   **Integração**: [Evolution API](https://github.com/EvolutionAPI/evolution-api)
+-   **Validação**: Zod & React Hook Form
 
 ## 📋 Pré-requisitos
 
@@ -57,7 +59,7 @@ Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js, desenhada p
     
     > **Nota de Segurança**: Para gerar chaves seguras, você pode usar o comando `openssl`:
     > - `openssl rand -base64 32` (para Secrets)
-    > - `openssl rand -hex 32` (para Chave de Criptografia)
+    > - `openssl rand -hex 32` (para Chave de Criptografia - `DATA_ENCRYPTION_KEY`)
 
 4.  **Configure o Banco de Dados**
 
@@ -89,6 +91,7 @@ Dados críticos de configuração dos tenants (como `databaseUrl` e chaves de AP
 O Middleware da aplicação implementa proteção contra abuso (Rate Limiting) baseada em IP.
 *   Limite padrão: **60 requisições/minuto** por IP.
 *   Aplica-se a rotas de login, admin, dashboard e webhooks.
+*   **Nota**: Em ambientes serverless (como Vercel), o armazenamento é volátil. Para produção, recomenda-se usar Redis (Upstash).
 
 ### 3. Proteção de Webhook
 O endpoint de recebimento de mensagens (`/api/webhook/evolution`) é protegido por um segredo compartilhado.
@@ -109,12 +112,16 @@ O endpoint de recebimento de mensagens (`/api/webhook/evolution`) é protegido p
 
 ## 📂 Estrutura do Projeto
 
--   `src/app`: Páginas e rotas da aplicação (App Router).
--   `src/components`: Componentes React reutilizáveis (UI, Layouts, Features).
--   `src/lib`: Bibliotecas utilitárias, configurações do Prisma, Auth e lógica de Tenant.
--   `src/actions`: Server Actions para mutações de dados.
--   `prisma/schema.prisma`: Definição do esquema do banco de dados.
--   `scripts`: Scripts auxiliares para migrações e verificações.
+A estrutura segue o padrão **Next.js App Router**:
+
+-   **`src/app`**: Rotas da aplicação.
+    -   `(auth)`: Rotas públicas de autenticação.
+    -   `(dashboard)`: Área logada protegida.
+    -   `api`: Endpoints de API (NextAuth, Webhooks, Cron).
+-   **`src/actions`**: Server Actions para lógica de negócios (Admin, Campanhas, Chat, Leads).
+-   **`src/components`**: Componentes React modulares.
+-   **`src/lib`**: Lógica core (Autenticação, Prisma, Multi-tenancy, Integração Evolution API).
+-   **`prisma`**: Definição do esquema do banco de dados unificado.
 
 ## 🏗 Arquitetura
 
@@ -129,35 +136,33 @@ O sistema utiliza uma abordagem híbrida onde existe um banco central para auten
 
 2.  **Banco de Dados do Tenant (Dados do Cliente)**
     *   **Responsabilidade**: Armazenar os dados de negócio (Leads, Conversas, Campanhas).
-    *   **Tabelas Principais**:
-        *   `Lead`: Entidade central do CRM.
-        *   `Campaign`: Módulo de disparos.
-        *   `WhatsAppContact` / `ChatHistory`: Dados brutos da integração com WhatsApp.
+    *   **Tabelas Principais**: `Lead`, `Campaign`, `CampaignMessage`.
 
 ### Fluxos de Dados
 
 *   **Entrada (Webhook)**: A Evolution API recebe mensagens e o sistema identifica o tenant proprietário para persistir a mensagem no banco correto.
 *   **Visualização**: O middleware e a lib `tenant.ts` identificam o banco do usuário logado para realizar as consultas no contexto correto.
 
-## � Status do Projeto
+## 🚧 Status do Projeto
 
 Atualmente, a plataforma está em fase de **Beta / Desenvolvimento Ativo**.
 
 | Funcionalidade | Status | Detalhes |
 | :--- | :--- | :--- |
-| **Multi-tenancy** | ✅ Completo | Arquitetura híbrida funcional. |
+| **Multi-tenancy** | ✅ Completo | Arquitetura híbrida funcional com criptografia. |
 | **Autenticação** | ✅ Completo | NextAuth com suporte a roles (Admin/User). |
 | **CRM (Leads)** | ⚠️ Parcial | Gestão de Leads e Tags ok. Faltam Pipelines/Deals. |
 | **WhatsApp** | ✅ Completo | Integração com Evolution API (QR Code, Envio, Recebimento). |
 | **Campanhas** | ✅ Completo | Disparos em massa com agendamento e fila. |
-| **Chat Ao Vivo** | ❌ Pendente | Histórico existe, mas falta interface de chat em tempo real. |
+| **Templates** | ✅ Completo | Gestão de templates de mensagens. |
+| **Chat Ao Vivo** | ⚠️ Backend | Lógica de histórico existe, mas falta interface de chat em tempo real. |
 | **Testes** | ❌ Pendente | Sem cobertura de testes automatizados. |
 
 ## ⚠️ Limitações Conhecidas
 
 1.  **Escalabilidade do Webhook**: O processamento atual de mensagens recebidas itera sobre todos os usuários para encontrar o tenant correto. Isso precisará ser otimizado (ex: indexar hash da instância) para escalar.
-2.  **Rate Limiting**: O controle de taxa atual é em memória e não persiste entre reinicializações ou em ambiente serverless. Recomendado migrar para Redis (Upstash).
-3.  **Migrações**: A sincronização de schema usa `db push`, o que não é ideal para produção. Recomendado migrar para `prisma migrate`.
+2.  **Rate Limiting**: O controle de taxa atual é em memória e não persiste entre reinicializações ou em ambiente serverless.
+3.  **Migrações**: A sincronização de schema usa `db push`. Recomendado migrar para `prisma migrate` em produção.
 
 ## 🚀 Próximos Passos
 
@@ -166,7 +171,7 @@ Atualmente, a plataforma está em fase de **Beta / Desenvolvimento Ativo**.
 - [ ] Melhorar performance do Webhook.
 - [ ] Implementar Pipelines de Vendas (Kanban).
 
-## �📝 Scripts Disponíveis
+## 📝 Scripts Disponíveis
 
 -   `npm run dev`: Inicia o servidor de desenvolvimento.
 -   `npm run build`: Compila a aplicação para produção.

@@ -23,7 +23,7 @@ import { getTemplates } from "@/actions/templates";
 import { Loader2, Calendar, Check, ArrowRight, ArrowLeft, Users, AlertTriangle, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { format, addMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
     Select,
@@ -36,7 +36,11 @@ import {
 const campaignSchema = z.object({
     name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
     template: z.string().min(10, "Template deve ter pelo menos 10 caracteres"),
-    scheduledAt: z.string().min(1, "Data/hora é obrigatória"),
+    scheduledAt: z.string().refine((val) => {
+        if (!val) return false;
+        const date = new Date(val);
+        return date.getTime() > Date.now() + (9.5 * 60 * 1000);
+    }, "A data deve ser pelo menos 10 minutos no futuro"),
     leadIds: z.array(z.string()).min(1, "Selecione pelo menos um lead"),
 });
 
@@ -189,8 +193,8 @@ export function CampaignForm() {
         }
     };
 
-    // Data mínima: agora
-    const minDate = new Date().toISOString().slice(0, 16);
+    // Data mínima: agora + 10 minutos
+    const minDate = format(addMinutes(new Date(), 10), "yyyy-MM-dd'T'HH:mm");
 
     return (
         <div className="space-y-6">
