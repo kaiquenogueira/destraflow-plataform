@@ -9,23 +9,28 @@ interface EditLeadPageProps {
 
 export default async function EditLeadPage({ params }: EditLeadPageProps) {
     const { id } = await params;
+    let lead;
 
     try {
-        const lead = await getLeadById(id);
-
-        return (
-            <div className="max-w-2xl mx-auto">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Editar Lead</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <LeadForm lead={lead} />
-                    </CardContent>
-                </Card>
-            </div>
-        );
+        lead = await getLeadById(id);
     } catch {
         notFound();
     }
+
+    if (!lead) {
+        notFound();
+    }
+
+    return (
+        <div className="max-w-2xl mx-auto">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Editar Lead</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <LeadForm lead={lead} />
+                </CardContent>
+            </Card>
+        </div>
+    );
 }

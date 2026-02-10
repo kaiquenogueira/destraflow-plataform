@@ -139,7 +139,34 @@ O sistema utiliza uma abordagem híbrida onde existe um banco central para auten
 *   **Entrada (Webhook)**: A Evolution API recebe mensagens e o sistema identifica o tenant proprietário para persistir a mensagem no banco correto.
 *   **Visualização**: O middleware e a lib `tenant.ts` identificam o banco do usuário logado para realizar as consultas no contexto correto.
 
-## 📝 Scripts Disponíveis
+## � Status do Projeto
+
+Atualmente, a plataforma está em fase de **Beta / Desenvolvimento Ativo**.
+
+| Funcionalidade | Status | Detalhes |
+| :--- | :--- | :--- |
+| **Multi-tenancy** | ✅ Completo | Arquitetura híbrida funcional. |
+| **Autenticação** | ✅ Completo | NextAuth com suporte a roles (Admin/User). |
+| **CRM (Leads)** | ⚠️ Parcial | Gestão de Leads e Tags ok. Faltam Pipelines/Deals. |
+| **WhatsApp** | ✅ Completo | Integração com Evolution API (QR Code, Envio, Recebimento). |
+| **Campanhas** | ✅ Completo | Disparos em massa com agendamento e fila. |
+| **Chat Ao Vivo** | ❌ Pendente | Histórico existe, mas falta interface de chat em tempo real. |
+| **Testes** | ❌ Pendente | Sem cobertura de testes automatizados. |
+
+## ⚠️ Limitações Conhecidas
+
+1.  **Escalabilidade do Webhook**: O processamento atual de mensagens recebidas itera sobre todos os usuários para encontrar o tenant correto. Isso precisará ser otimizado (ex: indexar hash da instância) para escalar.
+2.  **Rate Limiting**: O controle de taxa atual é em memória e não persiste entre reinicializações ou em ambiente serverless. Recomendado migrar para Redis (Upstash).
+3.  **Migrações**: A sincronização de schema usa `db push`, o que não é ideal para produção. Recomendado migrar para `prisma migrate`.
+
+## 🚀 Próximos Passos
+
+- [ ] Implementar Testes Unitários e de Integração.
+- [ ] Criar interface de "Bate-papo ao vivo" (Live Chat).
+- [ ] Melhorar performance do Webhook.
+- [ ] Implementar Pipelines de Vendas (Kanban).
+
+## �📝 Scripts Disponíveis
 
 -   `npm run dev`: Inicia o servidor de desenvolvimento.
 -   `npm run build`: Compila a aplicação para produção.

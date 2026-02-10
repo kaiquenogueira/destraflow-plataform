@@ -95,6 +95,7 @@ export function CampaignForm() {
             try {
                 const data = await getTemplates();
                 // Map Prisma template to local interface if needed, though they match
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 setTemplates(data.map((t: any) => ({ id: t.id, name: t.name, content: t.content })));
             } catch (error) {
                 console.error("Failed to load templates", error);
@@ -432,7 +433,7 @@ export function CampaignForm() {
                                 </div>
                                 <div className="col-span-2">
                                     <span className="text-muted-foreground">Mensagem:</span>
-                                    <p className="font-medium italic text-muted-foreground truncate">"{watch("template")}"</p>
+                                    <p className="font-medium italic text-muted-foreground truncate">&quot;{watch("template")}&quot;</p>
                                 </div>
                             </div>
                         </div>

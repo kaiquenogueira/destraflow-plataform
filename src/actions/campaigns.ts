@@ -44,13 +44,16 @@ export async function getLeadsForCampaignSelection() {
         orderBy: { createdAt: 'desc' }
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return leads.map((lead: any) => ({
         id: lead.id,
         name: lead.name,
         phone: lead.phone,
         tag: lead.tag,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         campaigns: lead.messages
             .filter((m: any) => m.campaign)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .map((m: any) => ({
                 name: m.campaign.name,
                 date: m.createdAt

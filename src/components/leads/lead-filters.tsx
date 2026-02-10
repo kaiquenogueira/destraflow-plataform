@@ -19,17 +19,6 @@ export function LeadFilters() {
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [date, setDate] = useState(initialDate);
 
-    // Debounce search
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (searchTerm !== initialSearch) {
-                updateFilters({ search: searchTerm });
-            }
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm, initialSearch]);
-
     const updateFilters = (updates: { search?: string; tag?: string; date?: string }) => {
         const params = new URLSearchParams(searchParams.toString());
         
@@ -51,6 +40,17 @@ export function LeadFilters() {
         params.set("page", "1");
         router.push(`/leads?${params.toString()}`);
     };
+
+    // Debounce search
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchTerm !== initialSearch) {
+                updateFilters({ search: searchTerm });
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, initialSearch]);
 
     const handleTagChange = (value: string) => {
         const newTag = initialTag === value ? "all" : value;

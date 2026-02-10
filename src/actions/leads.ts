@@ -91,6 +91,7 @@ export async function getLeads(params?: {
     const { tenantPrisma } = context;
     const { search, tag, page = 1, limit = 20, date } = params || {};
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
         ...(tag ? { tag } : {}),
         ...(search

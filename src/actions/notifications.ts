@@ -19,6 +19,7 @@ export async function getNotifications(params?: {
     const { tenantPrisma } = context;
     const { page = 1, limit = 20, startDate, endDate } = params || {};
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
     if (startDate) {
