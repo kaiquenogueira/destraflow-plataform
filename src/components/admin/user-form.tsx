@@ -27,6 +27,7 @@ interface UserFormProps {
         databaseUrl: string | null;
         evolutionInstance: string | null;
         evolutionApiKey: string | null;
+        evolutionPhone: string | null;
     };
 }
 
@@ -42,6 +43,7 @@ export function UserForm({ user }: UserFormProps) {
         databaseUrl: string;
         evolutionInstance: string;
         evolutionApiKey: string;
+        evolutionPhone: string;
     }>({
         email: user?.email || "",
         password: "",
@@ -50,6 +52,7 @@ export function UserForm({ user }: UserFormProps) {
         databaseUrl: user?.databaseUrl || "",
         evolutionInstance: user?.evolutionInstance || "",
         evolutionApiKey: user?.evolutionApiKey || "",
+        evolutionPhone: user?.evolutionPhone || "",
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -74,7 +77,16 @@ export function UserForm({ user }: UserFormProps) {
                     setLoading(false);
                     return;
                 }
-                await createUser(formData as { email: string; password: string; name: string; role: "ADMIN" | "USER"; databaseUrl?: string; evolutionInstance?: string; evolutionApiKey?: string });
+                await createUser(formData as { 
+                    email: string; 
+                    password: string; 
+                    name: string; 
+                    role: "ADMIN" | "USER"; 
+                    databaseUrl?: string; 
+                    evolutionInstance?: string; 
+                    evolutionApiKey?: string;
+                    evolutionPhone?: string;
+                });
                 toast.success("Usuário criado com sucesso");
             }
             router.push("/admin/users");
@@ -184,6 +196,19 @@ export function UserForm({ user }: UserFormProps) {
                                 placeholder="••••••"
                                 className="h-12"
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="evolutionPhone">Número do Agente (Conectado)</Label>
+                            <Input
+                                id="evolutionPhone"
+                                value={formData.evolutionPhone}
+                                onChange={(e) => setFormData({ ...formData, evolutionPhone: e.target.value })}
+                                placeholder="5511999999999"
+                                className="h-12"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Número do WhatsApp conectado na instância (para identificação de sessão)
+                            </p>
                         </div>
                     </div>
 

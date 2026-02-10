@@ -2,6 +2,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 // Mapa simples para Rate Limiting em memória (Nota: em serverless/edge, isso é volátil)
+// TODO: Em produção com Vercel/Serverless, substituir por Redis (ex: Upstash)
 const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
 
 function isRateLimited(ip: string) {

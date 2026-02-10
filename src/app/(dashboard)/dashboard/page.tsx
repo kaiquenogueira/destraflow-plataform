@@ -18,8 +18,15 @@ import {
     Clock,
     UserCog,
     Plus,
+    TrendingUp,
+    Calendar
 } from "lucide-react";
-import { TAG_LABELS, LeadTag } from "@/types";
+import { TAG_LABELS, TAG_COLORS, LeadTag } from "@/types";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 async function getAdminDashboardData() {
     const totalUsers = await prisma.crmUser.count();
@@ -57,7 +64,7 @@ async function getTenantDashboardData(userId: string) {
     const databaseUrl = decrypt(user.databaseUrl);
     const tenantPrisma = getTenantPrisma(databaseUrl);
 
-    const [totalLeads, leadsByTag, pendingMessages, sentMessages] = await Promise.all([
+    const [totalLeads, leadsByTag, pendingMessages, sentMessages, recentLeads] = await Promise.all([
         tenantPrisma.lead.count(),
         tenantPrisma.lead.groupBy({
             by: ["tag"],
@@ -65,6 +72,10 @@ async function getTenantDashboardData(userId: string) {
         }),
         tenantPrisma.campaignMessage.count({ where: { status: "PENDING" } }),
         tenantPrisma.campaignMessage.count({ where: { status: "SENT" } }),
+        tenantPrisma.lead.findMany({
+            orderBy: { updatedAt: "desc" },
+            take: 5,
+        }),
     ]);
 
     let evolutionStatus = { connected: false, state: "not_configured" };
@@ -97,6 +108,7 @@ async function getTenantDashboardData(userId: string) {
         evolutionStatus,
         pendingMessages,
         sentMessages,
+        recentLeads,
         isAdmin: false,
     };
 }
@@ -203,6 +215,10 @@ export default async function DashboardPage() {
         CUSTOMER: "success",
     };
 
+    const conversionRate = (data.totalLeads ?? 0) > 0 
+        ? ((data.tagCounts?.CUSTOMER || 0) / (data.totalLeads ?? 1)) * 100 
+        : 0;
+
     return (
         <div className="space-y-6">
             <div>
@@ -226,37 +242,87 @@ export default async function DashboardPage() {
                     icon={Users}
                     variant="default"
                 />
+                 <StatsCard
+                    title="Taxa de Conversão"
+                    value={`${conversionRate.toFixed(1)}%`}
+                    icon={TrendingUp}
+                    variant="success"
+                    description="Leads convertidos em clientes"
+                />
                 <StatsCard
                     title="Mensagens Pendentes"
                     value={data.pendingMessages ?? 0}
                     icon={Clock}
                     variant={(data.pendingMessages ?? 0) > 0 ? "warning" : "default"}
                 />
-                <StatsCard
-                    title="Mensagens Enviadas"
-                    value={data.sentMessages ?? 0}
-                    icon={Send}
-                    variant="success"
-                />
             </div>
 
-            <div>
-                <h2 className="text-lg font-semibold mb-4">Leads por Status</h2>
-                <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                    {(Object.keys(TAG_LABELS) as LeadTag[]).map((tag) => {
-                        const Icon = tagIcons[tag];
-                        return (
-                            <StatsCard
-                                key={tag}
-                                title={TAG_LABELS[tag]}
-                                value={data.tagCounts?.[tag] ?? 0}
-                                icon={Icon}
-                                variant={tagVariants[tag]}
-                            />
-                        );
-                    })}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+                <div className="col-span-4 space-y-6">
+                     <div>
+                        <h2 className="text-lg font-semibold mb-4">Leads por Status</h2>
+                        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+                            {(Object.keys(TAG_LABELS) as LeadTag[]).map((tag) => {
+                                const Icon = tagIcons[tag];
+                                return (
+                                    <StatsCard
+                                        key={tag}
+                                        title={TAG_LABELS[tag]}
+                                        value={data.tagCounts?.[tag] ?? 0}
+                                        icon={Icon}
+                                        variant={tagVariants[tag]}
+                                    />
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="col-span-3">
+                     <Card className="h-full">
+                        <CardHeader>
+                            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                                <Clock className="h-5 w-5" />
+                                Atividade Recente
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {data.recentLeads && data.recentLeads.length > 0 ? (
+                                    data.recentLeads.map((lead) => (
+                                        <div key={lead.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                                            <div className="space-y-1">
+                                                <p className="font-medium text-sm">{lead.name}</p>
+                                                <p className="text-xs text-muted-foreground">{lead.phone}</p>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <Badge className={cn("text-[10px] px-1 py-0", TAG_COLORS[lead.tag])}>
+                                                    {TAG_LABELS[lead.tag]}
+                                                </Badge>
+                                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                    {formatDistanceToNow(lead.updatedAt, { addSuffix: true, locale: ptBR })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-muted-foreground text-center py-4">
+                                        Nenhuma atividade recente
+                                    </p>
+                                )}
+                                {data.recentLeads && data.recentLeads.length > 0 && (
+                                    <Link href="/leads" className="block text-center mt-4">
+                                        <Button variant="link" size="sm">
+                                            Ver todos os leads
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
     );
 }
+

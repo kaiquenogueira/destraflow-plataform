@@ -29,16 +29,34 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
-// Cache de conexões para tenants
+// Cache de conexões para tenants (LRU - Least Recently Used)
 const tenantClients = new Map<string, PrismaClient>();
+const MAX_TENANT_CLIENTS = 10;
 
 /**
  * Obtém um cliente Prisma para o banco do tenant
- * Usa cache para evitar criar pools a cada request
+ * Usa cache LRU para evitar criar pools excessivos e vazamento de memória
  */
 export function getTenantPrisma(databaseUrl: string): PrismaClient {
   if (tenantClients.has(databaseUrl)) {
-    return tenantClients.get(databaseUrl)!;
+    const client = tenantClients.get(databaseUrl)!;
+    // Move para o final (mais recente)
+    tenantClients.delete(databaseUrl);
+    tenantClients.set(databaseUrl, client);
+    return client;
+  }
+
+  // Se atingiu o limite, remove o mais antigo (primeiro inserido)
+  if (tenantClients.size >= MAX_TENANT_CLIENTS) {
+    const oldestKey = tenantClients.keys().next().value;
+    if (oldestKey) {
+      const clientToRemove = tenantClients.get(oldestKey);
+      // Tenta desconectar graciosamente, mas não bloqueia se falhar
+      clientToRemove?.$disconnect().catch((e) => 
+        console.error("Failed to disconnect evicted tenant client:", e)
+      );
+      tenantClients.delete(oldestKey);
+    }
   }
 
   const client = createPrismaClient(databaseUrl);

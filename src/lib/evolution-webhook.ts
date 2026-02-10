@@ -43,19 +43,33 @@ interface ConnectionData {
     statusReason?: number;
 }
 
+// Cache para mapear instance -> dados do usuário (evita scan completo no banco)
+const instanceUserCache = new Map<string, { userId: string; encryptedDatabaseUrl: string }>();
+
 /**
  * Encontra o tenant baseado na instância Evolution
  */
 async function findTenantByInstance(instance: string) {
+    // 1. Tenta buscar do cache
+    if (instanceUserCache.has(instance)) {
+        const cached = instanceUserCache.get(instance)!;
+        try {
+            return {
+                userId: cached.userId,
+                tenantPrisma: getTenantPrisma(decrypt(cached.encryptedDatabaseUrl)),
+            };
+        } catch (e) {
+            console.error("Error connecting to cached tenant:", e);
+            instanceUserCache.delete(instance); // Invalida cache se falhar
+        }
+    }
+
+    // 2. Se não estiver em cache, busca no banco (lento)
     // Tenta encontrar a instância criptografada
     // Como a criptografia é probabilística (IV aleatório), não podemos buscar por igualdade direta
     // Precisamos buscar todos os usuários e verificar a instância (lento, mas necessário com essa arquitetura)
     // OU, idealmente, ter um hash determinístico para busca, mas para agora vamos iterar.
     // P.S. Em produção com muitos usuários, isso deve ser otimizado (hash da instância).
-    
-    // Solução temporária: Buscar todos e descriptografar (ineficiente para muitos usuários)
-    // Solução melhor para agora: Manter um campo "instanceHash" ou similar? O usuário não pediu alteração de schema.
-    // Vou fazer uma busca em memória por enquanto, assumindo poucos tenants.
     
     const users = await prisma.crmUser.findMany({
         select: { id: true, databaseUrl: true, evolutionInstance: true },
@@ -73,6 +87,12 @@ async function findTenantByInstance(instance: string) {
     if (!user?.databaseUrl) {
         return null;
     }
+
+    // 3. Salva no cache para próximas requisições
+    instanceUserCache.set(instance, {
+        userId: user.id,
+        encryptedDatabaseUrl: user.databaseUrl
+    });
 
     return {
         userId: user.id,
@@ -140,9 +160,17 @@ async function handleMessageUpsert(
                 interest: "Via WhatsApp",
             },
         });
+    } else {
+        // Atualizar data de modificação para subir no CRM
+        await tenant.tenantPrisma.lead.update({
+            where: { id: existingLead.id },
+            data: { updatedAt: new Date() }
+        });
     }
 
     // Salvar histórico de chat
+    // REMOVIDO: A automação de IA externa é responsável por registrar o retorno do cliente.
+    /*
     await tenant.tenantPrisma.chatHistory.create({
         data: {
             userId: contact.id,
@@ -154,6 +182,7 @@ async function handleMessageUpsert(
             },
         },
     });
+    */
 
     return { action: "message_saved", phone };
 }

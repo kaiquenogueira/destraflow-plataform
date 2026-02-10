@@ -21,8 +21,42 @@ const createCampaignSchema = z.object({
     name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
     template: z.string().min(10, "Template deve ter pelo menos 10 caracteres"),
     targetTag: z.enum(["COLD", "WARM", "HOT", "LOST", "CUSTOMER"]).optional(),
+    leadIds: z.array(z.string()).optional(),
     scheduledAt: z.coerce.date(),
 });
+
+export async function getLeadsForCampaignSelection() {
+    const context = await getTenantContext();
+    if (!context) return [];
+    
+    const leads = await context.tenantPrisma.lead.findMany({
+        include: {
+            messages: {
+                select: {
+                    campaign: {
+                        select: { name: true }
+                    },
+                    createdAt: true
+                },
+                orderBy: { createdAt: 'desc' }
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+
+    return leads.map((lead: any) => ({
+        id: lead.id,
+        name: lead.name,
+        phone: lead.phone,
+        tag: lead.tag,
+        campaigns: lead.messages
+            .filter((m: any) => m.campaign)
+            .map((m: any) => ({
+                name: m.campaign.name,
+                date: m.createdAt
+            }))
+    }));
+}
 
 export async function createCampaign(
     data: z.infer<typeof createCampaignSchema>
@@ -45,10 +79,17 @@ export async function createCampaign(
         },
     });
 
-    // 2. Buscar leads baseado na segmentação
-    const leads = await tenantPrisma.lead.findMany({
-        where: validated.targetTag ? { tag: validated.targetTag as LeadTag } : {},
-    });
+    // 2. Buscar leads baseado na seleção ou segmentação
+    let leads;
+    if (validated.leadIds && validated.leadIds.length > 0) {
+        leads = await tenantPrisma.lead.findMany({
+            where: { id: { in: validated.leadIds } }
+        });
+    } else {
+        leads = await tenantPrisma.lead.findMany({
+            where: validated.targetTag ? { tag: validated.targetTag as LeadTag } : {},
+        });
+    }
 
     // 3. Criar mensagens na fila para cada lead
     if (leads.length > 0) {

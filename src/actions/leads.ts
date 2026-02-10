@@ -4,6 +4,7 @@ import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { LeadTag } from "@/types";
+import { startOfDay, endOfDay, parseISO } from "date-fns";
 
 // Validation schemas
 const createLeadSchema = z.object({
@@ -74,6 +75,7 @@ export async function getLeads(params?: {
     tag?: LeadTag;
     page?: number;
     limit?: number;
+    date?: string; // Format: YYYY-MM-DD
 }) {
     const context = await getTenantContext();
     if (!context) {
@@ -87,9 +89,9 @@ export async function getLeads(params?: {
         };
     }
     const { tenantPrisma } = context;
-    const { search, tag, page = 1, limit = 20 } = params || {};
+    const { search, tag, page = 1, limit = 20, date } = params || {};
 
-    const where = {
+    const where: any = {
         ...(tag ? { tag } : {}),
         ...(search
             ? {
@@ -101,10 +103,18 @@ export async function getLeads(params?: {
             : {}),
     };
 
+    if (date) {
+        const parsedDate = parseISO(date);
+        where.updatedAt = {
+            gte: startOfDay(parsedDate),
+            lte: endOfDay(parsedDate),
+        };
+    }
+
     const [leads, total] = await Promise.all([
         tenantPrisma.lead.findMany({
             where,
-            orderBy: { createdAt: "desc" },
+            orderBy: { updatedAt: "desc" }, // Changed to updatedAt to show recent activity first
             skip: (page - 1) * limit,
             take: limit,
         }),

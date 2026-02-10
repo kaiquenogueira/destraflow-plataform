@@ -36,6 +36,7 @@ const createUserSchema = z.object({
     databaseUrl: z.string().optional(),
     evolutionInstance: z.string().optional(),
     evolutionApiKey: z.string().optional(),
+    evolutionPhone: z.string().optional(),
 });
 
 const updateUserSchema = createUserSchema.partial().extend({
@@ -74,6 +75,7 @@ export async function getUserById(id: string) {
             databaseUrl: true,
             evolutionInstance: true,
             evolutionApiKey: true,
+            evolutionPhone: true,
             createdAt: true,
             updatedAt: true,
         },
@@ -117,6 +119,7 @@ export async function createUser(data: z.infer<typeof createUserSchema>) {
             databaseUrl: encrypt(validated.databaseUrl || ""),
             evolutionInstance: encrypt(validated.evolutionInstance || ""),
             evolutionApiKey: encrypt(validated.evolutionApiKey || ""),
+            evolutionPhone: validated.evolutionPhone,
         },
     });
 
@@ -144,6 +147,9 @@ export async function updateUser(data: z.infer<typeof updateUserSchema>) {
     }
     if (updateData.evolutionApiKey) {
         dataToUpdate.evolutionApiKey = encrypt(updateData.evolutionApiKey);
+    }
+    if (updateData.evolutionPhone) {
+        dataToUpdate.evolutionPhone = updateData.evolutionPhone;
     }
 
     await prisma.crmUser.update({
@@ -187,4 +193,34 @@ export async function deleteUser(id: string) {
 
     revalidatePath("/admin/users");
     return { success: true };
+}
+
+export async function getUserNotifications(userId: string) {
+    await requireAdmin();
+
+    const user = await prisma.crmUser.findUnique({
+        where: { id: userId },
+        select: { databaseUrl: true },
+    });
+
+    if (!user || !user.databaseUrl) {
+        return [];
+    }
+
+    try {
+        const { getTenantPrisma } = await import("@/lib/prisma");
+        const { decrypt } = await import("@/lib/encryption");
+        
+        const tenantPrisma = getTenantPrisma(decrypt(user.databaseUrl));
+        
+        const notifications = await tenantPrisma.externalNotification.findMany({
+            orderBy: { criadoEm: "desc" },
+            take: 50, // Limite inicial para não sobrecarregar
+        });
+
+        return notifications;
+    } catch (error) {
+        console.error("Erro ao buscar notificações do usuário:", error);
+        return [];
+    }
 }

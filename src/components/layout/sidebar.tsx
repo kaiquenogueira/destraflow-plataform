@@ -13,6 +13,8 @@ import {
     ChevronLeft,
     ChevronRight,
     UserCog,
+    FileText,
+    Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
@@ -32,9 +34,19 @@ const tenantItems = [
         icon: Megaphone,
     },
     {
+        href: "/templates",
+        label: "Templates",
+        icon: FileText,
+    },
+    {
         href: "/whatsapp",
         label: "WhatsApp",
         icon: MessageSquare,
+    },
+    {
+        href: "/notifications",
+        label: "Notificações",
+        icon: Bell,
     },
 ];
 

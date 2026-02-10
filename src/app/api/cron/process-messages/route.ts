@@ -23,7 +23,13 @@ export async function GET(request: NextRequest) {
     // Verificar autorização
     const authHeader = request.headers.get("authorization");
 
-    if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+    // Segurança obrigatória: Rejeitar se não houver secret configurado ou se o header não bater
+    if (!CRON_SECRET) {
+        console.error("CRITICAL: CRON_SECRET is not set! Refusing to run cron job.");
+        return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
+    }
+
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -18,12 +18,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, Send, Loader2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Send, Loader2, Calendar } from "lucide-react";
 import { TAG_LABELS, TAG_COLORS, type LeadTag } from "@/types";
 import { deleteLead } from "@/actions/leads";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { SendMessageModal } from "./send-message-modal";
+import { format, formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Lead {
     id: string;
@@ -32,6 +34,7 @@ interface Lead {
     interest: string | null;
     tag: LeadTag;
     createdAt: Date;
+    updatedAt: Date;
 }
 
 interface LeadListProps {
@@ -85,6 +88,12 @@ export function LeadList({ leads }: LeadListProps) {
                             </div>
                             <Badge className={TAG_COLORS[lead.tag]}>{TAG_LABELS[lead.tag]}</Badge>
                         </div>
+                        <div className="flex items-center text-xs text-muted-foreground gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                                {format(lead.updatedAt, "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                        </div>
                         {lead.interest && (
                             <p className="text-sm text-muted-foreground line-clamp-2">
                                 {lead.interest}
@@ -132,6 +141,7 @@ export function LeadList({ leads }: LeadListProps) {
                             <TableHead>Telefone</TableHead>
                             <TableHead>Interesse</TableHead>
                             <TableHead>Etiqueta</TableHead>
+                            <TableHead>Atualizado</TableHead>
                             <TableHead className="w-[80px]">Ações</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -147,6 +157,16 @@ export function LeadList({ leads }: LeadListProps) {
                                     <Badge className={TAG_COLORS[lead.tag]}>
                                         {TAG_LABELS[lead.tag]}
                                     </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium">
+                                            {format(lead.updatedAt, "dd/MM HH:mm")}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {formatDistanceToNow(lead.updatedAt, { addSuffix: true, locale: ptBR })}
+                                        </span>
+                                    </div>
                                 </TableCell>
                                 <TableCell>
                                     <DropdownMenu>

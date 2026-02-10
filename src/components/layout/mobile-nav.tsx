@@ -10,6 +10,7 @@ import {
     Megaphone,
     MessageSquare,
     UserCog,
+    FileText,
 } from "lucide-react";
 
 // Menus para clientes (USER)
@@ -28,6 +29,11 @@ const tenantItems = [
         href: "/campaigns",
         label: "Campanhas",
         icon: Megaphone,
+    },
+    {
+        href: "/templates",
+        label: "Templates",
+        icon: FileText,
     },
     {
         href: "/whatsapp",

@@ -24,7 +24,8 @@ export interface WorkerResult {
 async function processTenanMessages(
     tenantPrisma: ReturnType<typeof getTenantPrisma>,
     evolutionInstance: string,
-    evolutionApiKey: string | null
+    evolutionApiKey: string | null,
+    evolutionPhone: string | null
 ): Promise<WorkerResult> {
     const result: WorkerResult = {
         processed: 0,
@@ -89,6 +90,51 @@ async function processTenanMessages(
                 },
             });
 
+            // ============================================================
+            // FECHAR O CICLO: Criar registro em chat_histories
+            // ============================================================
+            
+            // 1. Buscar ou criar WhatsAppContact (users)
+            let contact = await tenantPrisma.whatsAppContact.findFirst({
+                where: { whatsapp: message.lead.phone }
+            });
+
+            if (!contact) {
+                contact = await tenantPrisma.whatsAppContact.create({
+                    data: {
+                        whatsapp: message.lead.phone,
+                        name: message.lead.name,
+                        createdAt: new Date(),
+                        isManual: false 
+                    }
+                });
+            }
+
+            // 2. Criar histórico
+            // session_id = whatsapp_cliente_whatsapp_agente
+            // Ex: 5511999999999_5511888888888
+            // Se evolutionPhone não estiver configurado, usa apenas o telefone do cliente como fallback ou tenta pegar da instancia
+            
+            const agentPhone = evolutionPhone || "unknown_agent";
+            const sessionId = `${message.lead.phone}_${agentPhone}`;
+            const threadId = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+            
+            // Estrutura de mensagem solicitada:
+            // {"type": "system", "content": "{{mensagem tratada}}"}
+            
+            await tenantPrisma.chatHistory.create({
+                data: {
+                    userId: contact.id,
+                    sessionId: sessionId,
+                    threadId: threadId,
+                    message: {
+                        type: "system",
+                        content: message.payload
+                    },
+                    createdAt: new Date()
+                }
+            });
+
             result.sent++;
         } catch (error) {
             // Marcar como FAILED
@@ -135,6 +181,7 @@ export async function processAllTenantMessages(): Promise<{
             databaseUrl: true,
             evolutionInstance: true,
             evolutionApiKey: true,
+            evolutionPhone: true,
         },
     });
 
@@ -145,12 +192,18 @@ export async function processAllTenantMessages(): Promise<{
             const databaseUrl = decrypt(user.databaseUrl);
             const evolutionInstance = decrypt(user.evolutionInstance);
             const evolutionApiKey = user.evolutionApiKey ? decrypt(user.evolutionApiKey) : null;
+            // evolutionPhone não é sensível, mas se precisar descriptografar no futuro, ajustar aqui.
+            // Por enquanto, assumindo texto plano no schema ou seguindo padrão de criptografia se necessário.
+            // O schema diz apenas String?, e não tem helper de decrypt no código original para ele.
+            // Assumirei que é texto plano.
+            const evolutionPhone = user.evolutionPhone;
 
             const tenantPrisma = getTenantPrisma(databaseUrl);
             const result = await processTenanMessages(
                 tenantPrisma,
                 evolutionInstance,
-                evolutionApiKey
+                evolutionApiKey,
+                evolutionPhone
             );
             results[user.name] = result;
         } catch (error) {

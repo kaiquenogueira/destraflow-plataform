@@ -33,6 +33,7 @@ model CrmUser {
   // Configuração Evolution API
   evolutionInstance String? @map("evolution_instance")
   evolutionApiKey   String? @map("evolution_api_key")
+  evolutionPhone    String? @map("evolution_phone") // Número do WhatsApp conectado
   
   @@map("crm_users")
 }
@@ -121,6 +122,16 @@ model CampaignMessage {
   @@index([scheduledAt])
   @@index([priority])
   @@map("campaign_messages")
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  name      String
+  content   String   // Conteúdo com {{variáveis}}
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("templates")
 }
 
 // ============================================

@@ -23,19 +23,20 @@ const WEBHOOK_SECRET = process.env.EVOLUTION_WEBHOOK_SECRET;
 export async function POST(request: NextRequest) {
     try {
         // Validar secret se configurado
-        if (WEBHOOK_SECRET) {
-            const authHeader = request.headers.get("x-webhook-secret");
-            if (authHeader !== WEBHOOK_SECRET) {
-                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-            }
-        } else {
-            console.warn("⚠️ SECURITY WARNING: EVOLUTION_WEBHOOK_SECRET is not set! The webhook is vulnerable to unauthorized access.");
+        if (!WEBHOOK_SECRET) {
+            console.error("CRITICAL: EVOLUTION_WEBHOOK_SECRET is not set! Rejecting webhook request.");
+            return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
+        }
+
+        const authHeader = request.headers.get("x-webhook-secret");
+        if (authHeader !== WEBHOOK_SECRET) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const body = await request.json();
 
-        // Log do evento para debug
-        console.log("Evolution Webhook received:", JSON.stringify(body, null, 2));
+        // Log seguro (apenas tipo de evento)
+        console.log(`Evolution Webhook received: ${body?.event || "unknown"}`);
 
         // Processar evento
         const result = await handleWebhookEvent(body);

@@ -9,21 +9,44 @@ import { revalidatePath } from "next/cache";
 export async function getNotifications(params?: {
     page?: number;
     limit?: number;
+    startDate?: string;
+    endDate?: string;
 }) {
     const context = await getTenantContext();
     if (!context) {
         return { notifications: [], total: 0, pages: 0, currentPage: 1 };
     }
     const { tenantPrisma } = context;
-    const { page = 1, limit = 20 } = params || {};
+    const { page = 1, limit = 20, startDate, endDate } = params || {};
+
+    const where: any = {};
+
+    if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        where.criadoEm = {
+            ...where.criadoEm,
+            gte: start,
+        };
+    }
+
+    if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.criadoEm = {
+            ...where.criadoEm,
+            lte: end,
+        };
+    }
 
     const [notifications, total] = await Promise.all([
         tenantPrisma.externalNotification.findMany({
+            where,
             orderBy: { criadoEm: "desc" },
             skip: (page - 1) * limit,
             take: limit,
         }),
-        tenantPrisma.externalNotification.count(),
+        tenantPrisma.externalNotification.count({ where }),
     ]);
 
     return {

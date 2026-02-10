@@ -8,7 +8,7 @@ import { Pagination } from "@/components/ui/custom-pagination";
 import { LeadFilters } from "@/components/leads/lead-filters";
 
 interface LeadsPageProps {
-    searchParams: Promise<{ search?: string; tag?: string; page?: string }>;
+    searchParams: Promise<{ search?: string; tag?: string; page?: string; date?: string }>;
 }
 
 export default async function LeadsPage({ searchParams }: LeadsPageProps) {
@@ -16,8 +16,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     const search = params.search || "";
     const tag = params.tag as LeadTag | undefined;
     const page = parseInt(params.page || "1", 10);
+    const date = params.date || "";
 
-    const data = await getLeads({ search, tag, page });
+    const data = await getLeads({ search, tag, page, date });
 
     // Mostrar mensagem se não tem banco configurado
     if ("noDatabaseConfigured" in data && data.noDatabaseConfigured) {
@@ -74,7 +75,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 <Pagination
                     currentPage={data.currentPage}
                     totalPages={data.pages}
-                    createUrl={(page) => `/leads?page=${page}${search ? `&search=${search}` : ""}${tag ? `&tag=${tag}` : ""}`}
+                    createUrl={(page) => `/leads?page=${page}${search ? `&search=${search}` : ""}${tag ? `&tag=${tag}` : ""}${date ? `&date=${date}` : ""}`}
                 />
             </div>
         </div>
