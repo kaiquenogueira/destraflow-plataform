@@ -15,7 +15,7 @@ interface QRCodeResponse {
     pairingCode?: string;
 }
 
-class EvolutionClient {
+export class EvolutionClient {
     private config: EvolutionConfig;
 
     constructor(config: EvolutionConfig) {
@@ -142,4 +142,4 @@ export function createEvolutionClient(
     });
 }
 
-export type { EvolutionClient, InstanceStatus, QRCodeResponse };
+export type { InstanceStatus, QRCodeResponse };

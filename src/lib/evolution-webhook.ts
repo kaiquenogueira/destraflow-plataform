@@ -73,41 +73,6 @@ async function findTenantByInstance(instance: string) {
     });
 
     if (!user?.databaseUrl) {
-        // Fallback para migração gradual: se não achar pelo hash, tenta o método antigo (scan)
-        // Isso garante que não quebra enquanto roda a migração
-        const allUsers = await prisma.crmUser.findMany({
-             where: { evolutionInstanceHash: null }, // Só busca quem não tem hash ainda
-             select: { id: true, databaseUrl: true, evolutionInstance: true },
-        });
-
-        const found = allUsers.find(u => {
-            if (!u.evolutionInstance) return false;
-            try {
-                return decrypt(u.evolutionInstance) === instance;
-            } catch {
-                return false;
-            }
-        });
-
-        if (found?.databaseUrl) {
-            // Auto-heal: Salva o hash para a próxima vez ser rápido
-            await prisma.crmUser.update({
-                where: { id: found.id },
-                data: { evolutionInstanceHash: instanceHash }
-            });
-            
-            // Retorna o usuário encontrado
-            instanceUserCache.set(instance, {
-                userId: found.id,
-                encryptedDatabaseUrl: found.databaseUrl
-            });
-
-            return {
-                userId: found.id,
-                tenantPrisma: getTenantPrisma(decrypt(found.databaseUrl)),
-            };
-        }
-
         return null;
     }
 

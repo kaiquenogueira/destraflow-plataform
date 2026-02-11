@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationList } from "@/components/notifications/notification-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SyncDatabaseButton } from "@/components/admin/sync-database-button";
 
 export default async function EditUserPage({
     params,
@@ -29,11 +30,17 @@ export default async function EditUserPage({
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl md:text-3xl font-bold">Gerenciar Usuário</h1>
-                <p className="text-muted-foreground mt-1">
-                    Edite informações e veja o histórico de notificações
-                </p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold">Gerenciar Usuário</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Edite informações e veja o histórico de notificações
+                    </p>
+                </div>
+                <SyncDatabaseButton 
+                    userId={user.id} 
+                    hasDatabaseUrl={!!user.databaseUrl} 
+                />
             </div>
 
             <Tabs defaultValue="details" className="w-full">

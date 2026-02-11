@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LeadList } from "@/components/leads/lead-list";
+import { KanbanBoard } from "@/components/leads/kanban-board";
 import { getLeads } from "@/actions/leads";
 import { type LeadTag } from "@/types";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import { Pagination } from "@/components/ui/custom-pagination";
 import { LeadFilters } from "@/components/leads/lead-filters";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface LeadsPageProps {
-    searchParams: Promise<{ search?: string; tag?: string; page?: string; date?: string }>;
+    searchParams: Promise<{ search?: string; tag?: string; page?: string; date?: string; view?: string }>;
 }
 
 export default async function LeadsPage({ searchParams }: LeadsPageProps) {
@@ -17,8 +19,16 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     const tag = params.tag as LeadTag | undefined;
     const page = parseInt(params.page || "1", 10);
     const date = params.date || "";
+    const view = params.view || "list";
 
-    const data = await getLeads({ search, tag, page, date });
+    // For Kanban, we need more leads (or ideally all, but let's stick to pagination for now or increase limit)
+    // If view is kanban, we might want to fetch differently.
+    // For now, let's keep it simple and just show current page on Kanban,
+    // but typically Kanban shows ALL leads.
+    // Let's increase limit for Kanban view to make it useful.
+    const limit = view === "kanban" ? 100 : 20;
+
+    const data = await getLeads({ search, tag, page, limit, date });
 
     // Mostrar mensagem se não tem banco configurado
     if ("noDatabaseConfigured" in data && data.noDatabaseConfigured) {
@@ -47,7 +57,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 h-full flex flex-col">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -56,28 +66,57 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                         Gerencie seus leads e contatos
                     </p>
                 </div>
-                <Link href="/leads/new">
-                    <Button size="lg" className="w-full sm:w-auto">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Novo Lead
-                    </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                    <Link href="/leads/new">
+                        <Button size="lg" className="w-full sm:w-auto">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Novo Lead
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
-            {/* Filters */}
-            <LeadFilters />
+            <Tabs defaultValue={view} className="space-y-4 flex-1 flex flex-col">
+                <div className="flex items-center justify-between">
+                    <TabsList>
+                        <TabsTrigger value="list" asChild>
+                            <Link href={`/leads?view=list&page=${page}${search ? `&search=${search}` : ""}`}>
+                                <List className="mr-2 h-4 w-4" />
+                                Lista
+                            </Link>
+                        </TabsTrigger>
+                        <TabsTrigger value="kanban" asChild>
+                            <Link href={`/leads?view=kanban&page=${page}${search ? `&search=${search}` : ""}`}>
+                                <LayoutGrid className="mr-2 h-4 w-4" />
+                                Kanban
+                            </Link>
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
-            {/* List */}
-            <LeadList leads={data.leads} />
+                <TabsContent value="list" className="space-y-6">
+                     {/* Filters only show in List view for now as Kanban filters are columns themselves */}
+                    <LeadFilters />
+                    
+                    <LeadList leads={data.leads} />
 
-            {/* Pagination */}
-            <div className="py-4">
-                <Pagination
-                    currentPage={data.currentPage}
-                    totalPages={data.pages}
-                    createUrl={(page) => `/leads?page=${page}${search ? `&search=${search}` : ""}${tag ? `&tag=${tag}` : ""}${date ? `&date=${date}` : ""}`}
-                />
-            </div>
+                    <div className="py-4">
+                        <Pagination
+                            currentPage={data.currentPage}
+                            totalPages={data.pages}
+                            createUrl={(page) => `/leads?view=list&page=${page}${search ? `&search=${search}` : ""}${tag ? `&tag=${tag}` : ""}${date ? `&date=${date}` : ""}`}
+                        />
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="kanban" className="flex-1 overflow-hidden">
+                    <div className="mb-4">
+                         {/* Optional: Filter by name even in Kanban */}
+                         <LeadFilters />
+                    </div>
+                    <KanbanBoard initialLeads={data.leads} />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

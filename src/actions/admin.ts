@@ -7,25 +7,8 @@ import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { encrypt, decrypt, hashString } from "@/lib/encryption";
-
-async function requireAdmin() {
-    const session = await getServerSession(authConfig);
-
-    if (!session?.user?.id) {
-        throw new Error("Não autorizado");
-    }
-
-    const user = await prisma.crmUser.findUnique({
-        where: { id: session.user.id },
-        select: { role: true },
-    });
-
-    if (user?.role !== "ADMIN") {
-        throw new Error("Acesso negado. Apenas administradores.");
-    }
-
-    return session.user.id;
-}
+import { requireAdmin } from "@/lib/admin-auth";
+import { syncTenantDatabase } from "./tenant-sync";
 
 // Schema de validação
 const createUserSchema = z.object({
@@ -125,6 +108,19 @@ export async function createUser(data: z.infer<typeof createUserSchema>) {
             evolutionPhone: validated.evolutionPhone,
         },
     });
+
+    // Tentar sincronizar o banco de dados se houver URL configurada
+    if (validated.databaseUrl) {
+        console.log(`🚀 Acionando sincronização automática para ${user.email}`);
+        // Não vamos bloquear o retorno se falhar, mas vamos logar
+        // Ou podemos bloquear? O usuário pediu "garantir". 
+        // Se falhar aqui, o usuário foi criado mas o banco não está pronto.
+        // Vamos aguardar e logar.
+        const syncResult = await syncTenantDatabase(user.id);
+        if (!syncResult.success) {
+            console.error(`⚠️ Aviso: Usuário criado, mas falha na sincronização do DB: ${syncResult.message}`);
+        }
+    }
 
     revalidatePath("/admin/users");
     return { success: true, userId: user.id };

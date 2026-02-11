@@ -55,6 +55,28 @@ export async function updateLead(data: z.infer<typeof updateLeadSchema>) {
     return { success: true, lead };
 }
 
+export async function updateLeadTag(id: string, tag: LeadTag) {
+    const context = await getTenantContext();
+    if (!context) {
+        throw new Error("Banco de dados não configurado");
+    }
+    const { tenantPrisma } = context;
+
+    try {
+        const lead = await tenantPrisma.lead.update({
+            where: { id },
+            data: { tag },
+        });
+
+        revalidatePath("/leads");
+        revalidatePath(`/leads/${id}`);
+        return { success: true, lead };
+    } catch (error) {
+        console.error("Error updating lead tag:", error);
+        throw new Error("Erro ao atualizar tag do lead");
+    }
+}
+
 export async function deleteLead(id: string) {
     const context = await getTenantContext();
     if (!context) {
