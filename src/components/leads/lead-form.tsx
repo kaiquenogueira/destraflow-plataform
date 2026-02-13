@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { TAG_LABELS, type LeadTag } from "@/types";
+import { TAG_LABELS, type LeadTag, type Lead } from "@/types";
 import { createLead, updateLead } from "@/actions/leads";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,18 +28,17 @@ const leadSchema = z.object({
         .regex(/^\+?[1-9]\d{10,14}$/, "Telefone inválido (ex: +5511999999999)"),
     interest: z.string().optional(),
     tag: z.enum(["COLD", "WARM", "HOT", "LOST", "CUSTOMER"]),
+    aiPotential: z.string().optional(),
+    aiScore: z.coerce.number().min(0).max(100).optional(),
+    aiSummary: z.string().optional(),
+    aiAction: z.string().optional(),
+    aiMessageSuggestion: z.string().optional(),
 });
 
 type LeadFormData = z.infer<typeof leadSchema>;
 
 interface LeadFormProps {
-    lead?: {
-        id: string;
-        name: string;
-        phone: string;
-        interest: string | null;
-        tag: LeadTag;
-    };
+    lead?: Lead;
 }
 
 export function LeadForm({ lead }: LeadFormProps) {
@@ -59,6 +58,11 @@ export function LeadForm({ lead }: LeadFormProps) {
             phone: lead?.phone || "",
             interest: lead?.interest || "",
             tag: lead?.tag || "COLD",
+            aiPotential: lead?.aiPotential || "",
+            aiScore: lead?.aiScore || undefined,
+            aiSummary: lead?.aiSummary || "",
+            aiAction: lead?.aiAction || "",
+            aiMessageSuggestion: lead?.aiMessageSuggestion || "",
         },
     });
 
@@ -141,6 +145,58 @@ export function LeadForm({ lead }: LeadFormProps) {
                         ))}
                     </SelectContent>
                 </Select>
+            </div>
+
+            <div className="space-y-4 border-t pt-4">
+                <h3 className="font-semibold text-lg">Análise da Inteligência Artificial</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="aiPotential">Potencial</Label>
+                        <Input
+                            id="aiPotential"
+                            {...register("aiPotential")}
+                            placeholder="Ex: Alta, Média, Baixa"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="aiScore">Score (0-100)</Label>
+                        <Input
+                            id="aiScore"
+                            type="number"
+                            {...register("aiScore")}
+                            placeholder="Ex: 85"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="aiAction">Ação Sugerida</Label>
+                    <Input
+                        id="aiAction"
+                        {...register("aiAction")}
+                        placeholder="Ex: Ligar imediatamente"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="aiSummary">Resumo da Análise</Label>
+                    <Textarea
+                        id="aiSummary"
+                        {...register("aiSummary")}
+                        placeholder="Resumo gerado pela IA..."
+                        rows={3}
+                    />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="aiMessageSuggestion">Sugestão de Mensagem</Label>
+                    <Textarea
+                        id="aiMessageSuggestion"
+                        {...register("aiMessageSuggestion")}
+                        placeholder="Mensagem sugerida para envio..."
+                        rows={3}
+                    />
+                </div>
             </div>
 
             <div className="flex gap-3 pt-4">

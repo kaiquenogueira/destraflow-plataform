@@ -47,10 +47,12 @@ export async function syncTenantDatabase(userId: string): Promise<SyncResult> {
         // Vamos usar apenas `prisma db push` padrão que falha se houver data loss, ou pedir confirmação.
         // Como é "garantir que tem as tabelas", o push padrão é o melhor.
         
-        const command = `DATABASE_URL="${connectionString}" npx prisma db push --skip-generate`;
+        // Usamos --url para sobrescrever a conexão definida no prisma.config.ts/schema
+        // Isso garante que conectamos no tenant e não no CRM
+        const command = `npx prisma db push --schema=prisma/schema.tenant.prisma --url="${connectionString}"`;
 
         const { stdout, stderr } = await execAsync(command, {
-            env: { ...process.env, DATABASE_URL: connectionString },
+            env: { ...process.env },
         });
 
         console.log(`✅ Sincronização concluída para ${user.email}`);

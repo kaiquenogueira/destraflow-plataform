@@ -85,9 +85,9 @@ async function main() {
                 // Executar prisma db push para este banco
                 console.log("   🚀 Executando push...");
                 
-                // Usamos a variável de ambiente DATABASE_URL para passar a conexão do tenant para o comando
-                const { stdout, stderr } = await execAsync(`DATABASE_URL="${connectionString}" npx prisma db push`, {
-                    env: { ...process.env, DATABASE_URL: connectionString }
+                // Usamos a flag --url para passar a conexão do tenant diretamente
+                const { stdout, stderr } = await execAsync(`npx prisma db push --schema=prisma/schema.tenant.prisma --url="${connectionString}"`, {
+                    env: { ...process.env }
                 });
 
                 if (stdout) console.log(`   ✅ Sucesso:\n${stdout.trim().split('\n').map(l => '      ' + l).join('\n')}`);

@@ -3,10 +3,17 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, Calendar as CalendarIcon } from "lucide-react";
+import { Search, X, Calendar as CalendarIcon, Filter } from "lucide-react";
 import { TAG_LABELS, type LeadTag } from "@/types";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export function LeadFilters() {
     const router = useRouter();
@@ -15,11 +22,12 @@ export function LeadFilters() {
     const initialSearch = searchParams.get("search") || "";
     const initialTag = searchParams.get("tag") || "all";
     const initialDate = searchParams.get("date") || "";
+    const initialAiPotential = searchParams.get("aiPotential") || "all";
 
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [date, setDate] = useState(initialDate);
 
-    const updateFilters = (updates: { search?: string; tag?: string; date?: string }) => {
+    const updateFilters = (updates: { search?: string; tag?: string; date?: string; aiPotential?: string }) => {
         const params = new URLSearchParams(searchParams.toString());
         
         if (updates.search !== undefined) {
@@ -35,6 +43,11 @@ export function LeadFilters() {
         if (updates.date !== undefined) {
             if (updates.date) params.set("date", updates.date);
             else params.delete("date");
+        }
+
+        if (updates.aiPotential !== undefined) {
+            if (updates.aiPotential && updates.aiPotential !== "all") params.set("aiPotential", updates.aiPotential);
+            else params.delete("aiPotential");
         }
 
         params.set("page", "1");
@@ -86,7 +99,22 @@ export function LeadFilters() {
                         className="pl-10 h-10"
                     />
                 </div>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                    <Select 
+                        value={initialAiPotential} 
+                        onValueChange={(value) => updateFilters({ aiPotential: value })}
+                    >
+                        <SelectTrigger className="w-[140px] h-10">
+                            <SelectValue placeholder="Potencial AI" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos Potenciais</SelectItem>
+                            <SelectItem value="Alta">Alta</SelectItem>
+                            <SelectItem value="Média">Média</SelectItem>
+                            <SelectItem value="Baixa">Baixa</SelectItem>
+                        </SelectContent>
+                    </Select>
+
                     <Button 
                         variant={date === new Date().toISOString().split("T")[0] ? "default" : "outline"}
                         onClick={handleTodayClick}

@@ -98,6 +98,9 @@ export async function getLeads(params?: {
     page?: number;
     limit?: number;
     date?: string; // Format: YYYY-MM-DD
+    aiPotential?: string;
+    orderBy?: string;
+    orderDirection?: "asc" | "desc";
 }) {
     const context = await getTenantContext();
     if (!context) {
@@ -111,11 +114,21 @@ export async function getLeads(params?: {
         };
     }
     const { tenantPrisma } = context;
-    const { search, tag, page = 1, limit = 20, date } = params || {};
+    const { 
+        search, 
+        tag, 
+        page = 1, 
+        limit = 20, 
+        date, 
+        aiPotential,
+        orderBy = "updatedAt",
+        orderDirection = "desc"
+    } = params || {};
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
         ...(tag ? { tag } : {}),
+        ...(aiPotential ? { aiPotential: { contains: aiPotential, mode: "insensitive" } } : {}),
         ...(search
             ? {
                 OR: [
@@ -134,10 +147,24 @@ export async function getLeads(params?: {
         };
     }
 
+    // Validate orderBy field
+    const validSortFields = [
+        "name", 
+        "createdAt", 
+        "updatedAt", 
+        "aiScore", 
+        "aiPotential", 
+        "tag", 
+        "phone", 
+        "interest"
+    ];
+    
+    const sortField = validSortFields.includes(orderBy) ? orderBy : "updatedAt";
+
     const [leads, total] = await Promise.all([
         tenantPrisma.lead.findMany({
             where,
-            orderBy: { updatedAt: "desc" }, // Changed to updatedAt to show recent activity first
+            orderBy: { [sortField]: orderDirection },
             skip: (page - 1) * limit,
             take: limit,
         }),

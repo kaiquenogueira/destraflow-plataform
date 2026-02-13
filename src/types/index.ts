@@ -15,6 +15,12 @@ export interface Lead {
     tag: LeadTag;
     createdAt: Date;
     updatedAt: Date;
+    aiPotential?: string | null;
+    aiScore?: number | null;
+    aiSummary?: string | null;
+    aiAction?: string | null;
+    aiLastAnalyzedAt?: Date | null;
+    aiMessageSuggestion?: string | null;
 }
 
 export interface Campaign {
@@ -48,6 +54,12 @@ export interface CreateLeadInput {
     phone: string;
     interest?: string;
     tag: LeadTag;
+    aiPotential?: string;
+    aiScore?: number;
+    aiSummary?: string;
+    aiAction?: string;
+    aiLastAnalyzedAt?: Date;
+    aiMessageSuggestion?: string;
 }
 
 export interface UpdateLeadInput extends Partial<CreateLeadInput> {

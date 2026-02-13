@@ -10,7 +10,16 @@ import { LeadFilters } from "@/components/leads/lead-filters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface LeadsPageProps {
-    searchParams: Promise<{ search?: string; tag?: string; page?: string; date?: string; view?: string }>;
+    searchParams: Promise<{ 
+        search?: string; 
+        tag?: string; 
+        page?: string; 
+        date?: string; 
+        view?: string;
+        aiPotential?: string;
+        orderBy?: string;
+        orderDirection?: "asc" | "desc";
+    }>;
 }
 
 export default async function LeadsPage({ searchParams }: LeadsPageProps) {
@@ -20,6 +29,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     const page = parseInt(params.page || "1", 10);
     const date = params.date || "";
     const view = params.view || "list";
+    const aiPotential = params.aiPotential || "";
+    const orderBy = params.orderBy || "updatedAt";
+    const orderDirection = params.orderDirection || "desc";
 
     // For Kanban, we need more leads (or ideally all, but let's stick to pagination for now or increase limit)
     // If view is kanban, we might want to fetch differently.
@@ -28,7 +40,16 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     // Let's increase limit for Kanban view to make it useful.
     const limit = view === "kanban" ? 100 : 20;
 
-    const data = await getLeads({ search, tag, page, limit, date });
+    const data = await getLeads({ 
+        search, 
+        tag, 
+        page, 
+        limit, 
+        date,
+        aiPotential,
+        orderBy,
+        orderDirection
+    });
 
     // Mostrar mensagem se não tem banco configurado
     if ("noDatabaseConfigured" in data && data.noDatabaseConfigured) {
@@ -80,13 +101,19 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 <div className="flex items-center justify-between">
                     <TabsList>
                         <TabsTrigger value="list" asChild>
-                            <Link href={`/leads?view=list&page=${page}${search ? `&search=${search}` : ""}`}>
+                            <Link href={{
+                                pathname: "/leads",
+                                query: { ...params, view: "list", page: 1 } // Reset page on view switch? Or keep it? keeping params mostly
+                            }}>
                                 <List className="mr-2 h-4 w-4" />
                                 Lista
                             </Link>
                         </TabsTrigger>
                         <TabsTrigger value="kanban" asChild>
-                            <Link href={`/leads?view=kanban&page=${page}${search ? `&search=${search}` : ""}`}>
+                            <Link href={{
+                                pathname: "/leads",
+                                query: { ...params, view: "kanban" }
+                            }}>
                                 <LayoutGrid className="mr-2 h-4 w-4" />
                                 Kanban
                             </Link>
@@ -104,7 +131,18 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                         <Pagination
                             currentPage={data.currentPage}
                             totalPages={data.pages}
-                            createUrl={(page) => `/leads?view=list&page=${page}${search ? `&search=${search}` : ""}${tag ? `&tag=${tag}` : ""}${date ? `&date=${date}` : ""}`}
+                            createUrl={(page) => {
+                                const params = new URLSearchParams();
+                                params.set("view", "list");
+                                params.set("page", page.toString());
+                                if (search) params.set("search", search);
+                                if (tag) params.set("tag", tag);
+                                if (date) params.set("date", date);
+                                if (aiPotential) params.set("aiPotential", aiPotential);
+                                if (orderBy) params.set("orderBy", orderBy);
+                                if (orderDirection) params.set("orderDirection", orderDirection);
+                                return `/leads?${params.toString()}`;
+                            }}
                         />
                     </div>
                 </TabsContent>

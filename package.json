@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
-    "postinstall": "prisma generate"
+    "db:split": "npx tsx scripts/split-schema.ts",
+    "db:push:crm": "npm run db:split && prisma db push --schema=prisma/schema.crm.prisma && prisma generate",
+    "postinstall": "npm run db:split && prisma generate"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
