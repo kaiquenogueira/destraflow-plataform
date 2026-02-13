@@ -29,7 +29,11 @@ const leadSchema = z.object({
     interest: z.string().optional(),
     tag: z.enum(["COLD", "WARM", "HOT", "LOST", "CUSTOMER"]),
     aiPotential: z.string().optional(),
-    aiScore: z.coerce.number().min(0).max(100).optional(),
+    aiScore: z.string().optional().refine((val) => {
+        if (!val) return true;
+        const n = Number(val);
+        return !isNaN(n) && n >= 0 && n <= 100;
+    }, "Score deve ser entre 0 e 100"),
     aiSummary: z.string().optional(),
     aiAction: z.string().optional(),
     aiMessageSuggestion: z.string().optional(),
@@ -59,7 +63,7 @@ export function LeadForm({ lead }: LeadFormProps) {
             interest: lead?.interest || "",
             tag: lead?.tag || "COLD",
             aiPotential: lead?.aiPotential || "",
-            aiScore: lead?.aiScore || undefined,
+            aiScore: lead?.aiScore?.toString() || "",
             aiSummary: lead?.aiSummary || "",
             aiAction: lead?.aiAction || "",
             aiMessageSuggestion: lead?.aiMessageSuggestion || "",
@@ -71,11 +75,16 @@ export function LeadForm({ lead }: LeadFormProps) {
     const onSubmit = async (data: LeadFormData) => {
         setLoading(true);
         try {
+            const formattedData = {
+                ...data,
+                aiScore: data.aiScore ? Number(data.aiScore) : undefined,
+            };
+
             if (lead) {
-                await updateLead({ ...data, id: lead.id });
+                await updateLead({ ...formattedData, id: lead.id });
                 toast.success("Lead atualizado com sucesso!");
             } else {
-                await createLead(data);
+                await createLead(formattedData);
                 toast.success("Lead criado com sucesso!");
             }
             router.push("/leads");

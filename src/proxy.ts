@@ -24,7 +24,7 @@ function isRateLimited(ip: string) {
 }
 
 export default withAuth(
-    function middleware(req) {
+    function proxy(req) {
         // 1. Rate Limiting
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const ip = req.headers.get("x-forwarded-for") || (req as any).ip || "unknown";
