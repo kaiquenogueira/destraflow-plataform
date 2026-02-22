@@ -1,16 +1,38 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { redis, isRedisEnabled } from "@/lib/redis";
+import { Ratelimit } from "@upstash/ratelimit";
 
-// Mapa simples para Rate Limiting em memória (Nota: em serverless/edge, isso é volátil)
-// TODO: Em produção com Vercel/Serverless, substituir por Redis (ex: Upstash)
-const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+// Fallback Rate Limiting em memória (Nota: em serverless/edge, isso é volátil)
+const memoryRateLimit = new Map<string, { count: number; lastReset: number }>();
 
-function isRateLimited(ip: string) {
+// Rate Limiter via Upstash: 60 requisições a cada 1 minuto (60s)
+const ratelimit = isRedisEnabled
+    ? new Ratelimit({
+        redis: redis,
+        limiter: Ratelimit.slidingWindow(60, "1 m"),
+        analytics: true,
+        prefix: "@upstash/ratelimit/destraflow",
+    })
+    : null;
+
+async function checkRateLimit(ip: string): Promise<{ success: boolean; limit?: number; remaining?: number; reset?: number }> {
+    if (ratelimit) {
+        try {
+            const result = await ratelimit.limit(ip);
+            return result;
+        } catch (error) {
+            console.error("Redis Rate Limit Error, bypassing:", error);
+            return { success: true };
+        }
+    }
+
+    // Fallback Local
     const now = Date.now();
-    const WINDOW_MS = 60 * 1000; // 1 minuto
-    const MAX_REQUESTS = 60; // 60 requisições por minuto por IP
+    const WINDOW_MS = 60 * 1000;
+    const MAX_REQUESTS = 60;
 
-    const record = rateLimitMap.get(ip) || { count: 0, lastReset: now };
+    const record = memoryRateLimit.get(ip) || { count: 0, lastReset: now };
 
     if (now - record.lastReset > WINDOW_MS) {
         record.count = 0;
@@ -18,18 +40,24 @@ function isRateLimited(ip: string) {
     }
 
     record.count++;
-    rateLimitMap.set(ip, record);
+    memoryRateLimit.set(ip, record);
 
-    return record.count > MAX_REQUESTS;
+    return { success: record.count <= MAX_REQUESTS };
 }
 
 export default withAuth(
-    function proxy(req) {
+    async function proxy(req) {
         // 1. Rate Limiting
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const ip = req.headers.get("x-forwarded-for") || (req as any).ip || "unknown";
-        if (isRateLimited(ip)) {
-            return new NextResponse("Too Many Requests", { status: 429 });
+
+        const rateLimitResult = await checkRateLimit(ip);
+        if (!rateLimitResult.success) {
+            const response = new NextResponse("Too Many Requests", { status: 429 });
+            if (rateLimitResult.limit !== undefined) response.headers.set("X-RateLimit-Limit", rateLimitResult.limit.toString());
+            if (rateLimitResult.remaining !== undefined) response.headers.set("X-RateLimit-Remaining", rateLimitResult.remaining.toString());
+            if (rateLimitResult.reset !== undefined) response.headers.set("X-RateLimit-Reset", rateLimitResult.reset.toString());
+            return response;
         }
 
         const token = req.nextauth.token;

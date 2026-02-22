@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const fontSans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "DestraFlow CRM",
-  description: "CRM para gerenciamento de leads e campanhas WhatsApp",
+  title: "DestraFlow — Agentes de IA e Automação Empresarial",
+  description: "Transforme seu atendimento e processos com agentes de IA inteligentes. Automação, eficiência e ROI comprovado para empresas que querem escalar.",
 };
 
 export default function RootLayout({
@@ -17,9 +18,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${fontSans.variable} font-sans antialiased text-slate-800 dark:text-slate-200`}>
         {children}
         <Toaster position="top-center" richColors />
+
+        {/* Google Analytics Placeholder */}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-XXXXXXXXXX');
+          `}
+        </Script>
       </body>
     </html>
   );

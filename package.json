@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
     "db:split": "npx tsx scripts/split-schema.ts",
+    "db:migrate": "npm run db:split && prisma migrate deploy --schema=prisma/schema.crm.prisma && prisma generate",
     "db:push:crm": "npm run db:split && prisma db push --schema=prisma/schema.crm.prisma && prisma generate",
     "postinstall": "npm run db:split && prisma generate"
   },
@@ -20,6 +21,8 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

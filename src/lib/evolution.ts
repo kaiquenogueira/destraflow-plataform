@@ -47,6 +47,25 @@ export class EvolutionClient {
 
     async getInstanceStatus(): Promise<InstanceStatus> {
         try {
+            // No Evolution API v2, fetchInstances retorna um status mais estável para a UI
+            try {
+                const encodedName = encodeURIComponent(this.config.instanceName);
+                const instances = await this.request<Array<{ name: string; connectionStatus: string; }>>(
+                    `/instance/fetchInstances?instanceName=${encodedName}`
+                );
+
+                const instance = instances.find(i => i.name === this.config.instanceName);
+                if (instance) {
+                    return {
+                        connected: instance.connectionStatus === "open",
+                        state: instance.connectionStatus || "disconnected",
+                    };
+                }
+            } catch (e) {
+                // Ignore and fallback to connectionState
+                console.warn("Failed to fetch instance from fetchInstances, falling back", e);
+            }
+
             const data = await this.request<{ instance: { state: string }; }>(
                 `/instance/connectionState/${this.config.instanceName}`
             );
@@ -75,8 +94,13 @@ export class EvolutionClient {
                         integration: "WHATSAPP-BAILEYS",
                     }),
                 });
-            } catch {
-                // Instância já pode existir, ignorar erro
+            } catch (error) {
+                // Instância já pode existir. Em vez de suprimir todos os erros 500/401, ignoramos
+                // e seguimos em frente de qualquer forma (pois a rota connect valida se está UP),
+                // mas logamos se não for erro padrão de conflito.
+                if (error instanceof Error && !error.message.includes("409") && !error.message.includes("exist")) {
+                    console.warn("Instance creation failed, attempting connect anyway. Details:", error.message);
+                }
             }
 
             // Conectar e obter QR Code

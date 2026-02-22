@@ -19,7 +19,7 @@ export function KanbanColumn({ id, title, leads, color }: KanbanColumnProps) {
   });
 
   return (
-    <div className="flex flex-col h-full w-[280px] shrink-0 bg-muted/30 rounded-lg border p-2">
+    <div className="flex flex-col h-full w-[320px] shrink-0 bg-muted/30 rounded-lg border p-2">
       <div className="flex items-center justify-between p-2 mb-2">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${color}`} />

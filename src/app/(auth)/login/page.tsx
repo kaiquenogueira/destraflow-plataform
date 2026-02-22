@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, MessageSquare } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -45,12 +45,13 @@ export default function LoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950 p-4">
             <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
                 <CardHeader className="text-center pb-2">
-                    <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
-                        <MessageSquare className="w-8 h-8 text-white" />
+                    <div className="mx-auto mb-4 flex items-center justify-center">
+                        <img
+                            src="/images/logo.png"
+                            alt="DestraFlow Logo"
+                            className="w-48 h-auto object-contain dark:invert dark:brightness-200"
+                        />
                     </div>
-                    <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                        DestraFlow
-                    </CardTitle>
                     <CardDescription>
                         Entre com suas credenciais para acessar o CRM
                     </CardDescription>

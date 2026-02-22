@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -76,9 +77,15 @@ export function Sidebar() {
             {/* Logo */}
             <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-800">
                 {!collapsed && (
-                    <h1 className="font-bold text-xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                        DestraFlow
-                    </h1>
+                    <div className="flex items-center w-full h-full py-2">
+                        <Image
+                            src="/images/logo.png"
+                            alt="DestraFlow Logo"
+                            width={160}
+                            height={40}
+                            className="w-full h-full max-h-10 object-contain object-left dark:invert dark:brightness-200"
+                        />
+                    </div>
                 )}
                 <Button
                     variant="ghost"

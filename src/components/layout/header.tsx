@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,9 +28,15 @@ export function Header() {
         <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between h-14 md:h-16 px-4">
                 {/* Mobile Logo */}
-                <h1 className="font-bold text-lg md:hidden bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                    DestraFlow
-                </h1>
+                <div className="flex items-center gap-2 md:hidden">
+                    <Image
+                        src="/images/logo.png"
+                        alt="DestraFlow Logo"
+                        width={112}
+                        height={40}
+                        className="w-28 h-auto object-contain dark:invert dark:brightness-200"
+                    />
+                </div>
 
                 {/* Desktop spacer */}
                 <div className="hidden md:block" />

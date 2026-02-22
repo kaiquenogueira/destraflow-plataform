@@ -38,7 +38,7 @@ const dropAnimation: DropAnimation = {
   sideEffects: defaultDropAnimationSideEffects({
     styles: {
       active: {
-        opacity: "0.5",
+        opacity: "0.7",
       },
     },
   }),
@@ -76,35 +76,35 @@ export function KanbanBoard({ initialLeads }: KanbanBoardProps) {
 
     // Check if dropped over a column
     const isOverColumn = COLUMNS.some((col) => col.id === overId);
-    
+
     // If over a column, new tag is the column id
     // If over a card, find that card's tag
     let newTag: LeadTag | undefined;
 
     if (isOverColumn) {
-        newTag = overId as LeadTag;
+      newTag = overId as LeadTag;
     } else {
-        const overLead = leads.find(l => l.id === overId);
-        if (overLead) {
-            newTag = overLead.tag as LeadTag;
-        }
+      const overLead = leads.find(l => l.id === overId);
+      if (overLead) {
+        newTag = overLead.tag as LeadTag;
+      }
     }
 
     if (newTag && newTag !== activeLead.tag) {
-        // Optimistic Update
-        setLeads((prev) =>
-            prev.map((l) => (l.id === activeId ? { ...l, tag: newTag! } : l))
-        );
+      // Optimistic Update
+      setLeads((prev) =>
+        prev.map((l) => (l.id === activeId ? { ...l, tag: newTag! } : l))
+      );
 
-        // Server Action
-        try {
-            await updateLeadTag(activeId, newTag);
-            toast.success(`Lead movido para ${COLUMNS.find(c => c.id === newTag)?.title}`);
-        } catch (error) {
-            toast.error("Erro ao atualizar tag");
-            // Revert on error
-            setLeads(initialLeads);
-        }
+      // Server Action
+      try {
+        await updateLeadTag(activeId, newTag);
+        toast.success(`Lead movido para ${COLUMNS.find(c => c.id === newTag)?.title}`);
+      } catch (error) {
+        toast.error("Erro ao atualizar tag");
+        // Revert on error
+        setLeads(initialLeads);
+      }
     }
   }
 

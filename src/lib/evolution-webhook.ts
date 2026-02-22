@@ -3,6 +3,7 @@
  */
 
 import { prisma, getTenantPrisma } from "@/lib/prisma";
+import { redis, isRedisEnabled } from "@/lib/redis";
 import { encrypt, decrypt, hashString } from "@/lib/encryption";
 
 // Tipos de eventos da Evolution API
@@ -43,30 +44,47 @@ interface ConnectionData {
     statusReason?: number;
 }
 
-// Cache para mapear instance -> dados do usuário (evita scan completo no banco)
+// Fallback de cache em memória (útil para desenvolvimento se Redis não estiver configurado)
 const instanceUserCache = new Map<string, { userId: string; encryptedDatabaseUrl: string }>();
 
 /**
  * Encontra o tenant baseado na instância Evolution
  */
 async function findTenantByInstance(instance: string) {
-    // 1. Tenta buscar do cache
-    if (instanceUserCache.has(instance)) {
-        const cached = instanceUserCache.get(instance)!;
+    const cacheKey = `evolution_instance:${instance}`;
+
+    // 1. Tenta buscar do cache (Redis primário, Memória secundário)
+    let cachedData: { userId: string; encryptedDatabaseUrl: string } | null = null;
+
+    if (isRedisEnabled) {
+        try {
+            cachedData = await redis.get(cacheKey);
+        } catch (e) {
+            console.error("Redis get error for tenant:", e);
+        }
+    } else if (instanceUserCache.has(instance)) {
+        cachedData = instanceUserCache.get(instance)!;
+    }
+
+    if (cachedData) {
         try {
             return {
-                userId: cached.userId,
-                tenantPrisma: getTenantPrisma(decrypt(cached.encryptedDatabaseUrl)),
+                userId: cachedData.userId,
+                tenantPrisma: getTenantPrisma(decrypt(cachedData.encryptedDatabaseUrl)),
             };
         } catch (e) {
             console.error("Error connecting to cached tenant:", e);
-            instanceUserCache.delete(instance); // Invalida cache se falhar
+            if (isRedisEnabled) {
+                await redis.del(cacheKey).catch(console.error);
+            } else {
+                instanceUserCache.delete(instance);
+            }
         }
     }
 
     // 2. Se não estiver em cache, busca no banco (otimizado via hash)
     const instanceHash = hashString(instance);
-    
+
     const user = await prisma.crmUser.findFirst({
         where: { evolutionInstanceHash: instanceHash },
         select: { id: true, databaseUrl: true },
@@ -77,10 +95,21 @@ async function findTenantByInstance(instance: string) {
     }
 
     // 3. Salva no cache para próximas requisições
-    instanceUserCache.set(instance, {
+    const dataToCache = {
         userId: user.id,
         encryptedDatabaseUrl: user.databaseUrl
-    });
+    };
+
+    if (isRedisEnabled) {
+        try {
+            // Expira em 24h para forçar refresh ocasional e não estourar memória
+            await redis.set(cacheKey, dataToCache, { ex: 60 * 60 * 24 });
+        } catch (e) {
+            console.error("Redis set error for tenant:", e);
+        }
+    } else {
+        instanceUserCache.set(instance, dataToCache);
+    }
 
     return {
         userId: user.id,
