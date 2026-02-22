@@ -1,5 +1,5 @@
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { processAllTenantMessages, updateCampaignStatuses } from "./worker";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
@@ -49,13 +49,13 @@ describe("Worker", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (getTenantPrisma as any).mockReturnValue(mockTenantPrisma);
-    (createEvolutionClient as any).mockReturnValue(mockEvolutionClient);
-    (decrypt as any).mockImplementation((val: string) => val.replace("encrypted-", ""));
+    (getTenantPrisma as Mock).mockReturnValue(mockTenantPrisma);
+    (createEvolutionClient as Mock).mockReturnValue(mockEvolutionClient);
+    (decrypt as Mock).mockImplementation((val: string) => val.replace("encrypted-", ""));
     // Mock setTimeout to resolve immediately to skip rate limiting delay
     vi.spyOn(global, 'setTimeout').mockImplementation((fn) => {
-        if (typeof fn === 'function') fn();
-        return 0 as any;
+      if (typeof fn === 'function') fn();
+      return 0 as unknown as ReturnType<typeof setTimeout>;
     });
   });
 
@@ -66,7 +66,7 @@ describe("Worker", () => {
   describe("processAllTenantMessages", () => {
     it("should process messages for valid tenants", async () => {
       // Mock users
-      (prisma.crmUser.findMany as any).mockResolvedValue([
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
         {
           id: "user-1",
           name: "User 1",
@@ -113,7 +113,7 @@ describe("Worker", () => {
     });
 
     it("should handle disconnected instance", async () => {
-      (prisma.crmUser.findMany as any).mockResolvedValue([
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
         {
           id: "user-1",
           name: "User 1",
@@ -132,41 +132,41 @@ describe("Worker", () => {
     });
 
     it("should handle send errors", async () => {
-        (prisma.crmUser.findMany as any).mockResolvedValue([
-          {
-            id: "user-1",
-            name: "User 1",
-            databaseUrl: "encrypted-db-url",
-            evolutionInstance: "encrypted-instance",
-          },
-        ]);
-  
-        mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
-          {
-            id: "msg-1",
-            lead: { phone: "5511988888888", name: "Lead" },
-            payload: "Hello",
-          },
-        ]);
-  
-        mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
-        mockEvolutionClient.sendMessage.mockRejectedValue(new Error("Send Error"));
-  
-        const result = await processAllTenantMessages();
-  
-        expect(mockTenantPrisma.campaignMessage.update).toHaveBeenCalledWith(
-            expect.objectContaining({
-                where: { id: "msg-1" },
-                data: expect.objectContaining({ status: "FAILED", error: "Send Error" }),
-            })
-        );
-        expect(result.results["User 1"].failed).toBe(1);
-      });
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
+        {
+          id: "user-1",
+          name: "User 1",
+          databaseUrl: "encrypted-db-url",
+          evolutionInstance: "encrypted-instance",
+        },
+      ]);
+
+      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
+        {
+          id: "msg-1",
+          lead: { phone: "5511988888888", name: "Lead" },
+          payload: "Hello",
+        },
+      ]);
+
+      mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
+      mockEvolutionClient.sendMessage.mockRejectedValue(new Error("Send Error"));
+
+      const result = await processAllTenantMessages();
+
+      expect(mockTenantPrisma.campaignMessage.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "msg-1" },
+          data: expect.objectContaining({ status: "FAILED", error: "Send Error" }),
+        })
+      );
+      expect(result.results["User 1"].failed).toBe(1);
+    });
   });
 
   describe("updateCampaignStatuses", () => {
     it("should update completed campaigns", async () => {
-      (prisma.crmUser.findMany as any).mockResolvedValue([
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
         { databaseUrl: "encrypted-db-url" },
       ]);
 
@@ -189,27 +189,27 @@ describe("Worker", () => {
     });
 
     it("should update scheduled campaigns to processing", async () => {
-        (prisma.crmUser.findMany as any).mockResolvedValue([
-          { databaseUrl: "encrypted-db-url" },
-        ]);
-  
-        mockTenantPrisma.campaign.findMany.mockResolvedValue([
-          {
-            id: "c2",
-            status: "SCHEDULED",
-            scheduledAt: new Date(Date.now() - 1000), // Past
-            messages: [{ id: "m1" }], // Has pending
-            _count: { messages: 10 },
-          },
-        ]);
-  
-        const updated = await updateCampaignStatuses();
-  
-        expect(mockTenantPrisma.campaign.update).toHaveBeenCalledWith({
-          where: { id: "c2" },
-          data: { status: "PROCESSING" },
-        });
-        expect(updated).toBe(1);
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
+        { databaseUrl: "encrypted-db-url" },
+      ]);
+
+      mockTenantPrisma.campaign.findMany.mockResolvedValue([
+        {
+          id: "c2",
+          status: "SCHEDULED",
+          scheduledAt: new Date(Date.now() - 1000), // Past
+          messages: [{ id: "m1" }], // Has pending
+          _count: { messages: 10 },
+        },
+      ]);
+
+      const updated = await updateCampaignStatuses();
+
+      expect(mockTenantPrisma.campaign.update).toHaveBeenCalledWith({
+        where: { id: "c2" },
+        data: { status: "PROCESSING" },
       });
+      expect(updated).toBe(1);
+    });
   });
 });
