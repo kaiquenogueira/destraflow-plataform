@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Bot, Zap, BarChart3, Users, Network, Building2, CheckCircle2, MessageCircle, Code2 } from "lucide-react";
+import { ArrowRight, Bot, Zap, BarChart3, Building2, CheckCircle2, MessageCircle, Code2 } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -194,7 +194,7 @@ export default function HomePage() {
                   <Zap className="text-slate-300 w-6 h-6 relative z-10 group-hover:text-blue-400 transition-colors" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-white group-hover:text-blue-400 transition-colors">Workflows Modulares</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Editor visual infinito. Conecte módulos, desenhe árvores de decisão e ative automações baseadas em eventos (webhooks) sem escrever uma linha de código backend.</p>
+                <p className="text-slate-400 text-sm leading-relaxed">Editor visual infinito. Conecte módulos, desenhe árvores de decisão e ative automações baseadas em eventos sem escrever uma linha de código backend.</p>
               </div>
 
               {/* Feature Image Accent */}

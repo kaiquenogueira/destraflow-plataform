@@ -63,12 +63,6 @@ export default withAuth(
         const token = req.nextauth.token;
         const isAuth = !!token;
         const isAuthPage = req.nextUrl.pathname.startsWith("/login");
-        const isWebhook = req.nextUrl.pathname.startsWith("/api/webhook");
-
-        // Permitir Webhook sem auth (mas com rate limit já aplicado acima)
-        if (isWebhook) {
-            return null;
-        }
 
         if (isAuthPage) {
             if (isAuth) {
@@ -98,10 +92,6 @@ export default withAuth(
     {
         callbacks: {
             authorized: ({ req, token }) => {
-                // Permitir acesso ao webhook sem autenticação
-                if (req.nextUrl.pathname.startsWith("/api/webhook")) {
-                    return true;
-                }
                 // Rotas de login também são públicas
                 if (req.nextUrl.pathname.startsWith("/login")) {
                     return true;
@@ -114,6 +104,6 @@ export default withAuth(
 );
 
 export const config = {
-    // Adicionado /api/webhook para ser processado pelo middleware (para rate limit)
-    matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/api/webhook/:path*"],
+    // Rotas protegidas pelo middleware
+    matcher: ["/dashboard/:path*", "/admin/:path*", "/login"],
 };
