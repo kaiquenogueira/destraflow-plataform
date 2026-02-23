@@ -93,7 +93,7 @@ async function processTenanMessages(
             // ============================================================
             // FECHAR O CICLO: Criar registro em chat_histories
             // ============================================================
-            
+
             // 1. Buscar ou criar WhatsAppContact (users)
             let contact = await tenantPrisma.whatsAppContact.findFirst({
                 where: { whatsapp: message.lead.phone }
@@ -105,7 +105,7 @@ async function processTenanMessages(
                         whatsapp: message.lead.phone,
                         name: message.lead.name,
                         createdAt: new Date(),
-                        isManual: false 
+                        isManual: false
                     }
                 });
             }
@@ -114,14 +114,14 @@ async function processTenanMessages(
             // session_id = whatsapp_cliente_whatsapp_agente
             // Ex: 5511999999999_5511888888888
             // Se evolutionPhone não estiver configurado, usa apenas o telefone do cliente como fallback ou tenta pegar da instancia
-            
+
             const agentPhone = evolutionPhone || "unknown_agent";
             const sessionId = `${message.lead.phone}_${agentPhone}`;
             const threadId = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
-            
+
             // Estrutura de mensagem solicitada:
             // {"type": "system", "content": "{{mensagem tratada}}"}
-            
+
             await tenantPrisma.chatHistory.create({
                 data: {
                     userId: contact.id,
@@ -152,10 +152,10 @@ async function processTenanMessages(
             result.errors.push(`Message ${message.id}: ${errorMessage}`);
         }
 
-        // Rate limiting - aguardar tempo aleatório entre 3s e 7s para evitar bloqueios do WhatsApp
+        // Rate limiting - aguardar tempo aleatório entre 1s e 30s para evitar bloqueios do WhatsApp
         // Comportamento mais humano para evitar detecção de automação
-        const minDelay = 3000;
-        const maxDelay = 7000;
+        const minDelay = 1000;
+        const maxDelay = 30000;
         const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
         await new Promise((resolve) => setTimeout(resolve, delay));
     }
