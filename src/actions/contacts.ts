@@ -95,7 +95,7 @@ export async function syncContactToLead(contactId: number) {
             data: {
                 name: contact.name || contact.whatsapp,
                 phone: contact.whatsapp,
-                tag: "COLD",
+                tag: "NEW",
             },
         });
     }

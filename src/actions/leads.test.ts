@@ -50,7 +50,7 @@ describe("Leads Actions", () => {
       const input = {
         name: "Test Lead",
         phone: "+5511999999999",
-        tag: "COLD" as const,
+        tag: "NEW" as const,
         interest: "Product A",
       };
 
@@ -77,7 +77,7 @@ describe("Leads Actions", () => {
         createLead({
           name: "Test",
           phone: "+5511999999999",
-          tag: "COLD",
+          tag: "NEW",
         })
       ).rejects.toThrow("Banco de dados não configurado");
     });
@@ -87,7 +87,7 @@ describe("Leads Actions", () => {
         createLead({
           name: "T", // Too short
           phone: "invalid", // Invalid phone
-          tag: "COLD",
+          tag: "NEW",
         })
       ).rejects.toThrow();
     });
@@ -104,7 +104,7 @@ describe("Leads Actions", () => {
         id: "lead-1",
         name: "Updated Name",
         phone: "+5511999999999",
-        tag: "COLD",
+        tag: "NEW",
       });
 
       const result = await updateLead(input);
@@ -121,28 +121,28 @@ describe("Leads Actions", () => {
     it("should update lead tag successfully", async () => {
       mockPrisma.lead.update.mockResolvedValue({
         id: "lead-1",
-        tag: "HOT",
+        tag: "MEETING",
       });
 
-      const result = await updateLeadTag("lead-1", "HOT");
+      const result = await updateLeadTag("lead-1", "MEETING");
 
       expect(mockPrisma.lead.update).toHaveBeenCalledWith({
         where: { id: "lead-1" },
-        data: { tag: "HOT" },
+        data: { tag: "MEETING" },
       });
       expect(result.success).toBe(true);
     });
 
     it("should handle errors gracefully", async () => {
       mockPrisma.lead.update.mockRejectedValue(new Error("DB Error"));
-      
-      // Spy on console.error to suppress output
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-      await expect(updateLeadTag("lead-1", "HOT")).rejects.toThrow(
+      // Spy on console.error to suppress output
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => { });
+
+      await expect(updateLeadTag("lead-1", "MEETING")).rejects.toThrow(
         "Erro ao atualizar tag do lead"
       );
-      
+
       consoleSpy.mockRestore();
     });
   });
@@ -204,12 +204,12 @@ describe("Leads Actions", () => {
       mockPrisma.lead.findMany.mockResolvedValue([]);
       mockPrisma.lead.count.mockResolvedValue(0);
 
-      await getLeads({ search: "John", tag: "HOT" });
+      await getLeads({ search: "John", tag: "MEETING" });
 
       expect(mockPrisma.lead.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            tag: "HOT",
+            tag: "MEETING",
             OR: [
               { name: { contains: "John", mode: "insensitive" } },
               { phone: { contains: "John" } },
@@ -254,15 +254,15 @@ describe("Leads Actions", () => {
   describe("getLeadsByTag", () => {
     it("should return counts by tag", async () => {
       mockPrisma.lead.groupBy.mockResolvedValue([
-        { tag: "HOT", _count: 5 },
-        { tag: "COLD", _count: 3 },
+        { tag: "MEETING", _count: 5 },
+        { tag: "NEW", _count: 3 },
       ]);
 
       const result = await getLeadsByTag();
 
       expect(result).toEqual({
-        HOT: 5,
-        COLD: 3,
+        MEETING: 5,
+        NEW: 3,
       });
     });
 

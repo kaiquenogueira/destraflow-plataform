@@ -45,11 +45,14 @@ model CrmUser {
 // ============================================
 
 enum LeadTag {
-  COLD     // Frio
-  WARM     // Morno
-  HOT      // Quente
-  LOST     // Perdido
-  CUSTOMER // Cliente
+  NEW           // Novo
+  QUALIFICATION // Qualificação
+  PROSPECTING   // Prospecção
+  CALL          // Ligação
+  MEETING       // Reunião agendada
+  RETURN        // Retorno
+  LOST          // Perdido
+  CUSTOMER      // Cliente
 }
 
 model Lead {
@@ -57,7 +60,7 @@ model Lead {
   name      String
   phone     String   // Formato: +5511999999999
   interest  String?  // Campo de texto livre
-  tag       LeadTag  @default(COLD)
+  tag       LeadTag  @default(NEW)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   

@@ -20,7 +20,7 @@ function processTemplate(
 const createCampaignSchema = z.object({
     name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
     template: z.string().min(10, "Template deve ter pelo menos 10 caracteres"),
-    targetTag: z.enum(["COLD", "WARM", "HOT", "LOST", "CUSTOMER"]).optional(),
+    targetTag: z.enum(["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"]).optional(),
     leadIds: z.array(z.string()).optional(),
     scheduledAt: z.coerce.date().refine((date) => {
         // Permitir uma margem de erro de alguns segundos para latência de rede, 
@@ -33,7 +33,7 @@ const createCampaignSchema = z.object({
 export async function getLeadsForCampaignSelection() {
     const context = await getTenantContext();
     if (!context) return [];
-    
+
     const leads = await context.tenantPrisma.lead.findMany({
         where: {
             messages: {

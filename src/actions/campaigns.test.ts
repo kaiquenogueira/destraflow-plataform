@@ -69,23 +69,23 @@ describe("Campaign Actions", () => {
     (getTenantContext as any).mockResolvedValue({
       tenantPrisma: {
         lead: {
-            findMany: mocks.findMany,
-            findUnique: mocks.findUnique,
-            count: mocks.count,
+          findMany: mocks.findMany,
+          findUnique: mocks.findUnique,
+          count: mocks.count,
         },
         campaign: {
-            create: mocks.create,
-            findMany: mocks.findMany,
-            count: mocks.count,
-            findUnique: mocks.findUnique,
-            update: mocks.update,
+          create: mocks.create,
+          findMany: mocks.findMany,
+          count: mocks.count,
+          findUnique: mocks.findUnique,
+          update: mocks.update,
         },
         campaignMessage: {
-            createMany: mocks.createMany,
-            create: mocks.create,
-            groupBy: mocks.groupBy,
-            updateMany: mocks.updateMany,
-            count: mocks.count,
+          createMany: mocks.createMany,
+          create: mocks.create,
+          groupBy: mocks.groupBy,
+          updateMany: mocks.updateMany,
+          count: mocks.count,
         },
         $transaction: mocks.$transaction,
       }
@@ -151,31 +151,31 @@ describe("Campaign Actions", () => {
 
       expect(result.success).toBe(true);
     });
-    
+
     it("should create campaign with targetTag", async () => {
-        const now = new Date("2024-01-01T12:00:00Z");
-        const validDate = addMinutes(now, 15);
-  
-        const payload = {
-          name: "Test Campaign",
-          template: "Hello {{nome}}",
-          scheduledAt: validDate,
-          targetTag: "HOT" as const,
-        };
-  
-        mocks.create.mockResolvedValue({ id: "campaign-1" });
-        mocks.findMany.mockResolvedValue([
-          { id: "lead-1", name: "Test", phone: "123", interest: "Code" },
-        ]);
-  
-        await createCampaign(payload);
-  
-        expect(mocks.findMany).toHaveBeenCalledWith(
-            expect.objectContaining({
-                where: { tag: "HOT" }
-            })
-        );
-      });
+      const now = new Date("2024-01-01T12:00:00Z");
+      const validDate = addMinutes(now, 15);
+
+      const payload = {
+        name: "Test Campaign",
+        template: "Hello {{nome}}",
+        scheduledAt: validDate,
+        targetTag: "MEETING" as const,
+      };
+
+      mocks.create.mockResolvedValue({ id: "campaign-1" });
+      mocks.findMany.mockResolvedValue([
+        { id: "lead-1", name: "Test", phone: "123", interest: "Code" },
+      ]);
+
+      await createCampaign(payload);
+
+      expect(mocks.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tag: "MEETING" }
+        })
+      );
+    });
   });
 
   describe("getLeadsForCampaignSelection", () => {

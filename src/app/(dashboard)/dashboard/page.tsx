@@ -19,7 +19,8 @@ import {
     UserCog,
     Plus,
     TrendingUp,
-    Calendar
+    Calendar,
+    Phone
 } from "lucide-react";
 import { TAG_LABELS, TAG_COLORS, LeadTag } from "@/types";
 import { formatDistanceToNow } from "date-fns";
@@ -83,7 +84,7 @@ async function getTenantDashboardData(userId: string) {
         try {
             const instanceName = decrypt(user.evolutionInstance);
             const apiKey = user.evolutionApiKey ? decrypt(user.evolutionApiKey) : undefined;
-            
+
             const client = createEvolutionClient(
                 instanceName,
                 apiKey
@@ -99,7 +100,7 @@ async function getTenantDashboardData(userId: string) {
             acc[item.tag] = item._count;
             return acc;
         },
-        { COLD: 0, WARM: 0, HOT: 0, LOST: 0, CUSTOMER: 0 }
+        { NEW: 0, QUALIFICATION: 0, PROSPECTING: 0, CALL: 0, MEETING: 0, RETURN: 0, LOST: 0, CUSTOMER: 0 }
     );
 
     return {
@@ -199,24 +200,30 @@ export default async function DashboardPage() {
         );
     }
 
-    const tagIcons: Record<LeadTag, typeof Snowflake> = {
-        COLD: Snowflake,
-        WARM: ThermometerSun,
-        HOT: Flame,
+    const tagIcons: Record<LeadTag, any> = {
+        NEW: Snowflake,
+        QUALIFICATION: Users,
+        PROSPECTING: TrendingUp,
+        CALL: Phone,
+        MEETING: Calendar,
+        RETURN: Clock,
         LOST: UserX,
         CUSTOMER: UserCheck,
     };
 
     const tagVariants: Record<LeadTag, "info" | "warning" | "danger" | "default" | "success"> = {
-        COLD: "info",
-        WARM: "warning",
-        HOT: "danger",
-        LOST: "default",
+        NEW: "info",
+        QUALIFICATION: "default",
+        PROSPECTING: "default",
+        CALL: "warning",
+        MEETING: "warning",
+        RETURN: "default",
+        LOST: "danger",
         CUSTOMER: "success",
     };
 
-    const conversionRate = (data.totalLeads ?? 0) > 0 
-        ? ((data.tagCounts?.CUSTOMER || 0) / (data.totalLeads ?? 1)) * 100 
+    const conversionRate = (data.totalLeads ?? 0) > 0
+        ? ((data.tagCounts?.CUSTOMER || 0) / (data.totalLeads ?? 1)) * 100
         : 0;
 
     return (
@@ -242,7 +249,7 @@ export default async function DashboardPage() {
                     icon={Users}
                     variant="default"
                 />
-                 <StatsCard
+                <StatsCard
                     title="Taxa de Conversão"
                     value={`${conversionRate.toFixed(1)}%`}
                     icon={TrendingUp}
@@ -259,7 +266,7 @@ export default async function DashboardPage() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 <div className="col-span-4 space-y-6">
-                     <div>
+                    <div>
                         <h2 className="text-lg font-semibold mb-4">Leads por Status</h2>
                         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
                             {(Object.keys(TAG_LABELS) as LeadTag[]).map((tag) => {
@@ -279,7 +286,7 @@ export default async function DashboardPage() {
                 </div>
 
                 <div className="col-span-3">
-                     <Card className="h-full">
+                    <Card className="h-full">
                         <CardHeader>
                             <CardTitle className="text-lg font-semibold flex items-center gap-2">
                                 <Clock className="h-5 w-5" />

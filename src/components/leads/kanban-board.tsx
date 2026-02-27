@@ -23,9 +23,12 @@ import { toast } from "sonner";
 
 // Enum mapping for colors and titles
 const COLUMNS: { id: LeadTag; title: string; color: string }[] = [
-  { id: "COLD", title: "Frio", color: "bg-blue-500" },
-  { id: "WARM", title: "Morno", color: "bg-yellow-500" },
-  { id: "HOT", title: "Quente", color: "bg-orange-500" },
+  { id: "NEW", title: "Novo", color: "bg-blue-500" },
+  { id: "QUALIFICATION", title: "Qualificação", color: "bg-indigo-500" },
+  { id: "PROSPECTING", title: "Prospecção", color: "bg-purple-500" },
+  { id: "CALL", title: "Ligação", color: "bg-yellow-500" },
+  { id: "MEETING", title: "Reunião Agendada", color: "bg-orange-500" },
+  { id: "RETURN", title: "Retorno", color: "bg-teal-500" },
   { id: "CUSTOMER", title: "Cliente", color: "bg-green-500" },
   { id: "LOST", title: "Perdido", color: "bg-red-500" },
 ];

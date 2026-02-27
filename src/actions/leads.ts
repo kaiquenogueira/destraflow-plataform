@@ -13,7 +13,7 @@ const createLeadSchema = z.object({
         .string()
         .regex(/^\+?[1-9]\d{10,14}$/, "Telefone inválido (use formato +5511999999999)"),
     interest: z.string().optional(),
-    tag: z.enum(["COLD", "WARM", "HOT", "LOST", "CUSTOMER"]),
+    tag: z.enum(["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"]),
 });
 
 const updateLeadSchema = createLeadSchema.partial().extend({
@@ -114,12 +114,12 @@ export async function getLeads(params?: {
         };
     }
     const { tenantPrisma } = context;
-    const { 
-        search, 
-        tag, 
-        page = 1, 
-        limit = 20, 
-        date, 
+    const {
+        search,
+        tag,
+        page = 1,
+        limit = 20,
+        date,
         aiPotential,
         orderBy = "updatedAt",
         orderDirection = "desc"
@@ -149,16 +149,16 @@ export async function getLeads(params?: {
 
     // Validate orderBy field
     const validSortFields = [
-        "name", 
-        "createdAt", 
-        "updatedAt", 
-        "aiScore", 
-        "aiPotential", 
-        "tag", 
-        "phone", 
+        "name",
+        "createdAt",
+        "updatedAt",
+        "aiScore",
+        "aiPotential",
+        "tag",
+        "phone",
         "interest"
     ];
-    
+
     const sortField = validSortFields.includes(orderBy) ? orderBy : "updatedAt";
 
     const [leads, total] = await Promise.all([

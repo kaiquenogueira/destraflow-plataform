@@ -27,7 +27,7 @@ const leadSchema = z.object({
         .string()
         .regex(/^\+?[1-9]\d{10,14}$/, "Telefone inválido (ex: +5511999999999)"),
     interest: z.string().optional(),
-    tag: z.enum(["COLD", "WARM", "HOT", "LOST", "CUSTOMER"]),
+    tag: z.enum(["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"]),
     aiPotential: z.string().optional(),
     aiScore: z.string().optional().refine((val) => {
         if (!val) return true;
@@ -61,7 +61,7 @@ export function LeadForm({ lead }: LeadFormProps) {
             name: lead?.name || "",
             phone: lead?.phone || "",
             interest: lead?.interest || "",
-            tag: lead?.tag || "COLD",
+            tag: lead?.tag || "NEW",
             aiPotential: lead?.aiPotential || "",
             aiScore: lead?.aiScore?.toString() || "",
             aiSummary: lead?.aiSummary || "",
@@ -158,7 +158,7 @@ export function LeadForm({ lead }: LeadFormProps) {
 
             <div className="space-y-4 border-t pt-4">
                 <h3 className="font-semibold text-lg">Análise da Inteligência Artificial</h3>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="aiPotential">Potencial</Label>
@@ -197,7 +197,7 @@ export function LeadForm({ lead }: LeadFormProps) {
                         rows={3}
                     />
                 </div>
-                 <div className="space-y-2">
+                <div className="space-y-2">
                     <Label htmlFor="aiMessageSuggestion">Sugestão de Mensagem</Label>
                     <Textarea
                         id="aiMessageSuggestion"
