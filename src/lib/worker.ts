@@ -1,27 +1,48 @@
 /**
  * Worker de Processamento de Mensagens
- * 
+ *
  * Responsável por:
  * 1. Buscar mensagens pendentes de todos os tenants
- * 2. Enviar via Evolution API
- * 3. Atualizar status (SENT/FAILED)
+ * 2. Enviar via Evolution API (tenants processados em paralelo)
+ * 3. Atualizar status (SENT/FAILED/DEAD_LETTER)
+ * 4. Retry automático com backoff exponencial
  */
 
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
 import { decrypt } from "@/lib/encryption";
 
+const MAX_RETRIES = 3;
+const MAX_CONCURRENT_TENANTS = 5;
+const MESSAGES_PER_BATCH = 20;
+
 export interface WorkerResult {
     processed: number;
     sent: number;
     failed: number;
+    deadLettered: number;
+    retried: number;
     errors: string[];
+}
+
+/**
+ * Calcula delay com backoff exponencial + jitter para evitar detecção
+ * Base: 2-8s para primeira tentativa, escala com retryCount
+ */
+function calculateDelay(retryCount: number): number {
+    const baseMin = 2000;
+    const baseMax = 8000;
+    const base = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
+    const backoff = base * Math.pow(1.5, retryCount);
+    // Jitter: ±20%
+    const jitter = backoff * (0.8 + Math.random() * 0.4);
+    return Math.min(jitter, 30000); // Cap at 30s
 }
 
 /**
  * Processa mensagens pendentes de um tenant específico
  */
-async function processTenanMessages(
+async function processTenantMessages(
     tenantPrisma: ReturnType<typeof getTenantPrisma>,
     evolutionInstance: string,
     evolutionApiKey: string | null,
@@ -31,16 +52,25 @@ async function processTenanMessages(
         processed: 0,
         sent: 0,
         failed: 0,
+        deadLettered: 0,
+        retried: 0,
         errors: [],
     };
 
-    // Buscar mensagens pendentes que já passaram do horário
+    // Buscar mensagens pendentes e mensagens falhadas elegíveis para retry
     const pendingMessages = await tenantPrisma.campaignMessage.findMany({
         where: {
-            status: "PENDING",
-            scheduledAt: {
-                lte: new Date(),
-            },
+            OR: [
+                {
+                    status: "PENDING",
+                    scheduledAt: { lte: new Date() },
+                },
+                {
+                    status: "FAILED",
+                    retryCount: { lt: MAX_RETRIES },
+                    scheduledAt: { lte: new Date() },
+                },
+            ],
         },
         include: {
             lead: {
@@ -48,10 +78,10 @@ async function processTenanMessages(
             },
         },
         orderBy: [
-            { priority: "desc" }, // Prioridade alta primeiro
-            { scheduledAt: "asc" }, // Mais antigos primeiro
+            { priority: "desc" },
+            { scheduledAt: "asc" },
         ],
-        take: 10, // Processar em batches menores para evitar timeout com o delay aumentado
+        take: MESSAGES_PER_BATCH,
     });
 
     if (pendingMessages.length === 0) {
@@ -67,9 +97,9 @@ async function processTenanMessages(
         return result;
     }
 
-    // Processar cada mensagem
     for (const message of pendingMessages) {
         result.processed++;
+        const isRetry = message.status === "FAILED";
 
         // Marcar como PROCESSING
         await tenantPrisma.campaignMessage.update({
@@ -78,25 +108,21 @@ async function processTenanMessages(
         });
 
         try {
-            // Enviar mensagem
             await evolutionClient.sendMessage(message.lead.phone, message.payload);
 
-            // Marcar como SENT
+            // Sucesso — marcar como SENT
             await tenantPrisma.campaignMessage.update({
                 where: { id: message.id },
                 data: {
                     status: "SENT",
                     sentAt: new Date(),
+                    error: null,
                 },
             });
 
-            // ============================================================
-            // FECHAR O CICLO: Criar registro em chat_histories
-            // ============================================================
-
-            // 1. Buscar ou criar WhatsAppContact (users)
+            // Registrar no histórico de chat
             let contact = await tenantPrisma.whatsAppContact.findFirst({
-                where: { whatsapp: message.lead.phone }
+                where: { whatsapp: message.lead.phone },
             });
 
             if (!contact) {
@@ -105,58 +131,63 @@ async function processTenanMessages(
                         whatsapp: message.lead.phone,
                         name: message.lead.name,
                         createdAt: new Date(),
-                        isManual: false
-                    }
+                        isManual: false,
+                    },
                 });
             }
-
-            // 2. Criar histórico
-            // session_id = whatsapp_cliente_whatsapp_agente
-            // Ex: 5511999999999_5511888888888
-            // Se evolutionPhone não estiver configurado, usa apenas o telefone do cliente como fallback ou tenta pegar da instancia
 
             const agentPhone = evolutionPhone || "unknown_agent";
             const sessionId = `${message.lead.phone}_${agentPhone}`;
             const threadId = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
 
-            // Estrutura de mensagem solicitada:
-            // {"type": "system", "content": "{{mensagem tratada}}"}
-
             await tenantPrisma.chatHistory.create({
                 data: {
                     userId: contact.id,
-                    sessionId: sessionId,
-                    threadId: threadId,
+                    sessionId,
+                    threadId,
                     message: {
                         type: "system",
-                        content: message.payload
+                        content: message.payload,
                     },
-                    createdAt: new Date()
-                }
-            });
-
-            result.sent++;
-        } catch (error) {
-            // Marcar como FAILED
-            const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-            await tenantPrisma.campaignMessage.update({
-                where: { id: message.id },
-                data: {
-                    status: "FAILED",
-                    error: errorMessage,
+                    createdAt: new Date(),
                 },
             });
 
-            result.failed++;
-            result.errors.push(`Message ${message.id}: ${errorMessage}`);
+            result.sent++;
+            if (isRetry) result.retried++;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            const newRetryCount = (message.retryCount ?? 0) + 1;
+
+            if (newRetryCount >= MAX_RETRIES) {
+                // Dead letter — falha permanente
+                await tenantPrisma.campaignMessage.update({
+                    where: { id: message.id },
+                    data: {
+                        status: "DEAD_LETTER",
+                        error: `Falha permanente após ${MAX_RETRIES} tentativas: ${errorMessage}`,
+                        retryCount: newRetryCount,
+                    },
+                });
+                result.deadLettered++;
+            } else {
+                // Marcar como FAILED para retry na próxima execução
+                await tenantPrisma.campaignMessage.update({
+                    where: { id: message.id },
+                    data: {
+                        status: "FAILED",
+                        error: errorMessage,
+                        retryCount: newRetryCount,
+                    },
+                });
+                result.failed++;
+            }
+
+            result.errors.push(`Message ${message.id} (retry ${newRetryCount}/${MAX_RETRIES}): ${errorMessage}`);
         }
 
-        // Rate limiting - aguardar tempo aleatório entre 1s e 30s para evitar bloqueios do WhatsApp
-        // Comportamento mais humano para evitar detecção de automação
-        const minDelay = 1000;
-        const maxDelay = 30000;
-        const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+        // Rate limiting — delay entre mensagens para evitar bloqueio no WhatsApp
+        const delay = calculateDelay(message.retryCount ?? 0);
         await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
@@ -164,7 +195,24 @@ async function processTenanMessages(
 }
 
 /**
- * Processa mensagens de todos os tenants configurados
+ * Processa tenants em paralelo com controle de concorrência
+ */
+async function processWithConcurrency<T>(
+    items: T[],
+    maxConcurrent: number,
+    processor: (item: T) => Promise<void>
+): Promise<void> {
+    const chunks: T[][] = [];
+    for (let i = 0; i < items.length; i += maxConcurrent) {
+        chunks.push(items.slice(i, i + maxConcurrent));
+    }
+    for (const chunk of chunks) {
+        await Promise.allSettled(chunk.map(processor));
+    }
+}
+
+/**
+ * Processa mensagens de todos os tenants configurados (em paralelo)
  */
 export async function processAllTenantMessages(): Promise<{
     tenants: number;
@@ -172,7 +220,6 @@ export async function processAllTenantMessages(): Promise<{
 }> {
     const results: Record<string, WorkerResult> = {};
 
-    // Buscar todos os usuários com banco e Evolution configurados
     const users = await prisma.crmUser.findMany({
         where: {
             role: "USER",
@@ -189,21 +236,17 @@ export async function processAllTenantMessages(): Promise<{
         },
     });
 
-    for (const user of users) {
-        if (!user.databaseUrl || !user.evolutionInstance) continue;
+    await processWithConcurrency(users, MAX_CONCURRENT_TENANTS, async (user) => {
+        if (!user.databaseUrl || !user.evolutionInstance) return;
 
         try {
             const databaseUrl = decrypt(user.databaseUrl);
             const evolutionInstance = decrypt(user.evolutionInstance);
             const evolutionApiKey = user.evolutionApiKey ? decrypt(user.evolutionApiKey) : null;
-            // evolutionPhone não é sensível, mas se precisar descriptografar no futuro, ajustar aqui.
-            // Por enquanto, assumindo texto plano no schema ou seguindo padrão de criptografia se necessário.
-            // O schema diz apenas String?, e não tem helper de decrypt no código original para ele.
-            // Assumirei que é texto plano.
             const evolutionPhone = user.evolutionPhone;
 
             const tenantPrisma = getTenantPrisma(databaseUrl);
-            const result = await processTenanMessages(
+            const result = await processTenantMessages(
                 tenantPrisma,
                 evolutionInstance,
                 evolutionApiKey,
@@ -216,10 +259,12 @@ export async function processAllTenantMessages(): Promise<{
                 processed: 0,
                 sent: 0,
                 failed: 0,
+                deadLettered: 0,
+                retried: 0,
                 errors: [`Tenant error: ${errorMessage}`],
             };
         }
-    }
+    });
 
     return {
         tenants: users.length,
@@ -247,7 +292,7 @@ export async function updateCampaignStatuses(): Promise<number> {
         const databaseUrl = decrypt(user.databaseUrl);
         const tenantPrisma = getTenantPrisma(databaseUrl);
 
-        // Buscar campanhas PROCESSING que não têm mais mensagens PENDING
+        // Buscar campanhas ativas
         const campaigns = await tenantPrisma.campaign.findMany({
             where: {
                 status: { in: ["SCHEDULED", "PROCESSING"] },
@@ -257,24 +302,22 @@ export async function updateCampaignStatuses(): Promise<number> {
                     select: { messages: true },
                 },
                 messages: {
-                    where: { status: "PENDING" },
+                    where: { status: { in: ["PENDING", "FAILED"] } },
                     select: { id: true },
                 },
             },
         });
 
         for (const campaign of campaigns) {
-            const hasPending = campaign.messages.length > 0;
+            const hasPendingOrFailed = campaign.messages.length > 0;
 
-            if (!hasPending && campaign._count.messages > 0) {
-                // Todas as mensagens foram processadas
+            if (!hasPendingOrFailed && campaign._count.messages > 0) {
                 await tenantPrisma.campaign.update({
                     where: { id: campaign.id },
                     data: { status: "COMPLETED" },
                 });
                 updated++;
             } else if (campaign.status === "SCHEDULED" && campaign.scheduledAt <= new Date()) {
-                // Campanha deveria estar processando
                 await tenantPrisma.campaign.update({
                     where: { id: campaign.id },
                     data: { status: "PROCESSING" },

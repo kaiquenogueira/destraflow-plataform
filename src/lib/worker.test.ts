@@ -52,9 +52,8 @@ describe("Worker", () => {
     (getTenantPrisma as Mock).mockReturnValue(mockTenantPrisma);
     (createEvolutionClient as Mock).mockReturnValue(mockEvolutionClient);
     (decrypt as Mock).mockImplementation((val: string) => val.replace("encrypted-", ""));
-    // Mock setTimeout to resolve immediately to skip rate limiting delay
-    vi.spyOn(global, 'setTimeout').mockImplementation((fn) => {
-      if (typeof fn === 'function') fn();
+    vi.spyOn(global, "setTimeout").mockImplementation((fn) => {
+      if (typeof fn === "function") fn();
       return 0 as unknown as ReturnType<typeof setTimeout>;
     });
   });
@@ -65,7 +64,6 @@ describe("Worker", () => {
 
   describe("processAllTenantMessages", () => {
     it("should process messages for valid tenants", async () => {
-      // Mock users
       (prisma.crmUser.findMany as Mock).mockResolvedValue([
         {
           id: "user-1",
@@ -77,19 +75,17 @@ describe("Worker", () => {
         },
       ]);
 
-      // Mock pending messages
       mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
         {
           id: "msg-1",
           lead: { phone: "5511988888888", name: "Lead" },
           payload: "Hello",
+          status: "PENDING",
+          retryCount: 0,
         },
       ]);
 
-      // Mock evolution status
       mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
-
-      // Mock contact
       mockTenantPrisma.whatsAppContact.findFirst.mockResolvedValue({ id: "contact-1" });
 
       const result = await processAllTenantMessages();
@@ -112,6 +108,35 @@ describe("Worker", () => {
       expect(result.results["User 1"].sent).toBe(1);
     });
 
+    it("should process multiple tenants in parallel", async () => {
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
+        {
+          id: "user-1",
+          name: "User 1",
+          databaseUrl: "encrypted-db-url-1",
+          evolutionInstance: "encrypted-instance-1",
+          evolutionApiKey: null,
+          evolutionPhone: null,
+        },
+        {
+          id: "user-2",
+          name: "User 2",
+          databaseUrl: "encrypted-db-url-2",
+          evolutionInstance: "encrypted-instance-2",
+          evolutionApiKey: null,
+          evolutionPhone: null,
+        },
+      ]);
+
+      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([]);
+      mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
+
+      const result = await processAllTenantMessages();
+
+      expect(result.tenants).toBe(2);
+      expect(getTenantPrisma).toHaveBeenCalledTimes(2);
+    });
+
     it("should handle disconnected instance", async () => {
       (prisma.crmUser.findMany as Mock).mockResolvedValue([
         {
@@ -122,7 +147,9 @@ describe("Worker", () => {
         },
       ]);
 
-      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([{ id: "msg-1" }]);
+      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
+        { id: "msg-1", status: "PENDING", retryCount: 0 },
+      ]);
       mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: false });
 
       const result = await processAllTenantMessages();
@@ -131,7 +158,7 @@ describe("Worker", () => {
       expect(result.results["User 1"].processed).toBe(0);
     });
 
-    it("should handle send errors", async () => {
+    it("should handle send errors and increment retryCount", async () => {
       (prisma.crmUser.findMany as Mock).mockResolvedValue([
         {
           id: "user-1",
@@ -146,6 +173,8 @@ describe("Worker", () => {
           id: "msg-1",
           lead: { phone: "5511988888888", name: "Lead" },
           payload: "Hello",
+          status: "PENDING",
+          retryCount: 0,
         },
       ]);
 
@@ -157,10 +186,83 @@ describe("Worker", () => {
       expect(mockTenantPrisma.campaignMessage.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "msg-1" },
-          data: expect.objectContaining({ status: "FAILED", error: "Send Error" }),
+          data: expect.objectContaining({
+            status: "FAILED",
+            error: "Send Error",
+            retryCount: 1,
+          }),
         })
       );
       expect(result.results["User 1"].failed).toBe(1);
+    });
+
+    it("should dead-letter messages after MAX_RETRIES", async () => {
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
+        {
+          id: "user-1",
+          name: "User 1",
+          databaseUrl: "encrypted-db-url",
+          evolutionInstance: "encrypted-instance",
+        },
+      ]);
+
+      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
+        {
+          id: "msg-1",
+          lead: { phone: "5511988888888", name: "Lead" },
+          payload: "Hello",
+          status: "FAILED",
+          retryCount: 2, // Already failed 2 times, next fail = dead letter
+        },
+      ]);
+
+      mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
+      mockEvolutionClient.sendMessage.mockRejectedValue(new Error("Final Error"));
+
+      const result = await processAllTenantMessages();
+
+      expect(mockTenantPrisma.campaignMessage.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "msg-1" },
+          data: expect.objectContaining({
+            status: "DEAD_LETTER",
+            retryCount: 3,
+          }),
+        })
+      );
+      expect(result.results["User 1"].deadLettered).toBe(1);
+    });
+
+    it("should retry previously failed messages", async () => {
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
+        {
+          id: "user-1",
+          name: "User 1",
+          databaseUrl: "encrypted-db-url",
+          evolutionInstance: "encrypted-instance",
+          evolutionApiKey: "encrypted-key",
+          evolutionPhone: "5511999999999",
+        },
+      ]);
+
+      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
+        {
+          id: "msg-1",
+          lead: { phone: "5511988888888", name: "Lead" },
+          payload: "Hello",
+          status: "FAILED",
+          retryCount: 1,
+        },
+      ]);
+
+      mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
+      mockEvolutionClient.sendMessage.mockResolvedValue(true);
+      mockTenantPrisma.whatsAppContact.findFirst.mockResolvedValue({ id: 1 });
+
+      const result = await processAllTenantMessages();
+
+      expect(result.results["User 1"].sent).toBe(1);
+      expect(result.results["User 1"].retried).toBe(1);
     });
   });
 
@@ -174,7 +276,7 @@ describe("Worker", () => {
         {
           id: "c1",
           status: "PROCESSING",
-          messages: [], // No pending messages
+          messages: [],
           _count: { messages: 10 },
         },
       ]);
@@ -197,8 +299,8 @@ describe("Worker", () => {
         {
           id: "c2",
           status: "SCHEDULED",
-          scheduledAt: new Date(Date.now() - 1000), // Past
-          messages: [{ id: "m1" }], // Has pending
+          scheduledAt: new Date(Date.now() - 1000),
+          messages: [{ id: "m1" }],
           _count: { messages: 10 },
         },
       ]);

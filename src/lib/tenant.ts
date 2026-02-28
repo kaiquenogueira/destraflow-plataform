@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
@@ -15,7 +16,7 @@ export interface TenantContext {
  * Obtém o contexto do tenant atual baseado na sessão
  * Retorna null se o usuário não tem banco configurado (ex: admin)
  */
-export async function getTenantContext(): Promise<TenantContext | null> {
+export const getTenantContext = cache(async (): Promise<TenantContext | null> => {
     const session = await getServerSession(authConfig);
 
     if (!session?.user?.id) {
@@ -45,7 +46,7 @@ export async function getTenantContext(): Promise<TenantContext | null> {
         userRole: user.role,
         tenantPrisma: getTenantPrisma(user.databaseUrl),
     };
-}
+});
 
 /**
  * Verifica se o usuário atual é admin

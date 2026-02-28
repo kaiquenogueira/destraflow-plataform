@@ -5,7 +5,7 @@ export type LeadTag = "NEW" | "QUALIFICATION" | "PROSPECTING" | "CALL" | "MEETIN
 export type CampaignStatus = "DRAFT" | "SCHEDULED" | "PROCESSING" | "COMPLETED" | "CANCELLED";
 
 // Message status
-export type MessageStatus = "PENDING" | "PROCESSING" | "SENT" | "FAILED";
+export type MessageStatus = "PENDING" | "PROCESSING" | "SENT" | "FAILED" | "DEAD_LETTER";
 
 export interface Lead {
     id: string;
@@ -126,4 +126,5 @@ export const MESSAGE_STATUS_LABELS: Record<MessageStatus, string> = {
     PROCESSING: "Enviando",
     SENT: "Enviada",
     FAILED: "Falha",
+    DEAD_LETTER: "Falha Permanente",
 };

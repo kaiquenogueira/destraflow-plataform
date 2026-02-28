@@ -104,6 +104,16 @@ export default withAuth(
 );
 
 export const config = {
-    // Rotas protegidas pelo middleware
-    matcher: ["/dashboard/:path*", "/admin/:path*", "/login"],
+    // Rotas protegidas pelo middleware (auth + rate limiting)
+    matcher: [
+        "/dashboard/:path*",
+        "/admin/:path*",
+        "/leads/:path*",
+        "/campaigns/:path*",
+        "/templates/:path*",
+        "/whatsapp/:path*",
+        "/notifications/:path*",
+        "/login",
+        "/api/cron/:path*",
+    ],
 };

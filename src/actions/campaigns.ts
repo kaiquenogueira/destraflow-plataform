@@ -35,46 +35,49 @@ export async function getLeadsForCampaignSelection() {
     if (!context) return [];
 
     const leads = await context.tenantPrisma.lead.findMany({
-        where: {
-            messages: {
-                none: {
-                    campaign: {
-                        status: {
-                            in: ["SCHEDULED", "PROCESSING", "COMPLETED"]
-                        }
-                    }
-                }
-            }
-        },
         include: {
             messages: {
-                select: {
+                where: {
                     campaign: {
-                        select: { name: true }
-                    },
-                    createdAt: true
+                        status: { in: ["SCHEDULED", "PROCESSING", "COMPLETED"] }
+                    }
                 },
-                orderBy: { createdAt: 'desc' }
-            }
+                select: {
+                    campaign: { select: { name: true } },
+                    createdAt: true,
+                },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+            },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
+    });
+
+    // Deduplica por telefone (mantém o registro mais recente)
+    const seen = new Map<string, boolean>();
+    const unique = leads.filter((lead) => {
+        const phone = lead.phone.replace(/\D/g, "");
+        if (seen.has(phone)) return false;
+        seen.set(phone, true);
+        return true;
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return leads.map((lead: any) => ({
-        id: lead.id,
-        name: lead.name,
-        phone: lead.phone,
-        tag: lead.tag,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        campaigns: lead.messages
-            .filter((m: any) => m.campaign)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .map((m: any) => ({
-                name: m.campaign.name,
-                date: m.createdAt
-            }))
-    }));
+    return unique.map((lead: any) => {
+        const lastMessage = lead.messages[0];
+        return {
+            id: lead.id,
+            name: lead.name,
+            phone: lead.phone,
+            tag: lead.tag,
+            lastCampaign: lastMessage?.campaign
+                ? { name: lastMessage.campaign.name, date: lastMessage.createdAt }
+                : null,
+            campaigns: lead.messages
+                .filter((m: any) => m.campaign)
+                .map((m: any) => ({ name: m.campaign.name, date: m.createdAt })),
+        };
+    });
 }
 
 export async function createCampaign(
@@ -176,39 +179,40 @@ export async function getCampaigns(params?: {
 }
 
 export async function getCampaignById(id: string) {
+    const validId = z.string().uuid().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
     }
     const { tenantPrisma } = context;
 
-    const campaign = await tenantPrisma.campaign.findUnique({
-        where: { id },
-        include: {
-            messages: {
-                orderBy: { createdAt: "desc" },
-                include: {
-                    lead: {
-                        select: { name: true, phone: true },
+    const [campaign, statusCounts] = await Promise.all([
+        tenantPrisma.campaign.findUnique({
+            where: { id: validId },
+            include: {
+                messages: {
+                    orderBy: { createdAt: "desc" },
+                    include: {
+                        lead: {
+                            select: { name: true, phone: true },
+                        },
                     },
                 },
+                _count: {
+                    select: { messages: true },
+                },
             },
-            _count: {
-                select: { messages: true },
-            },
-        },
-    });
+        }),
+        tenantPrisma.campaignMessage.groupBy({
+            by: ["status"],
+            where: { campaignId: validId },
+            _count: true,
+        }),
+    ]);
 
     if (!campaign) {
         throw new Error("Campanha não encontrada");
     }
-
-    // Contar mensagens por status
-    const statusCounts = await tenantPrisma.campaignMessage.groupBy({
-        by: ["status"],
-        where: { campaignId: id },
-        _count: true,
-    });
 
     return {
         ...campaign,
@@ -223,6 +227,7 @@ export async function getCampaignById(id: string) {
 }
 
 export async function cancelCampaign(id: string) {
+    const validId = z.string().uuid().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
@@ -230,7 +235,7 @@ export async function cancelCampaign(id: string) {
     const { tenantPrisma } = context;
 
     const existing = await tenantPrisma.campaign.findUnique({
-        where: { id },
+        where: { id: validId },
     });
 
     if (!existing) {
@@ -244,22 +249,23 @@ export async function cancelCampaign(id: string) {
     // Transação: cancelar campanha e mensagens pendentes
     await tenantPrisma.$transaction([
         tenantPrisma.campaign.update({
-            where: { id },
+            where: { id: validId },
             data: { status: "CANCELLED" },
         }),
         tenantPrisma.campaignMessage.updateMany({
-            where: { campaignId: id, status: "PENDING" },
+            where: { campaignId: validId, status: "PENDING" },
             data: { status: "FAILED", error: "Campanha cancelada pelo usuário" },
         }),
     ]);
 
     revalidatePath("/campaigns");
-    revalidatePath(`/campaigns/${id}`);
+    revalidatePath(`/campaigns/${validId}`);
     return { success: true };
 }
 
 // Envio unitário (imediato)
 export async function sendUnitMessage(leadId: string, template: string) {
+    const validLeadId = z.string().uuid().parse(leadId);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
@@ -267,7 +273,7 @@ export async function sendUnitMessage(leadId: string, template: string) {
     const { tenantPrisma } = context;
 
     const lead = await tenantPrisma.lead.findUnique({
-        where: { id: leadId },
+        where: { id: validLeadId },
     });
 
     if (!lead) {
@@ -285,7 +291,7 @@ export async function sendUnitMessage(leadId: string, template: string) {
         },
     });
 
-    revalidatePath(`/leads/${leadId}`);
+    revalidatePath(`/leads/${validLeadId}`);
     return { success: true, messageId: message.id };
 }
 

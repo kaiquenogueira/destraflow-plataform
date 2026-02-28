@@ -2,6 +2,7 @@
 
 import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 /**
  * Buscar notificações pendentes (escalonamento para humano)
@@ -106,6 +107,7 @@ export async function getNotificationById(id: number) {
  * Deletar notificação (após resolver)
  */
 export async function deleteNotification(id: number) {
+    const validId = z.number().int().positive().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
@@ -113,7 +115,7 @@ export async function deleteNotification(id: number) {
     const { tenantPrisma } = context;
 
     await tenantPrisma.externalNotification.delete({
-        where: { id },
+        where: { id: validId },
     });
 
     revalidatePath("/notifications");

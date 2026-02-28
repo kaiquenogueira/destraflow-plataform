@@ -153,6 +153,53 @@ export class EvolutionClient {
             throw error;
         }
     }
+
+    /**
+     * Buscar histórico de mensagens de um contato via Evolution API
+     */
+    async fetchMessages(
+        phone: string,
+        params?: { limit?: number }
+    ): Promise<EvolutionMessage[]> {
+        try {
+            const number = phone.replace(/\D/g, "");
+            const response = await this.request<EvolutionMessage[]>(
+                `/chat/findMessages/${this.config.instanceName}`,
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        where: {
+                            key: {
+                                remoteJid: `${number}@s.whatsapp.net`,
+                            },
+                        },
+                        limit: params?.limit || 50,
+                    }),
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+            return [];
+        }
+    }
+}
+
+export interface EvolutionMessage {
+    key: {
+        remoteJid: string;
+        fromMe: boolean;
+        id: string;
+    };
+    message?: {
+        conversation?: string;
+        extendedTextMessage?: {
+            text?: string;
+        };
+    };
+    messageTimestamp?: number;
+    pushName?: string;
+    status?: string;
 }
 
 export function createEvolutionClient(

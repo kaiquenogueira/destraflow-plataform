@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
@@ -30,12 +31,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 async function getAdminDashboardData() {
-    const totalUsers = await prisma.crmUser.count();
-    const admins = await prisma.crmUser.count({ where: { role: "ADMIN" } });
-    const clients = await prisma.crmUser.count({ where: { role: "USER" } });
-    const configuredClients = await prisma.crmUser.count({
-        where: { role: "USER", databaseUrl: { not: null } },
-    });
+    const [totalUsers, admins, clients, configuredClients] = await Promise.all([
+        prisma.crmUser.count(),
+        prisma.crmUser.count({ where: { role: "ADMIN" } }),
+        prisma.crmUser.count({ where: { role: "USER" } }),
+        prisma.crmUser.count({
+            where: { role: "USER", databaseUrl: { not: null } },
+        }),
+    ]);
 
     return {
         totalUsers,
@@ -79,21 +82,8 @@ async function getTenantDashboardData(userId: string) {
         }),
     ]);
 
-    let evolutionStatus = { connected: false, state: "not_configured" };
-    if (user.evolutionInstance) {
-        try {
-            const instanceName = decrypt(user.evolutionInstance);
-            const apiKey = user.evolutionApiKey ? decrypt(user.evolutionApiKey) : undefined;
-
-            const client = createEvolutionClient(
-                instanceName,
-                apiKey
-            );
-            evolutionStatus = await client.getInstanceStatus();
-        } catch {
-            evolutionStatus = { connected: false, state: "error" };
-        }
-    }
+    let evolutionInstance = user.evolutionInstance;
+    let evolutionApiKey = user.evolutionApiKey;
 
     const tagCounts = leadsByTag.reduce(
         (acc: Record<string, number>, item: { tag: string; _count: number }) => {
@@ -106,12 +96,36 @@ async function getTenantDashboardData(userId: string) {
     return {
         totalLeads,
         tagCounts,
-        evolutionStatus,
+        evolutionInstance,
+        evolutionApiKey,
         pendingMessages,
         sentMessages,
         recentLeads,
         isAdmin: false,
     };
+}
+
+async function WhatsAppStatusCard({ evolutionInstance, evolutionApiKey }: { evolutionInstance: string | null; evolutionApiKey: string | null }) {
+    let evolutionStatus = { connected: false, state: "not_configured" };
+    if (evolutionInstance) {
+        try {
+            const instanceName = decrypt(evolutionInstance);
+            const apiKey = evolutionApiKey ? decrypt(evolutionApiKey) : undefined;
+            const client = createEvolutionClient(instanceName, apiKey);
+            evolutionStatus = await client.getInstanceStatus();
+        } catch {
+            evolutionStatus = { connected: false, state: "error" };
+        }
+    }
+    return (
+        <StatsCard
+            title="Status WhatsApp"
+            value={evolutionStatus.connected ? "Conectado" : "Desconectado"}
+            icon={MessageSquare}
+            variant={evolutionStatus.connected ? "success" : "danger"}
+            description={evolutionStatus.state || "não configurado"}
+        />
+    );
 }
 
 export default async function DashboardPage() {
@@ -236,13 +250,20 @@ export default async function DashboardPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatsCard
-                    title="Status WhatsApp"
-                    value={data.evolutionStatus?.connected ? "Conectado" : "Desconectado"}
-                    icon={MessageSquare}
-                    variant={data.evolutionStatus?.connected ? "success" : "danger"}
-                    description={data.evolutionStatus?.state || "não configurado"}
-                />
+                <Suspense fallback={
+                    <StatsCard
+                        title="Status WhatsApp"
+                        value="Verificando..."
+                        icon={MessageSquare}
+                        variant="default"
+                        description="carregando"
+                    />
+                }>
+                    <WhatsAppStatusCard
+                        evolutionInstance={data.evolutionInstance ?? null}
+                        evolutionApiKey={data.evolutionApiKey ?? null}
+                    />
+                </Suspense>
                 <StatsCard
                     title="Total de Leads"
                     value={data.totalLeads ?? 0}

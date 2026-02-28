@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LeadList } from "@/components/leads/lead-list";
-import { KanbanBoard } from "@/components/leads/kanban-board";
+import dynamic from "next/dynamic";
+
+const KanbanBoard = dynamic(
+    () => import("@/components/leads/kanban-board").then(m => m.KanbanBoard),
+    { loading: () => <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando Kanban...</div> }
+);
 import { getLeads } from "@/actions/leads";
 import { type LeadTag } from "@/types";
 import { Plus, AlertTriangle, LayoutGrid, List } from "lucide-react";
@@ -10,11 +15,11 @@ import { LeadFilters } from "@/components/leads/lead-filters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface LeadsPageProps {
-    searchParams: Promise<{ 
-        search?: string; 
-        tag?: string; 
-        page?: string; 
-        date?: string; 
+    searchParams: Promise<{
+        search?: string;
+        tag?: string;
+        page?: string;
+        date?: string;
         view?: string;
         aiPotential?: string;
         orderBy?: string;
@@ -40,11 +45,11 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     // Let's increase limit for Kanban view to make it useful.
     const limit = view === "kanban" ? 100 : 20;
 
-    const data = await getLeads({ 
-        search, 
-        tag, 
-        page, 
-        limit, 
+    const data = await getLeads({
+        search,
+        tag,
+        page,
+        limit,
         date,
         aiPotential,
         orderBy,
@@ -122,9 +127,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 </div>
 
                 <TabsContent value="list" className="space-y-6">
-                     {/* Filters only show in List view for now as Kanban filters are columns themselves */}
+                    {/* Filters only show in List view for now as Kanban filters are columns themselves */}
                     <LeadFilters />
-                    
+
                     <LeadList leads={data.leads} />
 
                     <div className="py-4">
@@ -149,8 +154,8 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
                 <TabsContent value="kanban" className="flex-1 overflow-hidden">
                     <div className="mb-4">
-                         {/* Optional: Filter by name even in Kanban */}
-                         <LeadFilters />
+                        {/* Optional: Filter by name even in Kanban */}
+                        <LeadFilters />
                     </div>
                     <KanbanBoard initialLeads={data.leads} />
                 </TabsContent>

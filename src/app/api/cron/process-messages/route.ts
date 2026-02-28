@@ -61,6 +61,14 @@ export async function GET(request: NextRequest) {
             (acc, r) => acc + r.failed,
             0
         );
+        const totalDeadLettered = Object.values(messageResults.results).reduce(
+            (acc, r) => acc + r.deadLettered,
+            0
+        );
+        const totalRetried = Object.values(messageResults.results).reduce(
+            (acc, r) => acc + r.retried,
+            0
+        );
 
         return NextResponse.json({
             success: true,
@@ -71,6 +79,8 @@ export async function GET(request: NextRequest) {
                 messagesProcessed: totalProcessed,
                 messagesSent: totalSent,
                 messagesFailed: totalFailed,
+                messagesDeadLettered: totalDeadLettered,
+                messagesRetried: totalRetried,
                 campaignsUpdated,
             },
             details: messageResults.results,

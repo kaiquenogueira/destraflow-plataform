@@ -56,6 +56,7 @@ export async function updateLead(data: z.infer<typeof updateLeadSchema>) {
 }
 
 export async function updateLeadTag(id: string, tag: LeadTag) {
+    const validId = z.string().uuid().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
@@ -64,7 +65,7 @@ export async function updateLeadTag(id: string, tag: LeadTag) {
 
     try {
         const lead = await tenantPrisma.lead.update({
-            where: { id },
+            where: { id: validId },
             data: { tag },
         });
 
@@ -78,6 +79,7 @@ export async function updateLeadTag(id: string, tag: LeadTag) {
 }
 
 export async function deleteLead(id: string) {
+    const validId = z.string().uuid().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
@@ -85,7 +87,7 @@ export async function deleteLead(id: string) {
     const { tenantPrisma } = context;
 
     await tenantPrisma.lead.delete({
-        where: { id },
+        where: { id: validId },
     });
 
     revalidatePath("/leads");

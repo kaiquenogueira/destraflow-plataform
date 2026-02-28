@@ -18,13 +18,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, Send, Loader2, Calendar, Bot, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Send, Loader2, Calendar, Bot, ArrowUpDown, ArrowUp, ArrowDown, MessageSquare } from "lucide-react";
 import { TAG_LABELS, TAG_COLORS, type LeadTag, type Lead } from "@/types";
 import { deleteLead } from "@/actions/leads";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SendMessageModal } from "./send-message-modal";
 import { LeadDetailsModal } from "./lead-details-modal";
+import { MessageHistoryModal } from "./message-history-modal";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -38,13 +39,14 @@ export function LeadList({ leads }: LeadListProps) {
     const [deleting, setDeleting] = useState<string | null>(null);
     const [sendingTo, setSendingTo] = useState<Lead | null>(null);
     const [viewingDetails, setViewingDetails] = useState<Lead | null>(null);
+    const [viewingHistory, setViewingHistory] = useState<Lead | null>(null);
 
     const orderBy = searchParams.get("orderBy");
     const orderDirection = searchParams.get("orderDirection");
 
     const handleSort = (field: string) => {
         const params = new URLSearchParams(searchParams.toString());
-        
+
         if (orderBy === field) {
             // Toggle direction
             if (orderDirection === "asc") {
@@ -63,7 +65,7 @@ export function LeadList({ leads }: LeadListProps) {
 
     const SortIcon = ({ field }: { field: string }) => {
         if (orderBy !== field) return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground/50" />;
-        return orderDirection === "asc" 
+        return orderDirection === "asc"
             ? <ArrowUp className="ml-2 h-4 w-4 text-primary" />
             : <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
     };
@@ -122,7 +124,7 @@ export function LeadList({ leads }: LeadListProps) {
                             </p>
                         )}
                         {lead.aiPotential && (
-                            <div 
+                            <div
                                 className="flex items-center gap-2 mt-2 pt-2 border-t border-dashed cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded px-1 -mx-1"
                                 onClick={() => setViewingDetails(lead)}
                             >
@@ -131,9 +133,9 @@ export function LeadList({ leads }: LeadListProps) {
                                 </span>
                                 {lead.aiScore && <span className="text-xs text-muted-foreground">({lead.aiScore} pts)</span>}
                                 {lead.aiAction && (
-                                     <span className="text-xs text-muted-foreground truncate flex-1 text-right" title={lead.aiAction}>
+                                    <span className="text-xs text-muted-foreground truncate flex-1 text-right" title={lead.aiAction}>
                                         {lead.aiAction}
-                                     </span>
+                                    </span>
                                 )}
                             </div>
                         )}
@@ -146,6 +148,15 @@ export function LeadList({ leads }: LeadListProps) {
                             >
                                 <Send className="h-4 w-4 mr-1" />
                                 Enviar
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => setViewingHistory(lead)}
+                            >
+                                <MessageSquare className="h-4 w-4 mr-1" />
+                                Histórico
                             </Button>
                             <Link href={`/leads/${lead.id}`} className="flex-1">
                                 <Button size="sm" variant="outline" className="w-full">
@@ -175,7 +186,7 @@ export function LeadList({ leads }: LeadListProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead 
+                            <TableHead
                                 className="cursor-pointer hover:bg-muted/50 transition-colors"
                                 onClick={() => handleSort("name")}
                             >
@@ -186,7 +197,7 @@ export function LeadList({ leads }: LeadListProps) {
                             </TableHead>
                             <TableHead>Telefone</TableHead>
                             <TableHead>Interesse</TableHead>
-                            <TableHead 
+                            <TableHead
                                 className="cursor-pointer hover:bg-muted/50 transition-colors"
                                 onClick={() => handleSort("aiScore")}
                             >
@@ -197,7 +208,7 @@ export function LeadList({ leads }: LeadListProps) {
                             </TableHead>
                             <TableHead>Sugestão</TableHead>
                             <TableHead>Etiqueta</TableHead>
-                            <TableHead 
+                            <TableHead
                                 className="cursor-pointer hover:bg-muted/50 transition-colors"
                                 onClick={() => handleSort("updatedAt")}
                             >
@@ -259,6 +270,10 @@ export function LeadList({ leads }: LeadListProps) {
                                                 <Send className="mr-2 h-4 w-4" />
                                                 Enviar Mensagem
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setViewingHistory(lead)}>
+                                                <MessageSquare className="mr-2 h-4 w-4" />
+                                                Ver Histórico
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setViewingDetails(lead)}>
                                                 <Bot className="mr-2 h-4 w-4" />
                                                 Ver Análise AI
@@ -297,6 +312,13 @@ export function LeadList({ leads }: LeadListProps) {
                 lead={viewingDetails}
                 open={!!viewingDetails}
                 onClose={() => setViewingDetails(null)}
+            />
+
+            <MessageHistoryModal
+                leadId={viewingHistory?.id || null}
+                leadName={viewingHistory?.name || ""}
+                open={!!viewingHistory}
+                onClose={() => setViewingHistory(null)}
             />
         </>
     );

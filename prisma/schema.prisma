@@ -107,10 +107,11 @@ model Campaign {
 }
 
 enum MessageStatus {
-  PENDING    // Aguardando envio
-  PROCESSING // Sendo enviado
-  SENT       // Enviado com sucesso
-  FAILED     // Falha no envio
+  PENDING     // Aguardando envio
+  PROCESSING  // Sendo enviado
+  SENT        // Enviado com sucesso
+  FAILED      // Falha no envio
+  DEAD_LETTER // Falha permanente após múltiplas tentativas
 }
 
 model CampaignMessage {
@@ -121,6 +122,7 @@ model CampaignMessage {
   status      MessageStatus @default(PENDING)
   error       String?       // Mensagem de erro se FAILED
   priority    Int           @default(0) // 0=normal, 1=alta (unitário)
+  retryCount  Int           @default(0) @map("retry_count") // Tentativas de reenvio
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
   
