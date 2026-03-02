@@ -265,7 +265,7 @@ export async function cancelCampaign(id: string) {
 
 // Envio unitário (imediato)
 export async function sendUnitMessage(leadId: string, template: string) {
-    const validLeadId = z.string().uuid().parse(leadId);
+    const validLeadId = z.string().parse(leadId);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");

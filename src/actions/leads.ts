@@ -56,7 +56,7 @@ export async function updateLead(data: z.infer<typeof updateLeadSchema>) {
 }
 
 export async function updateLeadTag(id: string, tag: LeadTag) {
-    const validId = z.string().uuid().parse(id);
+    const validId = z.string().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
@@ -79,7 +79,7 @@ export async function updateLeadTag(id: string, tag: LeadTag) {
 }
 
 export async function deleteLead(id: string) {
-    const validId = z.string().uuid().parse(id);
+    const validId = z.string().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
