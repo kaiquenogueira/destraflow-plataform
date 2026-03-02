@@ -48,6 +48,7 @@ vi.mock("@/lib/tenant", () => ({
         groupBy: mocks.groupBy,
         updateMany: mocks.updateMany,
         count: mocks.count,
+        findMany: mocks.findMany, // Added this
       },
       $transaction: mocks.$transaction,
     },
@@ -86,6 +87,7 @@ describe("Campaign Actions", () => {
           groupBy: mocks.groupBy,
           updateMany: mocks.updateMany,
           count: mocks.count,
+          findMany: mocks.findMany, // Added this
         },
         $transaction: mocks.$transaction,
       }
@@ -186,17 +188,22 @@ describe("Campaign Actions", () => {
 
       expect(mocks.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {
+          include: {
             messages: {
-              none: {
-                campaign: {
-                  status: {
-                    in: ["SCHEDULED", "PROCESSING", "COMPLETED"],
-                  },
+                where: {
+                    campaign: {
+                        status: { in: ["SCHEDULED", "PROCESSING", "COMPLETED"] }
+                    }
                 },
-              },
+                select: {
+                    campaign: { select: { name: true } },
+                    createdAt: true,
+                },
+                orderBy: { createdAt: "desc" },
+                take: 1,
             },
           },
+          orderBy: { createdAt: "desc" },
         })
       );
     });
@@ -225,35 +232,66 @@ describe("Campaign Actions", () => {
   });
 
   describe("getCampaignById", () => {
-    it("should return campaign with stats", async () => {
-      mocks.findUnique.mockResolvedValue({ id: "c1" });
+    it("should return campaign with stats and messages (supporting CUIDs and complex query)", async () => {
+      const cuid = "cmm9fzx6c000004jsculodr2a";
+      
+      // Mock para findUnique (Campanha)
+      mocks.findUnique.mockResolvedValue({ id: cuid, name: "Campaign 1" });
+      
+      // Mock para findMany (Mensagens)
+      mocks.findMany.mockResolvedValue([
+        { id: "msg1", status: "SENT", lead: { name: "Lead 1", phone: "123" } }
+      ]);
+
+      // Mock para count (Total mensagens)
+      mocks.count.mockResolvedValue(12);
+
+      // Mock para groupBy (Status counts)
       mocks.groupBy.mockResolvedValue([
         { status: "SENT", _count: 10 },
         { status: "FAILED", _count: 2 },
       ]);
 
-      const result = await getCampaignById("c1");
+      const result = await getCampaignById(cuid);
 
+      // Verifica se o ID (CUID) foi aceito
+      expect(result.id).toBe(cuid);
+      
+      // Verifica se a estrutura combinada está correta
+      expect(result.messages).toHaveLength(1);
+      expect(result._count).toEqual({ messages: 12 });
       expect(result.statusCounts).toEqual({
         SENT: 10,
         FAILED: 2,
       });
+
+      // Verifica se as chamadas foram feitas (a ordem pode variar devido ao Promise.all, mas devem ter ocorrido)
+      expect(mocks.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: cuid } }));
+      expect(mocks.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { campaignId: cuid } }));
+      expect(mocks.count).toHaveBeenCalledWith(expect.objectContaining({ where: { campaignId: cuid } }));
+      expect(mocks.groupBy).toHaveBeenCalledWith(expect.objectContaining({ where: { campaignId: cuid } }));
     });
 
     it("should throw if not found", async () => {
       mocks.findUnique.mockResolvedValue(null);
-      await expect(getCampaignById("c1")).rejects.toThrow("Campanha não encontrada");
+      // As outras chamadas podem ocorrer em paralelo, então precisamos mockar para não quebrar
+      mocks.findMany.mockResolvedValue([]);
+      mocks.count.mockResolvedValue(0);
+      mocks.groupBy.mockResolvedValue([]);
+      
+      await expect(getCampaignById("cmm9fzx6c000004jsculodr2a")).rejects.toThrow("Campanha não encontrada");
     });
   });
 
   describe("cancelCampaign", () => {
-    it("should cancel scheduled campaign", async () => {
-      mocks.findUnique.mockResolvedValue({ id: "c1", status: "SCHEDULED" });
+    it("should cancel scheduled campaign with CUID", async () => {
+      const cuid = "cmm9fzx6c000004jsculodr2a";
+      mocks.findUnique.mockResolvedValue({ id: cuid, status: "SCHEDULED" });
 
-      await cancelCampaign("c1");
+      await cancelCampaign(cuid);
 
+      expect(mocks.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: cuid } }));
       expect(mocks.$transaction).toHaveBeenCalled();
-      // Verify transaction contents would be ideal but hard with mock
     });
 
     it("should throw if not scheduled", async () => {
