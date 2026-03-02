@@ -179,29 +179,28 @@ export async function getCampaigns(params?: {
 }
 
 export async function getCampaignById(id: string) {
-    const validId = z.string().uuid().parse(id);
+    const validId = z.string().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
     }
     const { tenantPrisma } = context;
 
-    const [campaign, statusCounts] = await Promise.all([
+    const [campaign, messages, count, statusCounts] = await Promise.all([
         tenantPrisma.campaign.findUnique({
             where: { id: validId },
+        }),
+        tenantPrisma.campaignMessage.findMany({
+            where: { campaignId: validId },
+            orderBy: { createdAt: "desc" },
             include: {
-                messages: {
-                    orderBy: { createdAt: "desc" },
-                    include: {
-                        lead: {
-                            select: { name: true, phone: true },
-                        },
-                    },
-                },
-                _count: {
-                    select: { messages: true },
+                lead: {
+                    select: { name: true, phone: true },
                 },
             },
+        }),
+        tenantPrisma.campaignMessage.count({
+            where: { campaignId: validId },
         }),
         tenantPrisma.campaignMessage.groupBy({
             by: ["status"],
@@ -216,6 +215,8 @@ export async function getCampaignById(id: string) {
 
     return {
         ...campaign,
+        messages,
+        _count: { messages: count },
         statusCounts: statusCounts.reduce(
             (acc: Record<string, number>, item: { status: string; _count: number }) => {
                 acc[item.status] = item._count;
@@ -227,7 +228,7 @@ export async function getCampaignById(id: string) {
 }
 
 export async function cancelCampaign(id: string) {
-    const validId = z.string().uuid().parse(id);
+    const validId = z.string().parse(id);
     const context = await getTenantContext();
     if (!context) {
         throw new Error("Banco de dados não configurado");
