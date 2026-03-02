@@ -93,10 +93,9 @@ O Middleware da aplicação implementa proteção contra abuso (Rate Limiting) b
 *   Aplica-se a rotas de login, admin, dashboard e webhooks.
 *   **Nota**: Em ambientes serverless (como Vercel), o armazenamento é volátil. Para produção, recomenda-se usar Redis (Upstash).
 
-### 3. Proteção de Webhook
-O endpoint de recebimento de mensagens (`/api/webhook/evolution`) é protegido por um segredo compartilhado.
-*   Configure `EVOLUTION_WEBHOOK_SECRET` no `.env`.
-*   O mesmo valor deve ser configurado no header `x-webhook-secret` na Evolution API.
+### 3. Proteção de Webhook e Cron
+*   **Webhook**: O endpoint de recebimento de mensagens (`/api/webhook/evolution`) é protegido por um segredo compartilhado. Configure `EVOLUTION_WEBHOOK_SECRET` no `.env` e no header `x-webhook-secret` na Evolution API.
+*   **Cron Jobs**: As rotas de agendamento (`/api/cron/*`) são protegidas por `CRON_SECRET`. O middleware (`src/middleware.ts`) permite acesso público a essas rotas desde que o header `Authorization: Bearer <CRON_SECRET>` seja enviado.
 
 ## 🚀 Deploy
 
@@ -105,8 +104,9 @@ O endpoint de recebimento de mensagens (`/api/webhook/evolution`) é protegido p
 1.  Faça o push do código para seu repositório Git.
 2.  Importe o projeto na Vercel.
 3.  Configure as **Environment Variables** (baseado no `.env.example`).
-    *   **Importante**: Não esqueça de gerar e adicionar a `DATA_ENCRYPTION_KEY`.
-4.  O script `postinstall` configurado no `package.json` irá gerar o cliente Prisma automaticamente.
+    *   **Importante**: Não esqueça de gerar e adicionar a `DATA_ENCRYPTION_KEY` e `CRON_SECRET`.
+4.  Configure os **Cron Jobs** no `vercel.json` (ou use um serviço externo apontando para `/api/cron/process-messages` com o header de autorização).
+5.  O script `postinstall` configurado no `package.json` irá gerar o cliente Prisma automaticamente.
 
 ---
 
@@ -118,6 +118,7 @@ A estrutura segue o padrão **Next.js App Router**:
     -   `(auth)`: Rotas públicas de autenticação.
     -   `(dashboard)`: Área logada protegida.
     -   `api`: Endpoints de API (NextAuth, Webhooks, Cron).
+-   **`src/middleware.ts`**: Controle de acesso e proteção de rotas (Auth, Cron, API).
 -   **`src/actions`**: Server Actions para lógica de negócios (Admin, Campanhas, Chat, Leads).
 -   **`src/components`**: Componentes React modulares.
 -   **`src/lib`**: Lógica core (Autenticação, Prisma, Multi-tenancy, Integração Evolution API).
@@ -136,12 +137,13 @@ O sistema utiliza uma abordagem híbrida onde existe um banco central para auten
 
 2.  **Banco de Dados do Tenant (Dados do Cliente)**
     *   **Responsabilidade**: Armazenar os dados de negócio (Leads, Conversas, Campanhas).
-    *   **Tabelas Principais**: `Lead`, `Campaign`, `CampaignMessage`.
+    *   **Tabelas Principais**: `Lead`, `Campaign` (IDs via CUID), `CampaignMessage`.
 
 ### Fluxos de Dados
 
 *   **Entrada (Webhook)**: A Evolution API recebe mensagens e o sistema identifica o tenant proprietário para persistir a mensagem no banco correto.
 *   **Visualização**: O middleware e a lib `tenant.ts` identificam o banco do usuário logado para realizar as consultas no contexto correto.
+*   **Processamento em Background (Cron)**: O endpoint `/api/cron/process-messages` varre todos os tenants e processa mensagens pendentes de campanhas agendadas.
 
 ## 🚧 Status do Projeto
 
@@ -153,20 +155,20 @@ Atualmente, a plataforma está em fase de **Beta / Desenvolvimento Ativo**.
 | **Autenticação** | ✅ Completo | NextAuth com suporte a roles (Admin/User). |
 | **CRM (Leads)** | ⚠️ Parcial | Gestão de Leads e Tags ok. Faltam Pipelines/Deals. |
 | **WhatsApp** | ✅ Completo | Integração com Evolution API (QR Code, Envio, Recebimento). |
-| **Campanhas** | ✅ Completo | Disparos em massa com agendamento e fila. |
+| **Campanhas** | ✅ Completo | Disparos em massa com agendamento e fila (suporte a CUIDs). |
 | **Templates** | ✅ Completo | Gestão de templates de mensagens. |
 | **Chat Ao Vivo** | ⚠️ Backend | Lógica de histórico existe, mas falta interface de chat em tempo real. |
-| **Testes** | ❌ Pendente | Sem cobertura de testes automatizados. |
+| **Testes** | ✅ Parcial | Testes unitários para Campanhas implementados. |
 
 ## ⚠️ Limitações Conhecidas
 
 1.  **Escalabilidade do Webhook**: O processamento atual de mensagens recebidas itera sobre todos os usuários para encontrar o tenant correto. Isso precisará ser otimizado (ex: indexar hash da instância) para escalar.
 2.  **Rate Limiting**: O controle de taxa atual é em memória e não persiste entre reinicializações ou em ambiente serverless.
-3.  **Migrações**: A sincronização de schema usa `db push`. Recomendado migrar para `prisma migrate` em produção.
+3.  **Migrações**: A sincronização de schema usa `db push`. Scripts de migração de tenants (`scripts/migrate-tenants.ts`) disponíveis para atualizações de schema.
 
 ## 🚀 Próximos Passos
 
-- [ ] Implementar Testes Unitários e de Integração.
+- [ ] Implementar Testes de Integração E2E.
 - [ ] Criar interface de "Bate-papo ao vivo" (Live Chat).
 - [ ] Melhorar performance do Webhook.
 - [ ] Implementar Pipelines de Vendas (Kanban).

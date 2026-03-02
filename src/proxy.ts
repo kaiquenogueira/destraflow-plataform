@@ -63,6 +63,11 @@ export default withAuth(
         const token = req.nextauth.token;
         const isAuth = !!token;
         const isAuthPage = req.nextUrl.pathname.startsWith("/login");
+        const isCronRoute = req.nextUrl.pathname.startsWith("/api/cron");
+
+        if (isCronRoute) {
+            return NextResponse.next();
+        }
 
         if (isAuthPage) {
             if (isAuth) {
@@ -92,8 +97,8 @@ export default withAuth(
     {
         callbacks: {
             authorized: ({ req, token }) => {
-                // Rotas de login também são públicas
-                if (req.nextUrl.pathname.startsWith("/login")) {
+                // Rotas de login e cron são públicas
+                if (req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/api/cron")) {
                     return true;
                 }
                 // Demais rotas exigem token
