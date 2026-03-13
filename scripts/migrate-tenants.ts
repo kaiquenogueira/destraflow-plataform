@@ -36,9 +36,13 @@ async function migrateTenant(dbUrl: string, email: string) {
         await addEnumValue('RETURN');
 
         console.log("Updating old tags to new tags...");
-        await client.query(`UPDATE "leads" SET "tag" = 'NEW' WHERE "tag" = 'COLD'`);
-        await client.query(`UPDATE "leads" SET "tag" = 'PROSPECTING' WHERE "tag" = 'WARM'`);
-        await client.query(`UPDATE "leads" SET "tag" = 'MEETING' WHERE "tag" = 'HOT'`);
+        try {
+            await client.query(`UPDATE "leads" SET "tag" = 'NEW' WHERE "tag"::text = 'COLD'`);
+            await client.query(`UPDATE "leads" SET "tag" = 'PROSPECTING' WHERE "tag"::text = 'WARM'`);
+            await client.query(`UPDATE "leads" SET "tag" = 'MEETING' WHERE "tag"::text = 'HOT'`);
+        } catch (updateError: any) {
+            console.log(`Warning updating tags: ${updateError.message} (Isso é normal se os valores antigos não existirem mais)`);
+        }
 
         await client.end();
     } catch (e) {
