@@ -28,13 +28,13 @@ describe("EvolutionClient", () => {
     it("should return connected status when instance is open", async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ instance: { state: "open" } }),
+        json: async () => ([{ name: "test-instance", connectionStatus: "open" }]),
       });
 
       const status = await client.getInstanceStatus();
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "http://test-api.com/instance/connectionState/test-instance",
+        "http://test-api.com/instance/fetchInstances?instanceName=test-instance",
         expect.objectContaining({
           headers: expect.objectContaining({
             apikey: "test-api-key",
@@ -47,7 +47,7 @@ describe("EvolutionClient", () => {
     it("should return disconnected status when instance is not open", async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ instance: { state: "close" } }),
+        json: async () => ([{ name: "test-instance", connectionStatus: "close" }]),
       });
 
       const status = await client.getInstanceStatus();
@@ -66,6 +66,21 @@ describe("EvolutionClient", () => {
       expect(status).toEqual({ connected: false, state: "error" });
 
       consoleSpy.mockRestore();
+    });
+
+    it("should fallback to connectionState when fetchInstances does not return a match", async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ([]),
+      });
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ instance: { state: "open" } }),
+      });
+
+      const status = await client.getInstanceStatus();
+
+      expect(status).toEqual({ connected: true, state: "open" });
     });
   });
 

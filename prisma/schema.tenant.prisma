@@ -43,6 +43,7 @@ model Lead {
   
   // Relacionamentos
   messages  CampaignMessage[]
+  notes     LeadNote[]
   
   // AI Analysis Fields
   aiPotential       String?   @map("ai_potential")
@@ -124,6 +125,18 @@ model Template {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("templates")
+}
+
+model LeadNote {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  leadId    String   @map("lead_id")
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("lead_notes")
 }
 
 model WhatsAppContact {

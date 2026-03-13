@@ -1,9 +1,8 @@
-"use server";
-
 import { cache } from "react";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
+import { decrypt } from "@/lib/encryption";
 import type { PrismaClient } from "@prisma/client";
 
 export interface TenantContext {
@@ -41,29 +40,13 @@ export const getTenantContext = cache(async (): Promise<TenantContext | null> =>
         return null;
     }
 
+    const databaseUrl = decrypt(user.databaseUrl);
+
     return {
         userId: user.id,
         userRole: user.role,
-        tenantPrisma: getTenantPrisma(user.databaseUrl),
+        tenantPrisma: getTenantPrisma(databaseUrl),
     };
 });
 
-/**
- * Verifica se o usuário atual é admin
- */
-export async function requireAdmin(): Promise<void> {
-    const session = await getServerSession(authConfig);
-
-    if (!session?.user?.id) {
-        throw new Error("Não autorizado");
-    }
-
-    const user = await prisma.crmUser.findUnique({
-        where: { id: session.user.id },
-        select: { role: true },
-    });
-
-    if (user?.role !== "ADMIN") {
-        throw new Error("Acesso negado. Apenas administradores.");
-    }
-}
+export { requireAdmin } from "@/lib/admin-auth";

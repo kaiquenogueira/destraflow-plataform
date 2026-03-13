@@ -21,10 +21,13 @@ import {
     Plus,
     TrendingUp,
     Calendar,
-    Phone
+    Phone,
+    AlertTriangle,
+    Zap,
+    UserPlus
 } from "lucide-react";
 import { TAG_LABELS, TAG_COLORS, LeadTag } from "@/types";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, subDays, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +71,9 @@ async function getTenantDashboardData(userId: string) {
     const databaseUrl = decrypt(user.databaseUrl);
     const tenantPrisma = getTenantPrisma(databaseUrl);
 
-    const [totalLeads, leadsByTag, pendingMessages, sentMessages, recentLeads] = await Promise.all([
+    const sevenDaysAgo = subDays(new Date(), 7);
+
+    const [totalLeads, leadsByTag, pendingMessages, sentMessages, recentLeads, stagnantLeads, hotLeadsCount, newThisWeekCount] = await Promise.all([
         tenantPrisma.lead.count(),
         tenantPrisma.lead.groupBy({
             by: ["tag"],
@@ -80,10 +85,32 @@ async function getTenantDashboardData(userId: string) {
             orderBy: { updatedAt: "desc" },
             take: 5,
         }),
+        // Leads estagnados: sem update há 7+ dias, excluindo CUSTOMER e LOST
+        tenantPrisma.lead.findMany({
+            where: {
+                updatedAt: { lt: sevenDaysAgo },
+                tag: { notIn: ["CUSTOMER", "LOST"] },
+            },
+            orderBy: { updatedAt: "asc" },
+            take: 5,
+        }),
+        // Leads quentes: aiPotential contém "alta" ou "alto"
+        tenantPrisma.lead.count({
+            where: {
+                OR: [
+                    { aiPotential: { contains: "alta", mode: "insensitive" } },
+                    { aiPotential: { contains: "alto", mode: "insensitive" } },
+                ],
+            },
+        }),
+        // Novos esta semana
+        tenantPrisma.lead.count({
+            where: { createdAt: { gte: sevenDaysAgo } },
+        }),
     ]);
 
-    let evolutionInstance = user.evolutionInstance;
-    let evolutionApiKey = user.evolutionApiKey;
+    const evolutionInstance = user.evolutionInstance;
+    const evolutionApiKey = user.evolutionApiKey;
 
     const tagCounts = leadsByTag.reduce(
         (acc: Record<string, number>, item: { tag: string; _count: number }) => {
@@ -101,6 +128,9 @@ async function getTenantDashboardData(userId: string) {
         pendingMessages,
         sentMessages,
         recentLeads,
+        stagnantLeads,
+        hotLeadsCount,
+        newThisWeekCount,
         isAdmin: false,
     };
 }
@@ -287,6 +317,38 @@ export default async function DashboardPage() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 <div className="col-span-4 space-y-6">
+                    {/* Insights do Funil */}
+                    <div>
+                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Zap className="h-5 w-5 text-amber-500" />
+                            Insights do Funil
+                        </h2>
+                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                            <StatsCard
+                                title="Leads Estagnados"
+                                value={data.stagnantLeads?.length ?? 0}
+                                icon={AlertTriangle}
+                                variant={(data.stagnantLeads?.length ?? 0) > 0 ? "warning" : "default"}
+                                description="Sem movimento há 7+ dias"
+                            />
+                            <StatsCard
+                                title="Leads Quentes"
+                                value={data.hotLeadsCount ?? 0}
+                                icon={Flame}
+                                variant={(data.hotLeadsCount ?? 0) > 0 ? "success" : "default"}
+                                description="Potencial alto (IA)"
+                            />
+                            <StatsCard
+                                title="Novos esta Semana"
+                                value={data.newThisWeekCount ?? 0}
+                                icon={UserPlus}
+                                variant={(data.newThisWeekCount ?? 0) > 0 ? "info" : "default"}
+                                description="Últimos 7 dias"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Leads por Status */}
                     <div>
                         <h2 className="text-lg font-semibold mb-4">Leads por Status</h2>
                         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
@@ -306,8 +368,46 @@ export default async function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="col-span-3">
-                    <Card className="h-full">
+                <div className="col-span-3 space-y-6">
+                    {/* Leads Estagnados */}
+                    {data.stagnantLeads && data.stagnantLeads.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5 text-amber-500" />
+                                    Leads Estagnados
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {data.stagnantLeads.map((lead) => (
+                                        <div key={lead.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                                            <div className="space-y-1">
+                                                <p className="font-medium text-sm">{lead.name}</p>
+                                                <Badge className={cn("text-[10px] px-1 py-0", TAG_COLORS[lead.tag])}>
+                                                    {TAG_LABELS[lead.tag]}
+                                                </Badge>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                                                    {differenceInDays(new Date(), lead.updatedAt)}d
+                                                </span>
+                                                <p className="text-[10px] text-muted-foreground">sem movimento</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <Link href="/leads?orderBy=updatedAt&orderDirection=asc" className="block text-center mt-2">
+                                        <Button variant="link" size="sm">
+                                            Ver todos estagnados
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Atividade Recente */}
+                    <Card className="h-fit">
                         <CardHeader>
                             <CardTitle className="text-lg font-semibold flex items-center gap-2">
                                 <Clock className="h-5 w-5" />

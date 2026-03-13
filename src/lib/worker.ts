@@ -120,38 +120,15 @@ async function processTenantMessages(
                 },
             });
 
-            // Registrar no histórico de chat
-            let contact = await tenantPrisma.whatsAppContact.findFirst({
-                where: { whatsapp: message.lead.phone },
-            });
-
-            if (!contact) {
-                contact = await tenantPrisma.whatsAppContact.create({
-                    data: {
-                        whatsapp: message.lead.phone,
-                        name: message.lead.name,
-                        createdAt: new Date(),
-                        isManual: false,
-                    },
-                });
-            }
-
-            const agentPhone = evolutionPhone || "unknown_agent";
-            const sessionId = `${message.lead.phone}_${agentPhone}`;
-            const threadId = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
-
-            await tenantPrisma.chatHistory.create({
-                data: {
-                    userId: contact.id,
-                    sessionId,
-                    threadId,
-                    message: {
-                        type: "system",
-                        content: message.payload,
-                    },
-                    createdAt: new Date(),
+            await persistOutboundMessageAudit(
+                tenantPrisma,
+                {
+                    phone: message.lead.phone,
+                    name: message.lead.name,
+                    payload: message.payload,
                 },
-            });
+                evolutionPhone
+            );
 
             result.sent++;
             if (isRetry) result.retried++;
@@ -192,6 +169,48 @@ async function processTenantMessages(
     }
 
     return result;
+}
+
+async function persistOutboundMessageAudit(
+    tenantPrisma: ReturnType<typeof getTenantPrisma>,
+    message: { phone: string; name: string; payload: string },
+    evolutionPhone: string | null
+): Promise<void> {
+    try {
+        let contact = await tenantPrisma.whatsAppContact.findFirst({
+            where: { whatsapp: message.phone },
+        });
+
+        if (!contact) {
+            contact = await tenantPrisma.whatsAppContact.create({
+                data: {
+                    whatsapp: message.phone,
+                    name: message.name,
+                    createdAt: new Date(),
+                    isManual: false,
+                },
+            });
+        }
+
+        const agentPhone = evolutionPhone || "unknown_agent";
+        const sessionId = `${message.phone}_${agentPhone}`;
+        const threadId = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+
+        await tenantPrisma.chatHistory.create({
+            data: {
+                userId: contact.id,
+                sessionId,
+                threadId,
+                message: {
+                    type: "system",
+                    content: message.payload,
+                },
+                createdAt: new Date(),
+            },
+        });
+    } catch (error) {
+        console.error("Failed to persist outbound message audit:", error);
+    }
 }
 
 /**

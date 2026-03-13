@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { syncTenantDatabase } from "./tenant-sync";
+import { buildTenantSyncCommand, isValidPostgresConnectionString, syncTenantDatabase } from "./tenant-sync";
 import fs from "fs";
 import path from "path";
 
@@ -21,17 +21,17 @@ vi.mock("@/lib/admin-auth", () => ({
 }));
 
 // Mock do child_process para não executar comandos reais
-const mockExec = vi.fn();
+const mockExecFile = vi.fn();
 vi.mock("child_process", () => {
     return {
-        exec: (cmd: string, opts: any, cb: any) => {
-            mockExec(cmd, opts);
+        execFile: (file: string, args: string[], opts: any, cb: any) => {
+            mockExecFile(file, args, opts);
             if (cb) cb(null, { stdout: "Success", stderr: "" });
             return { stdout: "Success", stderr: "" }; // Retorno síncrono simulado se necessário
         },
         default: { // Necessário para alguns imports
-            exec: (cmd: string, opts: any, cb: any) => {
-                mockExec(cmd, opts);
+            execFile: (file: string, args: string[], opts: any, cb: any) => {
+                mockExecFile(file, args, opts);
                 if (cb) cb(null, { stdout: "Success", stderr: "" });
             }
         }
@@ -58,12 +58,17 @@ describe("Tenant Database Synchronization", () => {
 
         // Assert
         expect(result.success).toBe(true);
-        expect(mockExec).toHaveBeenCalledWith(
-            expect.stringContaining('DATABASE_URL="postgresql://user:pass@host:5432/db" npx prisma db push --skip-generate'),
+        expect(mockExecFile).toHaveBeenCalledWith(
+            "npx",
+            [
+                "prisma",
+                "db",
+                "push",
+                "--schema=prisma/schema.tenant.prisma",
+                "--url=postgresql://user:pass@host:5432/db",
+            ],
             expect.objectContaining({
-                env: expect.objectContaining({
-                    DATABASE_URL: "postgresql://user:pass@host:5432/db",
-                }),
+                env: expect.any(Object),
             })
         );
     });
@@ -78,7 +83,7 @@ describe("Tenant Database Synchronization", () => {
 
         expect(result.success).toBe(false);
         expect(result.message).toContain("sem banco de dados");
-        expect(mockExec).not.toHaveBeenCalled();
+        expect(mockExecFile).not.toHaveBeenCalled();
     });
 });
 
@@ -132,5 +137,26 @@ describe("Schema Integrity Check", () => {
 
         expect(newTables).toHaveLength(0);
         expect(missingTables).toHaveLength(0);
+    });
+});
+
+describe("Tenant Sync Helpers", () => {
+    it("should validate postgres connection strings", () => {
+        expect(isValidPostgresConnectionString("postgresql://tenant")).toBe(true);
+        expect(isValidPostgresConnectionString("postgres://tenant")).toBe(true);
+        expect(isValidPostgresConnectionString("mysql://tenant")).toBe(false);
+    });
+
+    it("should build a deterministic prisma db push command", () => {
+        expect(buildTenantSyncCommand("postgresql://tenant-db")).toEqual({
+            file: "npx",
+            args: [
+                "prisma",
+                "db",
+                "push",
+                "--schema=prisma/schema.tenant.prisma",
+                "--url=postgresql://tenant-db",
+            ],
+        });
     });
 });

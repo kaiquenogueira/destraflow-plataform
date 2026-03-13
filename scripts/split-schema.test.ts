@@ -1,11 +1,8 @@
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { splitSchema } from './split-schema';
 
 const ROOT_DIR = path.join(__dirname, '..');
 const CRM_SCHEMA_PATH = path.join(ROOT_DIR, 'prisma/schema.crm.prisma');
@@ -13,9 +10,9 @@ const TENANT_SCHEMA_PATH = path.join(ROOT_DIR, 'prisma/schema.tenant.prisma');
 
 describe('Schema Split Script', () => {
     
-    beforeAll(async () => {
+    beforeAll(() => {
         // Executa o script de split
-        await execAsync('npx tsx scripts/split-schema.ts', { cwd: ROOT_DIR });
+        splitSchema();
     });
 
     it('should create both schema files', () => {

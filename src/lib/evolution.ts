@@ -54,12 +54,14 @@ export class EvolutionClient {
                     `/instance/fetchInstances?instanceName=${encodedName}`
                 );
 
-                const instance = instances.find(i => i.name === this.config.instanceName);
-                if (instance) {
-                    return {
-                        connected: instance.connectionStatus === "open",
-                        state: instance.connectionStatus || "disconnected",
-                    };
+                if (Array.isArray(instances)) {
+                    const instance = instances.find(i => i.name === this.config.instanceName);
+                    if (instance) {
+                        return {
+                            connected: instance.connectionStatus === "open",
+                            state: instance.connectionStatus || "disconnected",
+                        };
+                    }
                 }
             } catch (e) {
                 // Ignore and fallback to connectionState

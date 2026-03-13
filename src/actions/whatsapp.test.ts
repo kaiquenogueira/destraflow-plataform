@@ -9,7 +9,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { createEvolutionClient } from "@/lib/evolution";
-import { encrypt, decrypt } from "@/lib/encryption";
+import { encrypt, decrypt, hashString } from "@/lib/encryption";
 
 // Mock dependencies
 vi.mock("next-auth", () => ({
@@ -32,6 +32,7 @@ vi.mock("@/lib/evolution", () => ({
 vi.mock("@/lib/encryption", () => ({
   encrypt: vi.fn((val) => `encrypted-${val}`),
   decrypt: vi.fn((val) => val.replace("encrypted-", "")),
+  hashString: vi.fn((val) => `hashed-${val}`),
 }));
 
 vi.mock("next/cache", () => ({
@@ -64,6 +65,7 @@ describe("WhatsApp Actions", () => {
     (createEvolutionClient as any).mockReturnValue(mockEvolutionClient);
     (encrypt as any).mockImplementation((val: string) => `encrypted-${val}`);
     (decrypt as any).mockImplementation((val: string) => val.replace("encrypted-", ""));
+    (hashString as any).mockImplementation((val: string) => `hashed-${val}`);
   });
 
   describe("getWhatsAppStatus", () => {
@@ -157,6 +159,17 @@ describe("WhatsApp Actions", () => {
       expect(mockEvolutionClient.disconnect).toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
+
+    it("should return error when disconnect fails", async () => {
+      mockEvolutionClient.disconnect.mockResolvedValue(false);
+
+      const result = await disconnectWhatsApp();
+
+      expect(result).toEqual({
+        success: false,
+        error: "Não foi possível desconectar a instância do WhatsApp",
+      });
+    });
   });
 
   describe("saveEvolutionConfig", () => {
@@ -167,6 +180,7 @@ describe("WhatsApp Actions", () => {
         where: { id: "user-1" },
         data: {
           evolutionInstance: "encrypted-new-instance",
+          evolutionInstanceHash: "hashed-new-instance",
           evolutionApiKey: "encrypted-new-key",
         },
       });

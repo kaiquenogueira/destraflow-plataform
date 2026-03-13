@@ -3,16 +3,33 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/encryption";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export type SyncResult = {
     success: boolean;
     message: string;
     details?: string;
 };
+
+export async function isValidPostgresConnectionString(connectionString: string): Promise<boolean> {
+    return connectionString.startsWith("postgresql://") || connectionString.startsWith("postgres://");
+}
+
+export async function buildTenantSyncCommand(connectionString: string) {
+    return {
+        file: "npx",
+        args: [
+            "prisma",
+            "db",
+            "push",
+            "--schema=prisma/schema.tenant.prisma",
+            `--url=${connectionString}`,
+        ],
+    };
+}
 
 export async function syncTenantDatabase(userId: string): Promise<SyncResult> {
     try {
@@ -34,7 +51,7 @@ export async function syncTenantDatabase(userId: string): Promise<SyncResult> {
         const connectionString = decrypt(user.databaseUrl);
         
         // Validação básica da string de conexão
-        if (!connectionString.startsWith("postgresql://") && !connectionString.startsWith("postgres://")) {
+        if (!await isValidPostgresConnectionString(connectionString)) {
             return { success: false, message: "URL do banco de dados inválida" };
         }
 
@@ -49,9 +66,9 @@ export async function syncTenantDatabase(userId: string): Promise<SyncResult> {
         
         // Usamos --url para sobrescrever a conexão definida no prisma.config.ts/schema
         // Isso garante que conectamos no tenant e não no CRM
-        const command = `npx prisma db push --schema=prisma/schema.tenant.prisma --url="${connectionString}"`;
+        const command = await buildTenantSyncCommand(connectionString);
 
-        const { stdout, stderr } = await execAsync(command, {
+        const { stdout } = await execFileAsync(command.file, command.args, {
             env: { ...process.env },
         });
 

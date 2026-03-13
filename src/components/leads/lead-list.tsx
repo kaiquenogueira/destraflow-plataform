@@ -17,10 +17,14 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, Send, Loader2, Calendar, Bot, ArrowUpDown, ArrowUp, ArrowDown, MessageSquare } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Send, Loader2, Calendar, Bot, ArrowUpDown, ArrowUp, ArrowDown, MessageSquare, ExternalLink, ArrowRightLeft } from "lucide-react";
 import { TAG_LABELS, TAG_COLORS, type LeadTag, type Lead } from "@/types";
-import { deleteLead } from "@/actions/leads";
+import { deleteLead, updateLeadTag } from "@/actions/leads";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SendMessageModal } from "./send-message-modal";
@@ -68,6 +72,21 @@ export function LeadList({ leads }: LeadListProps) {
         return orderDirection === "asc"
             ? <ArrowUp className="ml-2 h-4 w-4 text-primary" />
             : <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    };
+
+    const handleTagChange = async (leadId: string, newTag: LeadTag) => {
+        try {
+            await updateLeadTag(leadId, newTag);
+            toast.success(`Lead movido para ${TAG_LABELS[newTag]}`);
+            router.refresh();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Erro ao mover lead");
+        }
+    };
+
+    const openWhatsApp = (phone: string) => {
+        const cleanPhone = phone.replace(/\D/g, "");
+        window.open(`https://wa.me/${cleanPhone}`, "_blank");
     };
 
     const handleDelete = async (id: string) => {
@@ -139,7 +158,16 @@ export function LeadList({ leads }: LeadListProps) {
                                 )}
                             </div>
                         )}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => openWhatsApp(lead.phone)}
+                            >
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                WhatsApp
+                            </Button>
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -176,6 +204,19 @@ export function LeadList({ leads }: LeadListProps) {
                                     <Trash2 className="h-4 w-4" />
                                 )}
                             </Button>
+                        </div>
+                        {/* Mobile Tag Change */}
+                        <div className="flex gap-1.5 flex-wrap mt-2 pt-2 border-t">
+                            <span className="text-xs text-muted-foreground w-full mb-1">Mover para:</span>
+                            {(Object.entries(TAG_LABELS) as [LeadTag, string][]).filter(([tag]) => tag !== lead.tag).map(([tag, label]) => (
+                                <Badge
+                                    key={tag}
+                                    className={`cursor-pointer text-[10px] px-1.5 py-0.5 ${TAG_COLORS[tag]}`}
+                                    onClick={() => handleTagChange(lead.id, tag)}
+                                >
+                                    {label}
+                                </Badge>
+                            ))}
                         </div>
                     </div>
                 ))}
@@ -266,6 +307,10 @@ export function LeadList({ leads }: LeadListProps) {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => openWhatsApp(lead.phone)}>
+                                                <ExternalLink className="mr-2 h-4 w-4" />
+                                                Abrir no WhatsApp
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setSendingTo(lead)}>
                                                 <Send className="mr-2 h-4 w-4" />
                                                 Enviar Mensagem
@@ -274,6 +319,25 @@ export function LeadList({ leads }: LeadListProps) {
                                                 <MessageSquare className="mr-2 h-4 w-4" />
                                                 Ver Histórico
                                             </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger>
+                                                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                                                    Mover para...
+                                                </DropdownMenuSubTrigger>
+                                                <DropdownMenuSubContent>
+                                                    {(Object.entries(TAG_LABELS) as [LeadTag, string][]).filter(([tag]) => tag !== lead.tag).map(([tag, label]) => (
+                                                        <DropdownMenuItem
+                                                            key={tag}
+                                                            onClick={() => handleTagChange(lead.id, tag)}
+                                                        >
+                                                            <span className={`inline-block w-2 h-2 rounded-full mr-2 ${TAG_COLORS[tag].split(' ')[0]}`} />
+                                                            {label}
+                                                        </DropdownMenuItem>
+                                                    ))}
+                                                </DropdownMenuSubContent>
+                                            </DropdownMenuSub>
+                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem onClick={() => setViewingDetails(lead)}>
                                                 <Bot className="mr-2 h-4 w-4" />
                                                 Ver Análise AI
@@ -284,6 +348,7 @@ export function LeadList({ leads }: LeadListProps) {
                                                     Editar
                                                 </Link>
                                             </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem
                                                 className="text-destructive"
                                                 onClick={() => handleDelete(lead.id)}

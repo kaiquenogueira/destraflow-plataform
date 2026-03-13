@@ -264,6 +264,49 @@ describe("Worker", () => {
       expect(result.results["User 1"].sent).toBe(1);
       expect(result.results["User 1"].retried).toBe(1);
     });
+
+    it("should not mark a message as failed when the audit log persistence fails after a successful send", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
+        {
+          id: "user-1",
+          name: "User 1",
+          databaseUrl: "encrypted-db-url",
+          evolutionInstance: "encrypted-instance",
+          evolutionApiKey: "encrypted-key",
+          evolutionPhone: "5511999999999",
+        },
+      ]);
+
+      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
+        {
+          id: "msg-1",
+          lead: { phone: "5511988888888", name: "Lead" },
+          payload: "Hello",
+          status: "PENDING",
+          retryCount: 0,
+        },
+      ]);
+
+      mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
+      mockEvolutionClient.sendMessage.mockResolvedValue(true);
+      mockTenantPrisma.whatsAppContact.findFirst.mockResolvedValue({ id: "contact-1" });
+      mockTenantPrisma.chatHistory.create.mockRejectedValue(new Error("history failed"));
+
+      const result = await processAllTenantMessages();
+
+      expect(result.results["User 1"].sent).toBe(1);
+      expect(result.results["User 1"].failed).toBe(0);
+      expect(mockTenantPrisma.campaignMessage.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "msg-1" },
+          data: expect.objectContaining({ status: "SENT" }),
+        })
+      );
+
+      consoleSpy.mockRestore();
+    });
   });
 
   describe("updateCampaignStatuses", () => {

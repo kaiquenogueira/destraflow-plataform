@@ -85,7 +85,7 @@ function extractBlocks(content: string): { type: string, name: string, content: 
     return blocks;
 }
 
-function splitSchema() {
+export function splitSchema() {
     console.log('🔄 Iniciando separação de schemas...');
 
     if (!fs.existsSync(SCHEMA_PATH)) {
@@ -128,4 +128,6 @@ function splitSchema() {
     console.log(`✅ Tenant Schema: ${TENANT_SCHEMA_PATH} (${blocks.filter(b => !CRM_MODELS.includes(b.name) && !IGNORE_MODELS.includes(b.name)).length} models)`);
 }
 
-splitSchema();
+if (require.main === module) {
+    splitSchema();
+}

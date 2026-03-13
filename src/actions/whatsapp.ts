@@ -5,7 +5,7 @@ import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
 import { revalidatePath } from "next/cache";
-import { encrypt, decrypt } from "@/lib/encryption";
+import { encrypt, decrypt, hashString } from "@/lib/encryption";
 
 async function getCurrentUserId(): Promise<string> {
     const session = await getServerSession(authConfig);
@@ -79,7 +79,14 @@ export async function disconnectWhatsApp() {
     try {
         const config = await getUserEvolutionConfig();
         const client = createEvolutionClient(config.instanceName, config.apiKey);
-        await client.disconnect();
+        const disconnected = await client.disconnect();
+
+        if (!disconnected) {
+            return {
+                success: false,
+                error: "Não foi possível desconectar a instância do WhatsApp",
+            };
+        }
 
         revalidatePath("/whatsapp");
         return { success: true };
@@ -101,6 +108,7 @@ export async function saveEvolutionConfig(
         where: { id: userId },
         data: {
             evolutionInstance: encrypt(instanceName),
+            evolutionInstanceHash: hashString(instanceName),
             evolutionApiKey: apiKey ? encrypt(apiKey) : null,
         },
     });

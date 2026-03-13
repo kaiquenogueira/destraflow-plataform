@@ -110,20 +110,21 @@ export async function createUser(data: z.infer<typeof createUserSchema>) {
     });
 
     // Tentar sincronizar o banco de dados se houver URL configurada
-    if (validated.databaseUrl) {
-        console.log(`🚀 Acionando sincronização automática para ${user.email}`);
+    let syncResult = null;
+    if (validated.role === "USER" && validated.databaseUrl) {
+        console.log(`🚀 Acionando sincronização automática para ${validated.email}`);
         // Não vamos bloquear o retorno se falhar, mas vamos logar
         // Ou podemos bloquear? O usuário pediu "garantir". 
         // Se falhar aqui, o usuário foi criado mas o banco não está pronto.
         // Vamos aguardar e logar.
-        const syncResult = await syncTenantDatabase(user.id);
+        syncResult = await syncTenantDatabase(user.id);
         if (!syncResult.success) {
             console.error(`⚠️ Aviso: Usuário criado, mas falha na sincronização do DB: ${syncResult.message}`);
         }
     }
 
     revalidatePath("/admin/users");
-    return { success: true, userId: user.id };
+    return { success: true, userId: user.id, syncResult };
 }
 
 export async function updateUser(data: z.infer<typeof updateUserSchema>) {
