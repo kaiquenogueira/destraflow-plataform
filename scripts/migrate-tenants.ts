@@ -1,11 +1,11 @@
 import 'dotenv/config';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import crypto from 'crypto';
 import { prisma } from '../src/lib/prisma';
 import { decrypt } from '../src/lib/encryption';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 import { Client } from 'pg';
 
@@ -51,9 +51,18 @@ async function migrateTenant(dbUrl: string, email: string) {
     }
 
     // 2. Rodar o prisma db push para alinhar o schema final (e remover as antigas se Prisma suportar)
-    const command = `npx prisma db push --schema=prisma/schema.tenant.prisma --accept-data-loss --url="${dbUrl}"`;
-    const { stdout, stderr } = await execAsync(command, {
+    const args = [
+        'prisma',
+        'db',
+        'push',
+        '--schema=prisma/schema.tenant.prisma',
+        '--accept-data-loss',
+        `--url=${dbUrl}`
+    ];
+    
+    const { stdout, stderr } = await execFileAsync('npx', args, {
         env: { ...process.env },
+        shell: false
     });
     console.log(`Success for ${email}`);
     console.log("Output:", stdout.slice(0, 200) + "...");

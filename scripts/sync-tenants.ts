@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import { createDecipheriv } from "crypto";
 import * as dotenv from "dotenv";
@@ -9,7 +9,7 @@ import pg from "pg";
 // Carregar variáveis de ambiente
 dotenv.config();
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 // Configuração de criptografia
 const ALGORITHM = "aes-256-gcm";
@@ -86,12 +86,22 @@ async function main() {
                 console.log("   🚀 Executando push...");
                 
                 // Usamos a flag --url para passar a conexão do tenant diretamente
-                const { stdout, stderr } = await execAsync(`npx prisma db push --schema=prisma/schema.tenant.prisma --url="${connectionString}"`, {
-                    env: { ...process.env }
+                // Use execFile to prevent shell injection
+                const args = [
+                    'prisma', 
+                    'db', 
+                    'push', 
+                    '--schema=prisma/schema.tenant.prisma', 
+                    `--url=${connectionString}`
+                ];
+
+                const { stdout, stderr } = await execFileAsync('npx', args, {
+                    env: { ...process.env },
+                    shell: false
                 });
 
-                if (stdout) console.log(`   ✅ Sucesso:\n${stdout.trim().split('\n').map(l => '      ' + l).join('\n')}`);
-                if (stderr) console.error(`   ⚠️  Avisos/Erros:\n${stderr.trim().split('\n').map(l => '      ' + l).join('\n')}`);
+                if (stdout) console.log(`   ✅ Sucesso:\n${stdout.trim().split('\n').map((l: string) => '      ' + l).join('\n')}`);
+                if (stderr) console.error(`   ⚠️  Avisos/Erros:\n${stderr.trim().split('\n').map((l: string) => '      ' + l).join('\n')}`);
 
             } catch (error) {
                 console.error(`   ❌ Erro ao sincronizar tenant ${user.email}:`, error);
