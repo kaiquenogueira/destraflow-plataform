@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { buildTenantSyncCommand, isValidPostgresConnectionString, syncTenantDatabase } from "./tenant-sync";
+import {
+    syncTenantDatabase,
+} from "./tenant-sync";
+import {
+    buildTenantDiffCommand,
+    buildTenantSyncCommand,
+    filterNonDestructiveSqlStatements,
+    isDataLossError,
+    isValidPostgresConnectionString,
+    sanitizeErrorDetails,
+} from "@/lib/tenant-sync-utils";
 import fs from "fs";
 import path from "path";
 
@@ -22,21 +32,30 @@ vi.mock("@/lib/admin-auth", () => ({
 
 // Mock do child_process para não executar comandos reais
 const mockExecFile = vi.fn();
+const mockPgClient = {
+    connect: vi.fn(),
+    query: vi.fn(),
+    end: vi.fn(),
+};
+
 vi.mock("child_process", () => {
     return {
         execFile: (file: string, args: string[], opts: any, cb: any) => {
-            mockExecFile(file, args, opts);
-            if (cb) cb(null, { stdout: "Success", stderr: "" });
-            return { stdout: "Success", stderr: "" }; // Retorno síncrono simulado se necessário
+            mockExecFile(file, args, opts, cb);
         },
-        default: { // Necessário para alguns imports
+        default: {
             execFile: (file: string, args: string[], opts: any, cb: any) => {
-                mockExecFile(file, args, opts);
-                if (cb) cb(null, { stdout: "Success", stderr: "" });
+                mockExecFile(file, args, opts, cb);
             }
         }
     };
 });
+
+vi.mock("pg", () => ({
+    Client: vi.fn(function MockClient() {
+        return mockPgClient;
+    }),
+}));
 
 // Importar mocks para configuração
 import { prisma } from "@/lib/prisma";
@@ -44,6 +63,12 @@ import { prisma } from "@/lib/prisma";
 describe("Tenant Database Synchronization", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockExecFile.mockImplementation((file: string, args: string[], opts: any, cb: any) => {
+            cb(null, "Success", "");
+        });
+        mockPgClient.connect.mockResolvedValue(undefined);
+        mockPgClient.query.mockResolvedValue(undefined);
+        mockPgClient.end.mockResolvedValue(undefined);
     });
 
     it("should execute prisma db push with correct connection string", async () => {
@@ -69,7 +94,8 @@ describe("Tenant Database Synchronization", () => {
             ],
             expect.objectContaining({
                 env: expect.any(Object),
-            })
+            }),
+            expect.any(Function),
         );
     });
 
@@ -85,6 +111,53 @@ describe("Tenant Database Synchronization", () => {
         expect(result.message).toContain("sem banco de dados");
         expect(mockExecFile).not.toHaveBeenCalled();
     });
+
+    it("should fallback to non-destructive sync on data loss error", async () => {
+        (prisma.crmUser.findUnique as any).mockResolvedValue({
+            email: "test@example.com",
+            databaseUrl: "encrypted_postgresql://user:pass@host:5432/db",
+        });
+
+        mockExecFile
+            .mockImplementationOnce((file: string, args: string[], opts: any, cb: any) => {
+                cb(new Error("Use the --accept-data-loss flag"), "", "");
+            })
+            .mockImplementationOnce((file: string, args: string[], opts: any, cb: any) => {
+                cb(
+                    null,
+                    "CREATE TABLE \"new_table\" (\"id\" TEXT NOT NULL PRIMARY KEY);\nDROP TABLE \"chat_histories_tools\";",
+                    "",
+                );
+            });
+
+        const result = await syncTenantDatabase("user-123");
+
+        expect(result.success).toBe(true);
+        expect(result.message).toContain("não-destrutivo");
+        expect(mockPgClient.connect).toHaveBeenCalledTimes(1);
+        expect(mockPgClient.query).toHaveBeenCalledWith(
+            'CREATE TABLE "new_table" ("id" TEXT NOT NULL PRIMARY KEY)',
+        );
+        expect(mockPgClient.end).toHaveBeenCalledTimes(1);
+        expect(mockExecFile).toHaveBeenNthCalledWith(
+            2,
+            "npx",
+            [
+                "prisma",
+                "migrate",
+                "diff",
+                "--from-config-datasource",
+                "--to-schema=prisma/schema.tenant.prisma",
+                "--script",
+            ],
+            expect.objectContaining({
+                env: expect.objectContaining({
+                    DATABASE_URL: "postgresql://user:pass@host:5432/db",
+                }),
+            }),
+            expect.any(Function),
+        );
+    });
 });
 
 describe("Schema Integrity Check", () => {
@@ -94,6 +167,7 @@ describe("Schema Integrity Check", () => {
     // continua funcionando para essa nova tabela.
     const EXPECTED_TENANT_TABLES = [
         "leads",
+        "lead_notes",
         "campaigns",
         "campaign_messages",
         "templates",
@@ -158,5 +232,46 @@ describe("Tenant Sync Helpers", () => {
                 "--url=postgresql://tenant-db",
             ],
         });
+    });
+
+    it("should build a deterministic prisma migrate diff command", () => {
+        expect(buildTenantDiffCommand("postgresql://tenant-db")).toEqual({
+            file: "npx",
+            args: [
+                "prisma",
+                "migrate",
+                "diff",
+                "--from-config-datasource",
+                "--to-schema=prisma/schema.tenant.prisma",
+                "--script",
+            ],
+        });
+    });
+
+    it("should classify data loss errors", () => {
+        expect(isDataLossError(new Error("Use the --accept-data-loss flag"))).toBe(true);
+        expect(isDataLossError(new Error("other error"))).toBe(false);
+    });
+
+    it("should filter destructive sql statements", () => {
+        const statements = filterNonDestructiveSqlStatements(`
+            CREATE TABLE "a" ("id" TEXT NOT NULL PRIMARY KEY);
+            ALTER TABLE "a" ADD COLUMN "name" TEXT;
+            DROP TABLE "b";
+            ALTER TABLE "a" DROP COLUMN "name";
+        `);
+
+        expect(statements).toEqual([
+            'CREATE TABLE "a" ("id" TEXT NOT NULL PRIMARY KEY)',
+            'ALTER TABLE "a" ADD COLUMN "name" TEXT',
+        ]);
+    });
+
+    it("should sanitize connection details", () => {
+        const raw = "cmd --url=postgresql://postgres:supersecret@host:5432/db?schema=public";
+        const sanitized = sanitizeErrorDetails(raw, "postgresql://postgres:supersecret@host:5432/db?schema=public");
+
+        expect(sanitized).not.toContain("supersecret");
+        expect(sanitized).toContain("<redacted");
     });
 });
