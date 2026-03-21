@@ -106,9 +106,14 @@ describe("Auth Config", () => {
     });
 
     describe("session", () => {
-      it("should add token info to session user", async () => {
+      it("should add token info to session user if user exists in db", async () => {
         const session = { user: { name: "Test" }, expires: "date" };
         const token = { id: "user-1", role: "ADMIN" };
+
+        (prisma.crmUser.findUnique as any).mockResolvedValue({
+          id: "user-1",
+          role: "ADMIN",
+        });
 
         const result = await authConfig.callbacks?.session?.({
           session: session as any,
@@ -121,6 +126,23 @@ describe("Auth Config", () => {
           id: "user-1",
           role: "ADMIN",
         });
+        expect(prisma.crmUser.findUnique).toHaveBeenCalledWith({
+          where: { id: "user-1" },
+          select: { id: true, role: true },
+        });
+      });
+
+      it("should throw error if user is not found in db (revoked/deleted)", async () => {
+        const session = { user: { name: "Test" }, expires: "date" };
+        const token = { id: "user-1", role: "ADMIN" };
+
+        (prisma.crmUser.findUnique as any).mockResolvedValue(null);
+
+        await expect(authConfig.callbacks?.session?.({
+          session: session as any,
+          token,
+          user: null as any
+        } as any)).rejects.toThrow("Usuário não encontrado no banco de dados");
       });
     });
   });

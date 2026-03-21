@@ -3,6 +3,7 @@
 import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import xss from "xss";
 
 const createTemplateSchema = z.object({
     name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -31,7 +32,10 @@ export async function createTemplate(data: z.infer<typeof createTemplateSchema>)
     const validated = createTemplateSchema.parse(data);
 
     const template = await context.tenantPrisma.template.create({
-        data: validated,
+        data: {
+            name: validated.name,
+            content: xss(validated.content),
+        },
     });
 
     revalidatePath("/templates");
@@ -42,11 +46,16 @@ export async function updateTemplate(data: z.infer<typeof updateTemplateSchema>)
     const context = await getTenantContext();
     if (!context) throw new Error("Banco de dados não configurado");
     
-    const { id, ...updateData } = updateTemplateSchema.parse(data);
+    const { id, content, ...updateData } = updateTemplateSchema.parse(data);
+
+    const dataToUpdate: any = { ...updateData };
+    if (content) {
+        dataToUpdate.content = xss(content);
+    }
 
     await context.tenantPrisma.template.update({
         where: { id },
-        data: updateData,
+        data: dataToUpdate,
     });
 
     revalidatePath("/templates");

@@ -10,13 +10,20 @@ import { encrypt, decrypt, hashString } from "@/lib/encryption";
 import { requireAdmin } from "@/lib/admin-auth";
 import { syncTenantDatabase } from "./tenant-sync";
 
+// Validar se o formato de conexão do banco é seguro, exigindo um formato PostgreSQL válido sem queries extras que poderiam causar SSRF/injeções.
+const databaseUrlSchema = z.string()
+    .url("A URL do banco deve ser uma URL válida")
+    .regex(/^postgres(?:ql)?:\/\/[^:]+:[^@]+@[^:]+:\d+\/[^?]+$/, "A URL deve ser estritamente no formato postgresql://user:pass@host:port/dbname (sem parâmetros query extras)")
+    .optional()
+    .or(z.literal(""));
+
 // Schema de validação
 const createUserSchema = z.object({
     email: z.string().email("Email inválido"),
     password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
     name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
     role: z.enum(["ADMIN", "USER"]),
-    databaseUrl: z.string().optional(),
+    databaseUrl: databaseUrlSchema,
     evolutionInstance: z.string().optional(),
     evolutionApiKey: z.string().optional(),
     evolutionPhone: z.string().optional(),
@@ -24,6 +31,7 @@ const createUserSchema = z.object({
 
 const updateUserSchema = createUserSchema.partial().extend({
     id: z.string(),
+    databaseUrl: databaseUrlSchema,
 });
 
 export async function getUsers() {

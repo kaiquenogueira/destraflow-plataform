@@ -3,6 +3,7 @@
 import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import xss from "xss";
 
 const createNoteSchema = z.object({
     leadId: z.string(),
@@ -17,10 +18,13 @@ export async function createNote(data: z.infer<typeof createNoteSchema>) {
     const { tenantPrisma } = context;
     const validated = createNoteSchema.parse(data);
 
+    // Sanitizar o conteúdo da nota para evitar injeção de XSS
+    const sanitizedContent = xss(validated.content);
+
     const note = await (tenantPrisma as any).leadNote.create({
         data: {
             leadId: validated.leadId,
-            content: validated.content,
+            content: sanitizedContent,
         },
     });
 

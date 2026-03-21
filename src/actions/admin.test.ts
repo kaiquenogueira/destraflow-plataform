@@ -143,7 +143,7 @@ describe("Admin Actions", () => {
         password: "password123",
         name: "New User",
         role: "USER" as const,
-        databaseUrl: "db-url",
+        databaseUrl: "postgresql://user:pass@host:5432/db-url",
         evolutionInstance: "instance",
         evolutionApiKey: "key",
       };
@@ -153,7 +153,7 @@ describe("Admin Actions", () => {
       expect(prisma.crmUser.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           email: "new@example.com",
-          databaseUrl: "encrypted-db-url",
+          databaseUrl: "encrypted-postgresql://user:pass@host:5432/db-url",
           evolutionInstance: "encrypted-instance",
           evolutionApiKey: "encrypted-key",
           password: "hashed-password",
@@ -202,15 +202,34 @@ describe("Admin Actions", () => {
 
       await updateUser({
         id: "target-user",
-        databaseUrl: "new-url",
+        databaseUrl: "postgresql://user:pass@host:5432/new-url",
       });
 
       expect(prisma.crmUser.update).toHaveBeenCalledWith({
         where: { id: "target-user" },
         data: expect.objectContaining({
-          databaseUrl: "encrypted-new-url",
+          databaseUrl: "encrypted-postgresql://user:pass@host:5432/new-url",
         }),
       });
+    });
+
+    it("should throw if databaseUrl has invalid format (SSRF prevention)", async () => {
+      (getServerSession as any).mockResolvedValue(mockAdminSession);
+      (prisma.crmUser.findUnique as any).mockResolvedValue(mockAdminUser);
+
+      const invalidUrls = [
+        "http://internal.api/metadata", // Not postgresql
+        "postgresql://user:pass@host:5432/db?sslmode=disable", // Has query params
+        "postgres://user@host/db", // Missing password
+        "mysql://user:pass@host/db", // Wrong protocol
+      ];
+
+      for (const url of invalidUrls) {
+        await expect(updateUser({
+          id: "target-user",
+          databaseUrl: url,
+        })).rejects.toThrow();
+      }
     });
   });
 

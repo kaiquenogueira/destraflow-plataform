@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { redis, isRedisEnabled } from "@/lib/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 
-// Fallback Rate Limiting em memória (Nota: em serverless/edge, isso é volátil)
+// Fallback Rate Limiting em memória (Nota: em serverless/edge, isso é volátil e não distribuído)
 const memoryRateLimit = new Map<string, { count: number; lastReset: number }>();
 
 // Rate Limiter via Upstash: 60 requisições a cada 1 minuto (60s)

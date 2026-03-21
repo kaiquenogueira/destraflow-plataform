@@ -44,7 +44,7 @@ export const authConfig: NextAuthOptions = {
     ],
     session: {
         strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        maxAge: 4 * 60 * 60, // Reduzido para 4 horas (segurança A07)
     },
     callbacks: {
         async jwt({ token, user }) {
@@ -55,9 +55,22 @@ export const authConfig: NextAuthOptions = {
             return token;
         },
         async session({ session, token }) {
-            if (session.user) {
-                session.user.id = token.id as string;
-                session.user.role = token.role as string;
+            // Verificação ativa: garante que o usuário ainda existe no banco
+            if (token.id) {
+                const dbUser = await prisma.crmUser.findUnique({
+                    where: { id: token.id as string },
+                    select: { id: true, role: true },
+                });
+                
+                if (!dbUser) {
+                    // Se o usuário foi deletado, forçamos a invalidação da sessão
+                    throw new Error("Usuário não encontrado no banco de dados");
+                }
+                
+                if (session.user) {
+                    session.user.id = dbUser.id;
+                    session.user.role = dbUser.role;
+                }
             }
             return session;
         },
