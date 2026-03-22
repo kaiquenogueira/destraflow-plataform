@@ -88,9 +88,21 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold">Leads</h1>
-                    <p className="text-muted-foreground mt-1">
-                        Gerencie seus leads e contatos
-                    </p>
+                    <div className="flex items-center gap-3 mt-1">
+                        <p className="text-muted-foreground">
+                            Gerencie seus leads e contatos
+                        </p>
+                        {/* Indicador de Uso de IA */}
+                        {!("noDatabaseConfigured" in data) && data.aiUsage && (
+                            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-xs font-medium text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                </span>
+                                IA: {data.aiUsage.used}/{data.aiUsage.limit} Créditos
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <Link href="/leads/new">
@@ -130,7 +142,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                     {/* Filters only show in List view for now as Kanban filters are columns themselves */}
                     <LeadFilters />
 
-                    <LeadList leads={data.leads} />
+                    <LeadList leads={data.leads} aiUsage={!("noDatabaseConfigured" in data) ? data.aiUsage : undefined} />
 
                     <div className="py-4">
                         <Pagination
@@ -157,7 +169,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                         {/* Optional: Filter by name even in Kanban */}
                         <LeadFilters />
                     </div>
-                    <KanbanBoard initialLeads={data.leads} />
+                    <KanbanBoard initialLeads={data.leads} aiUsage={!("noDatabaseConfigured" in data) ? data.aiUsage : undefined} />
                 </TabsContent>
             </Tabs>
         </div>

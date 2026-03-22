@@ -1,9 +1,45 @@
 "use server";
 
 import { getTenantContext } from "@/lib/tenant";
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { LeadTag, CampaignStatus } from "@/types";
+import { CampaignPersonalizer } from "@/services/ai/campaign-personalizer";
+
+// Não inicializar instâncias globais que usem env vars diretamente fora de funções em arquivos de action
+// Isso quebra os testes unitários que fazem mock do ambiente
+let aiPersonalizerInstance: CampaignPersonalizer | null = null;
+
+function getAIPersonalizer() {
+    if (!aiPersonalizerInstance) {
+        aiPersonalizerInstance = new CampaignPersonalizer();
+    }
+    return aiPersonalizerInstance;
+}
+
+interface QuotaPrismaClient {
+    crmUser: {
+        update: (args: {
+            where: { id: string };
+            data: { aiMessagesUsed: { increment: number } | { set: number } };
+        }) => Promise<unknown>;
+    };
+}
+
+async function incrementAIUsage(userId: string, quotaPrisma: QuotaPrismaClient = prisma) {
+    await quotaPrisma.crmUser.update({
+        where: { id: userId },
+        data: { aiMessagesUsed: { increment: 1 } },
+    });
+}
+
+async function resetAIUsage(userId: string, quotaPrisma: QuotaPrismaClient = prisma) {
+    await quotaPrisma.crmUser.update({
+        where: { id: userId },
+        data: { aiMessagesUsed: { set: 0 } },
+    });
+}
 
 // Template processing - substitui variáveis como {{nome}} pelo valor real
 function processTemplate(
@@ -275,17 +311,20 @@ export async function sendUnitMessage(leadId: string, template: string) {
 
     const lead = await tenantPrisma.lead.findUnique({
         where: { id: validLeadId },
+        include: { notes: true }
     });
 
     if (!lead) {
         throw new Error("Lead não encontrado");
     }
 
+    let finalPayload = processTemplate(template, lead);
+
     // Inserir na fila com prioridade alta e data imediata
     const message = await tenantPrisma.campaignMessage.create({
         data: {
             leadId: lead.id,
-            payload: processTemplate(template, lead),
+            payload: finalPayload,
             scheduledAt: new Date(),
             status: "PENDING",
             priority: 1,
@@ -294,6 +333,52 @@ export async function sendUnitMessage(leadId: string, template: string) {
 
     revalidatePath(`/leads/${validLeadId}`);
     return { success: true, messageId: message.id };
+}
+
+// Gerar sugestão de mensagem via IA
+export async function generateAIPersonalizedMessage(leadId: string, template: string) {
+    const validLeadId = z.string().parse(leadId);
+    const context = await getTenantContext();
+    if (!context) {
+        throw new Error("Banco de dados não configurado");
+    }
+    const { tenantPrisma, userId, aiMessagesUsed = 0, aiMessagesLimit = 15, aiLimitResetAt } = context;
+
+    let currentAIMessagesUsed = aiMessagesUsed;
+    if (aiLimitResetAt && new Date() > aiLimitResetAt) {
+        await resetAIUsage(userId);
+        currentAIMessagesUsed = 0;
+    }
+
+    if (currentAIMessagesUsed >= aiMessagesLimit) {
+        throw new Error("Limite mensal de IA atingido.");
+    }
+
+    const lead = await tenantPrisma.lead.findUnique({
+        where: { id: validLeadId },
+        include: { notes: true }
+    });
+
+    if (!lead) {
+        throw new Error("Lead não encontrado");
+    }
+
+    const finalPayload = processTemplate(template, lead);
+
+    const leadContext = {
+        name: lead.name,
+        interest: lead.interest,
+        aiSummary: lead.aiSummary,
+        notes: lead.notes.map(n => n.content)
+    };
+
+    const personalizedPayload = await getAIPersonalizer().personalize(finalPayload, leadContext);
+    
+    if (personalizedPayload !== finalPayload) {
+        await incrementAIUsage(userId);
+    }
+
+    return { success: true, personalizedMessage: personalizedPayload };
 }
 
 // Métricas de campanhas

@@ -35,6 +35,7 @@ const COLUMNS: { id: LeadTag; title: string; color: string }[] = [
 
 interface KanbanBoardProps {
   initialLeads: Lead[];
+  aiUsage?: { used: number; limit: number };
 }
 
 const dropAnimation: DropAnimation = {
@@ -47,7 +48,7 @@ const dropAnimation: DropAnimation = {
   }),
 };
 
-export function KanbanBoard({ initialLeads }: KanbanBoardProps) {
+export function KanbanBoard({ initialLeads, aiUsage }: KanbanBoardProps) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
 
@@ -143,13 +144,14 @@ export function KanbanBoard({ initialLeads }: KanbanBoardProps) {
             title={col.title}
             color={col.color}
             leads={leads.filter((l) => l.tag === col.id)}
+            aiUsage={aiUsage}
           />
         ))}
       </div>
 
       {createPortal(
         <DragOverlay dropAnimation={dropAnimation}>
-          {activeLead && <KanbanCard lead={activeLead} />}
+          {activeLead && <KanbanCard lead={activeLead} aiUsage={aiUsage} />}
         </DragOverlay>,
         document.body
       )}

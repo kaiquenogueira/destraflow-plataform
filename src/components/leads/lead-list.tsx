@@ -35,9 +35,10 @@ import { ptBR } from "date-fns/locale";
 
 interface LeadListProps {
     leads: Lead[];
+    aiUsage?: { used: number; limit: number };
 }
 
-export function LeadList({ leads }: LeadListProps) {
+export function LeadList({ leads, aiUsage }: LeadListProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [deleting, setDeleting] = useState<string | null>(null);
@@ -377,6 +378,7 @@ export function LeadList({ leads }: LeadListProps) {
                 lead={viewingDetails}
                 open={!!viewingDetails}
                 onClose={() => setViewingDetails(null)}
+                aiUsage={aiUsage}
             />
 
             <MessageHistoryModal

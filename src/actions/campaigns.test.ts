@@ -9,6 +9,15 @@ import {
   sendUnitMessage,
   getCampaignMetrics,
 } from "./campaigns";
+import { z } from "zod";
+
+const createCampaignSchema = z.object({
+  name: z.string().min(3),
+  template: z.string().min(5),
+  scheduledAt: z.date().refine((date) => date >= new Date(), {
+    message: "A data deve ser no futuro",
+  }),
+});
 import { addMinutes } from "date-fns";
 
 // Define mocks
@@ -317,6 +326,76 @@ describe("Campaign Actions", () => {
           payload: "Hello Test",
         }),
       });
+    });
+  });
+
+  describe("createCampaignSchema", () => {
+    it("should parse scheduled date properly", async () => {
+      const pastDate = new Date(Date.now() - 10000);
+      const futureDate = new Date(Date.now() + 10000);
+
+      const data = {
+        name: "Campaign 1",
+        template: "Hello {{nome}}",
+        scheduledAt: futureDate,
+      };
+
+      expect(() => createCampaignSchema.parse(data)).not.toThrow();
+
+      const pastData = {
+        ...data,
+        scheduledAt: pastDate,
+      };
+
+      expect(() => createCampaignSchema.parse(pastData)).toThrow();
+    });
+  });
+
+  describe("generateAIPersonalizedMessage", () => {
+    it("should generate AI personalized message successfully", async () => {
+      // Configurar environment mock antes de qualquer outra coisa
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake" };
+      
+      (getTenantContext as any).mockResolvedValue({
+        tenantPrisma: { lead: { findUnique: mocks.findUnique } },
+        userId: "user-1",
+        aiMessagesUsed: 5,
+        aiMessagesLimit: 15
+      });
+
+      mocks.findUnique.mockResolvedValue({
+        id: "lead-1",
+        name: "João",
+        interest: "Software",
+        aiSummary: "Quer desconto",
+        notes: [{ content: "Ligar depois" }]
+      });
+
+      // Mock the module before importing campaigns
+      vi.mock("@/lib/prisma", () => ({
+        prisma: {
+          crmUser: {
+            update: vi.fn().mockResolvedValue({}),
+          }
+        }
+      }));
+
+      // Mock the personalizer
+      const { generateAIPersonalizedMessage } = await import("./campaigns");
+      
+      // We need to mock the underlying personalizer class to avoid actual API calls
+      vi.mock("@/services/ai/campaign-personalizer", () => {
+        const MockCampaignPersonalizer = vi.fn();
+        MockCampaignPersonalizer.prototype.personalize = vi.fn().mockResolvedValue("Mensagem com IA para João");
+        return { CampaignPersonalizer: MockCampaignPersonalizer };
+      });
+
+      const result = await generateAIPersonalizedMessage("lead-1", "Template original");
+
+      expect(result.success).toBe(true);
+      // Restaurar o env original
+      process.env = originalEnv;
     });
   });
 

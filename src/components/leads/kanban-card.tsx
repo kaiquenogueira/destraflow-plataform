@@ -14,9 +14,10 @@ import { cn } from "@/lib/utils";
 
 interface KanbanCardProps {
   lead: Lead;
+  aiUsage?: { used: number; limit: number };
 }
 
-export function KanbanCard({ lead }: KanbanCardProps) {
+export function KanbanCard({ lead, aiUsage }: KanbanCardProps) {
   const {
     setNodeRef,
     attributes,

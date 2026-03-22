@@ -7,8 +7,10 @@
 // Os bancos dos tenants terão leads, campaigns, campaign_messages
 
 generator client {
+
   provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
+  output          = "../src/generated/prisma/crm"
 }
 
 datasource db {
@@ -41,6 +43,11 @@ model CrmUser {
   evolutionInstanceHash String? @map("evolution_instance_hash") // Hash SHA-256 para busca rápida
   evolutionApiKey   String? @map("evolution_api_key")
   evolutionPhone    String? @map("evolution_phone") // Número do WhatsApp conectado
+  
+  // Limites de IA
+  aiMessagesLimit Int     @default(15) @map("ai_messages_limit") // Limite de personalizações por mês
+  aiMessagesUsed  Int     @default(0) @map("ai_messages_used") // Uso atual no mês
+  aiLimitResetAt  DateTime? @map("ai_limit_reset_at") // Data do próximo reset
   
   @@index([evolutionInstanceHash])
   @@map("crm_users")

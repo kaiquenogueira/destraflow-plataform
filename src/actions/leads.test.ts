@@ -177,6 +177,10 @@ describe("Leads Actions", () => {
         total: 2,
         pages: 1,
         currentPage: 1,
+        aiUsage: {
+          used: 0,
+          limit: 15
+        }
       });
       expect(mockPrisma.lead.findMany).toHaveBeenCalledWith({
         where: {},

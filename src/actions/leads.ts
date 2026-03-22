@@ -178,6 +178,10 @@ export async function getLeads(params?: {
         total,
         pages: Math.ceil(total / limit),
         currentPage: page,
+        aiUsage: {
+            used: context.aiMessagesUsed || 0,
+            limit: context.aiMessagesLimit || 15
+        }
     };
 }
 

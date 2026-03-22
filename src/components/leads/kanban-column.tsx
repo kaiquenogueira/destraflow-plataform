@@ -11,9 +11,10 @@ interface KanbanColumnProps {
   title: string;
   leads: Lead[];
   color: string;
+  aiUsage?: { used: number; limit: number };
 }
 
-export function KanbanColumn({ id, title, leads, color }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, leads, color, aiUsage }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({
     id: id,
   });
@@ -33,7 +34,7 @@ export function KanbanColumn({ id, title, leads, color }: KanbanColumnProps) {
       <div ref={setNodeRef} className="flex-1 overflow-y-auto space-y-3 min-h-[100px] p-1">
         <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map((lead) => (
-            <KanbanCard key={lead.id} lead={lead} />
+            <KanbanCard key={lead.id} lead={lead} aiUsage={aiUsage} />
           ))}
         </SortableContext>
         {leads.length === 0 && (

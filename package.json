@@ -9,9 +9,10 @@
     "lint": "eslint",
     "test": "vitest",
     "db:split": "npx tsx scripts/split-schema.ts",
-    "db:migrate": "npm run db:split && prisma migrate deploy --schema=prisma/schema.crm.prisma && prisma generate",
-    "db:push:crm": "npm run db:split && prisma db push --schema=prisma/schema.crm.prisma && prisma generate",
-    "postinstall": "npm run db:split && prisma generate"
+    "db:generate": "prisma generate && prisma generate --schema=prisma/schema.crm.prisma && prisma generate --schema=prisma/schema.tenant.prisma",
+    "db:migrate": "npm run db:split && prisma migrate deploy --schema=prisma/schema.crm.prisma && npm run db:generate",
+    "db:push:crm": "npm run db:split && prisma db push --schema=prisma/schema.crm.prisma && npm run db:generate",
+    "postinstall": "npm run db:split && npm run db:generate"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

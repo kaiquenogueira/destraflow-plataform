@@ -17,19 +17,27 @@ interface LeadDetailsModalProps {
   lead: Lead | null;
   open: boolean;
   onClose: () => void;
+  aiUsage?: { used: number; limit: number };
 }
 
-export function LeadDetailsModal({ lead, open, onClose }: LeadDetailsModalProps) {
+export function LeadDetailsModal({ lead, open, onClose, aiUsage }: LeadDetailsModalProps) {
   if (!lead) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Bot className="h-6 w-6 text-primary" />
-            Análise de IA - {lead.name}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Bot className="h-6 w-6 text-primary" />
+              Análise de IA - {lead.name}
+            </DialogTitle>
+            {aiUsage && (
+              <Badge variant={aiUsage.used >= aiUsage.limit ? "destructive" : "secondary"} className="mr-6">
+                Créditos IA: {aiUsage.used}/{aiUsage.limit}
+              </Badge>
+            )}
+          </div>
           <DialogDescription>
             Detalhes da análise realizada pela inteligência artificial para este lead.
           </DialogDescription>

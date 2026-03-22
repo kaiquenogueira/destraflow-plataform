@@ -16,6 +16,16 @@ function extractHeader(content: string): string {
     return match ? match[0] : '';
 }
 
+function withGeneratorOutput(header: string, output: string): string {
+    return header.replace(
+        /generator\s+client\s*\{([\s\S]*?)\}/,
+        (_, generatorBody: string) => {
+            const withoutOutput = generatorBody.replace(/^\s*output\s*=\s*".*"\s*$/gm, '').trimEnd();
+            return `generator client {\n${withoutOutput}\n  output          = "${output}"\n}`;
+        }
+    );
+}
+
 function extractBlocks(content: string): { type: string, name: string, content: string }[] {
     const blocks: { type: string, name: string, content: string }[] = [];
     
@@ -96,6 +106,8 @@ export function splitSchema() {
     const schemaContent = fs.readFileSync(SCHEMA_PATH, 'utf-8');
     
     const header = extractHeader(schemaContent);
+    const crmHeader = withGeneratorOutput(header, '../src/generated/prisma/crm');
+    const tenantHeader = withGeneratorOutput(header, '../src/generated/prisma/tenant');
     const blocks = extractBlocks(schemaContent);
 
     let crmBody = '';
@@ -118,12 +130,12 @@ export function splitSchema() {
 // Comando: npm run db:split`;
 
     // Salvar CRM Schema
-    const crmFinal = `${warning}\n\n${header}\n${crmBody}`;
+    const crmFinal = `${warning}\n\n${crmHeader}\n${crmBody}`;
     fs.writeFileSync(CRM_SCHEMA_PATH, crmFinal);
     console.log(`✅ CRM Schema: ${CRM_SCHEMA_PATH} (${blocks.filter(b => CRM_MODELS.includes(b.name)).length} models)`);
 
     // Salvar Tenant Schema
-    const tenantFinal = `${warning}\n\n${header}\n${tenantBody}`;
+    const tenantFinal = `${warning}\n\n${tenantHeader}\n${tenantBody}`;
     fs.writeFileSync(TENANT_SCHEMA_PATH, tenantFinal);
     console.log(`✅ Tenant Schema: ${TENANT_SCHEMA_PATH} (${blocks.filter(b => !CRM_MODELS.includes(b.name) && !IGNORE_MODELS.includes(b.name)).length} models)`);
 }

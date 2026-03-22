@@ -3,12 +3,15 @@ import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/encryption";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient as TenantPrismaClient } from "@/generated/prisma/tenant";
 
 export interface TenantContext {
     userId: string;
     userRole: "ADMIN" | "USER";
-    tenantPrisma: PrismaClient;
+    tenantPrisma: TenantPrismaClient;
+    aiMessagesUsed?: number;
+    aiMessagesLimit?: number;
+    aiLimitResetAt?: Date | null;
 }
 
 /**
@@ -28,6 +31,9 @@ export const getTenantContext = cache(async (): Promise<TenantContext | null> =>
             id: true,
             role: true,
             databaseUrl: true,
+            aiMessagesUsed: true,
+            aiMessagesLimit: true,
+            aiLimitResetAt: true,
         },
     });
 
@@ -46,6 +52,9 @@ export const getTenantContext = cache(async (): Promise<TenantContext | null> =>
         userId: user.id,
         userRole: user.role,
         tenantPrisma: getTenantPrisma(databaseUrl),
+        aiMessagesUsed: user.aiMessagesUsed,
+        aiMessagesLimit: user.aiMessagesLimit,
+        aiLimitResetAt: user.aiLimitResetAt,
     };
 });
 

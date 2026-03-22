@@ -7,8 +7,10 @@
 // Os bancos dos tenants terão leads, campaigns, campaign_messages
 
 generator client {
+
   provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
+  output          = "../src/generated/prisma/tenant"
 }
 
 datasource db {

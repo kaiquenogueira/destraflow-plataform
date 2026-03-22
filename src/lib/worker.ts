@@ -11,10 +11,14 @@
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
 import { decrypt } from "@/lib/encryption";
+import { CampaignPersonalizer } from "@/services/ai/campaign-personalizer";
 
 const MAX_RETRIES = 3;
 const MAX_CONCURRENT_TENANTS = 5;
 const MESSAGES_PER_BATCH = 20;
+
+// Instância única do personalizador de IA (stateless)
+const aiPersonalizer = new CampaignPersonalizer();
 
 export interface WorkerResult {
     processed: number;
@@ -46,7 +50,10 @@ async function processTenantMessages(
     tenantPrisma: ReturnType<typeof getTenantPrisma>,
     evolutionInstance: string,
     evolutionApiKey: string | null,
-    evolutionPhone: string | null
+    evolutionPhone: string | null,
+    crmUserId: string,
+    aiMessagesUsed: number,
+    aiMessagesLimit: number
 ): Promise<WorkerResult> {
     const result: WorkerResult = {
         processed: 0,
@@ -74,7 +81,13 @@ async function processTenantMessages(
         },
         include: {
             lead: {
-                select: { phone: true, name: true },
+                select: { 
+                    phone: true, 
+                    name: true,
+                    interest: true,
+                    aiSummary: true,
+                    notes: { select: { content: true } }
+                },
             },
         },
         orderBy: [
@@ -108,7 +121,31 @@ async function processTenantMessages(
         });
 
         try {
-            await evolutionClient.sendMessage(message.lead.phone, message.payload);
+            let finalPayload = message.payload;
+            let aiUsed = false;
+
+            // Só tenta usar IA se o cliente não atingiu o limite
+            if (aiMessagesUsed < aiMessagesLimit) {
+                // 1. Extrair o contexto do lead para a IA
+                const leadContext = {
+                    name: message.lead.name,
+                    interest: message.lead.interest,
+                    aiSummary: message.lead.aiSummary,
+                    notes: message.lead.notes.map(n => n.content)
+                };
+
+                // 2. Tentar hiper-personalizar a mensagem. Se falhar, retorna a original.
+                const personalizedPayload = await aiPersonalizer.personalize(message.payload, leadContext);
+                
+                if (personalizedPayload !== message.payload) {
+                    finalPayload = personalizedPayload;
+                    aiUsed = true;
+                    aiMessagesUsed++; // Incrementa localmente para a próxima iteração do loop
+                }
+            }
+
+            // 3. Enviar a mensagem (personalizada ou original)
+            await evolutionClient.sendMessage(message.lead.phone, finalPayload);
 
             // Sucesso — marcar como SENT
             await tenantPrisma.campaignMessage.update({
@@ -117,15 +154,24 @@ async function processTenantMessages(
                     status: "SENT",
                     sentAt: new Date(),
                     error: null,
+                    payload: finalPayload, // Atualizamos o payload no banco para refletir o que realmente foi enviado
                 },
             });
+
+            // 4. Se usou IA, atualiza o contador no banco CRM central
+            if (aiUsed) {
+                await prisma.crmUser.update({
+                    where: { id: crmUserId },
+                    data: { aiMessagesUsed: { increment: 1 } }
+                });
+            }
 
             await persistOutboundMessageAudit(
                 tenantPrisma,
                 {
                     phone: message.lead.phone,
                     name: message.lead.name,
-                    payload: message.payload,
+                    payload: finalPayload,
                 },
                 evolutionPhone
             );
@@ -252,6 +298,8 @@ export async function processAllTenantMessages(): Promise<{
             evolutionInstance: true,
             evolutionApiKey: true,
             evolutionPhone: true,
+            aiMessagesLimit: true,
+            aiMessagesUsed: true,
         },
     });
 
@@ -269,7 +317,10 @@ export async function processAllTenantMessages(): Promise<{
                 tenantPrisma,
                 evolutionInstance,
                 evolutionApiKey,
-                evolutionPhone
+                evolutionPhone,
+                user.id,
+                user.aiMessagesUsed,
+                user.aiMessagesLimit
             );
             results[user.name] = result;
         } catch (error) {
