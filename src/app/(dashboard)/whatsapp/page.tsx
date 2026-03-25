@@ -49,7 +49,7 @@ export default function WhatsAppPage() {
         fetchStatus();
     }, [fetchStatus]);
 
-    // Auto-refresh every 10 seconds when generating QR
+    // Auto-refresh every 10 segundos apenas quando o QR code estiver sendo exibido
     useEffect(() => {
         if (qrCode) {
             const interval = setInterval(fetchStatus, 10000);
@@ -57,7 +57,7 @@ export default function WhatsAppPage() {
         }
     }, [qrCode, fetchStatus]);
 
-    const handleGenerateQR = async () => {
+    const handleGenerateQR = useCallback(async () => {
         setGenerating(true);
         setQrCode(null);
         try {
@@ -73,7 +73,21 @@ export default function WhatsAppPage() {
         } finally {
             setGenerating(false);
         }
-    };
+    }, []);
+
+    // Gera o QR Code automaticamente caso a conexão caia
+    useEffect(() => {
+        if (
+            status &&
+            !status.connected &&
+            status.state !== "not_configured" &&
+            !qrCode &&
+            !generating &&
+            !disconnecting
+        ) {
+            handleGenerateQR();
+        }
+    }, [status, qrCode, generating, disconnecting, handleGenerateQR]);
 
     const handleDisconnect = async () => {
         if (!confirm("Tem certeza que deseja desconectar o WhatsApp?")) return;
