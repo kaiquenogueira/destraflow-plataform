@@ -9,6 +9,7 @@ export function buildTenantSyncCommand(connectionString: string) {
             "prisma",
             "db",
             "push",
+            "--skip-generate",
             "--schema=prisma/schema.tenant.prisma",
             `--url=${connectionString}`,
         ],

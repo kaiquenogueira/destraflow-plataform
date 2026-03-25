@@ -89,11 +89,14 @@ describe("Tenant Database Synchronization", () => {
                 "prisma",
                 "db",
                 "push",
+                "--skip-generate",
                 "--schema=prisma/schema.tenant.prisma",
                 "--url=postgresql://user:pass@host:5432/db",
             ],
             expect.objectContaining({
-                env: expect.any(Object),
+                env: expect.objectContaining({
+                    DATABASE_URL: "postgresql://user:pass@host:5432/db",
+                }),
             }),
             expect.any(Function),
         );
@@ -228,6 +231,7 @@ describe("Tenant Sync Helpers", () => {
                 "prisma",
                 "db",
                 "push",
+                "--skip-generate",
                 "--schema=prisma/schema.tenant.prisma",
                 "--url=postgresql://tenant-db",
             ],

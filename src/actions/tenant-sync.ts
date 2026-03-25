@@ -109,7 +109,7 @@ export async function syncTenantDatabase(userId: string): Promise<SyncResult> {
         let stdout = "";
         try {
             const result = await execFileAsync(command.file, command.args, {
-                env: { ...process.env },
+                env: { ...process.env, DATABASE_URL: connectionString },
             });
             stdout = typeof result === "string" ? result : result.stdout || "";
         } catch (error) {
