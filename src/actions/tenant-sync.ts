@@ -45,7 +45,7 @@ async function executeSqlStatements(connectionString: string, statements: string
 async function syncTenantDatabaseNonDestructive(connectionString: string, userEmail: string): Promise<SyncResult> {
     const diffCommand = buildTenantDiffCommand(connectionString);
     const diffResult = await execFileAsync(diffCommand.file, diffCommand.args, {
-        env: { ...process.env, DATABASE_URL: connectionString },
+        env: { ...process.env, DATABASE_URL: connectionString, HOME: '/tmp', npm_config_cache: '/tmp/.npm' },
     });
     const stdout = typeof diffResult === "string" ? diffResult : diffResult.stdout || "";
 
@@ -109,7 +109,7 @@ export async function syncTenantDatabase(userId: string): Promise<SyncResult> {
         let stdout = "";
         try {
             const result = await execFileAsync(command.file, command.args, {
-                env: { ...process.env, DATABASE_URL: connectionString },
+                env: { ...process.env, DATABASE_URL: connectionString, HOME: '/tmp', npm_config_cache: '/tmp/.npm' },
             });
             stdout = typeof result === "string" ? result : result.stdout || "";
         } catch (error) {
