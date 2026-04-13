@@ -229,3 +229,163 @@ export async function getLeadsByTag() {
         {} as Record<LeadTag, number>
     );
 }
+
+// Schema para validação de cada lead importado
+const importLeadSchema = z.object({
+    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+    phone: z.string().min(8, "Telefone inválido"),
+    interest: z.string().optional(),
+    tag: z
+        .enum(["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"])
+        .optional()
+        .default("NEW"),
+});
+
+const VALID_TAGS = ["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"];
+
+function normalizePhone(raw: string): string {
+    // Remove tudo que não é dígito ou +
+    let phone = raw.replace(/[^\d+]/g, "");
+
+    // Se começa com +, manter
+    if (phone.startsWith("+")) {
+        return phone;
+    }
+
+    // Se tem 10-11 dígitos (BR sem código de país), adicionar +55
+    if (phone.length >= 10 && phone.length <= 11) {
+        return `+55${phone}`;
+    }
+
+    // Se tem 12-13 dígitos e começa com 55, adicionar +
+    if ((phone.length === 12 || phone.length === 13) && phone.startsWith("55")) {
+        return `+${phone}`;
+    }
+
+    // Retornar como está para validação posterior
+    return `+${phone}`;
+}
+
+function normalizeTag(raw: string | undefined): LeadTag {
+    if (!raw) return "NEW";
+    const upper = raw.trim().toUpperCase();
+    if (VALID_TAGS.includes(upper)) return upper as LeadTag;
+
+    // Tentar mapear nomes em português
+    const PT_TAG_MAP: Record<string, LeadTag> = {
+        NOVO: "NEW",
+        "QUALIFICAÇÃO": "QUALIFICATION",
+        QUALIFICACAO: "QUALIFICATION",
+        "PROSPECÇÃO": "PROSPECTING",
+        PROSPECCAO: "PROSPECTING",
+        "LIGAÇÃO": "CALL",
+        LIGACAO: "CALL",
+        "REUNIÃO": "MEETING",
+        REUNIAO: "MEETING",
+        RETORNO: "RETURN",
+        PERDIDO: "LOST",
+        CLIENTE: "CUSTOMER",
+    };
+
+    return PT_TAG_MAP[upper] || "NEW";
+}
+
+export interface ImportResult {
+    imported: number;
+    skipped: number;
+    errors: Array<{ row: number; field: string; message: string }>;
+}
+
+export async function importLeadsFromCSV(
+    leads: Array<{ name: string; phone: string; interest?: string; tag?: string }>
+): Promise<ImportResult> {
+    const context = await getTenantContext();
+    if (!context) {
+        throw new Error("Banco de dados não configurado");
+    }
+    const { tenantPrisma } = context;
+
+    const result: ImportResult = {
+        imported: 0,
+        skipped: 0,
+        errors: [],
+    };
+
+    if (!leads || leads.length === 0) {
+        throw new Error("Nenhum lead para importar");
+    }
+
+    if (leads.length > 5000) {
+        throw new Error("Máximo de 5000 leads por importação");
+    }
+
+    // Buscar telefones já existentes para deduplicação
+    const existingLeads = await tenantPrisma.lead.findMany({
+        select: { phone: true },
+    });
+    const existingPhones = new Set(existingLeads.map((l: { phone: string }) => l.phone.replace(/\D/g, "")));
+
+    const validLeads: Array<{ name: string; phone: string; interest?: string; tag: LeadTag }> = [];
+    const seenPhonesInBatch = new Set<string>();
+
+    for (let i = 0; i < leads.length; i++) {
+        const raw = leads[i];
+        const rowNum = i + 2; // +2: header + 0-indexed
+
+        // Validar campos obrigatórios
+        if (!raw.name || raw.name.trim().length < 2) {
+            result.errors.push({ row: rowNum, field: "nome", message: "Nome é obrigatório (mín. 2 caracteres)" });
+            continue;
+        }
+
+        if (!raw.phone || raw.phone.trim().length < 8) {
+            result.errors.push({ row: rowNum, field: "telefone", message: "Telefone é obrigatório" });
+            continue;
+        }
+
+        const normalizedPhone = normalizePhone(raw.phone.trim());
+        const phoneDigits = normalizedPhone.replace(/\D/g, "");
+
+        // Validar formato do telefone normalizado
+        if (!/^\+?[1-9]\d{10,14}$/.test(normalizedPhone)) {
+            result.errors.push({
+                row: rowNum,
+                field: "telefone",
+                message: `Formato inválido: "${raw.phone}" → "${normalizedPhone}"`,
+            });
+            continue;
+        }
+
+        // Deduplicar contra banco existente
+        if (existingPhones.has(phoneDigits)) {
+            result.skipped++;
+            continue;
+        }
+
+        // Deduplicar dentro do batch
+        if (seenPhonesInBatch.has(phoneDigits)) {
+            result.skipped++;
+            continue;
+        }
+
+        seenPhonesInBatch.add(phoneDigits);
+
+        validLeads.push({
+            name: raw.name.trim(),
+            phone: normalizedPhone,
+            interest: raw.interest?.trim() || undefined,
+            tag: normalizeTag(raw.tag),
+        });
+    }
+
+    // Inserir em batch
+    if (validLeads.length > 0) {
+        await tenantPrisma.lead.createMany({
+            data: validLeads,
+        });
+        result.imported = validLeads.length;
+    }
+
+    revalidatePath("/leads");
+    return result;
+}

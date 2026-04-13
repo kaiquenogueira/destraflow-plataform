@@ -13,6 +13,7 @@ import { Plus, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import { Pagination } from "@/components/ui/custom-pagination";
 import { LeadFilters } from "@/components/leads/lead-filters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LeadImport } from "@/components/leads/lead-import";
 
 interface LeadsPageProps {
     searchParams: Promise<{
@@ -105,6 +106,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <LeadImport />
                     <Link href="/leads/new">
                         <Button size="lg" className="w-full sm:w-auto">
                             <Plus className="mr-2 h-4 w-4" />

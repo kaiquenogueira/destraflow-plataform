@@ -381,6 +381,108 @@ export async function generateAIPersonalizedMessage(leadId: string, template: st
     return { success: true, personalizedMessage: personalizedPayload };
 }
 
+// Retry todas as mensagens DEAD_LETTER de uma campanha
+export async function retryCampaignDeadLetters(campaignId: string) {
+    const validId = z.string().parse(campaignId);
+    const context = await getTenantContext();
+    if (!context) {
+        throw new Error("Banco de dados não configurado");
+    }
+    const { tenantPrisma } = context;
+
+    const campaign = await tenantPrisma.campaign.findUnique({
+        where: { id: validId },
+    });
+
+    if (!campaign) {
+        throw new Error("Campanha não encontrada");
+    }
+
+    // Contar mensagens DEAD_LETTER antes do reset
+    const deadLetterCount = await tenantPrisma.campaignMessage.count({
+        where: { campaignId: validId, status: "DEAD_LETTER" },
+    });
+
+    if (deadLetterCount === 0) {
+        throw new Error("Nenhuma mensagem com falha permanente para retentar");
+    }
+
+    // Transação: resetar mensagens + atualizar status da campanha
+    await tenantPrisma.$transaction([
+        tenantPrisma.campaignMessage.updateMany({
+            where: { campaignId: validId, status: "DEAD_LETTER" },
+            data: {
+                status: "PENDING",
+                retryCount: 0,
+                error: null,
+                scheduledAt: new Date(),
+            },
+        }),
+        // Se a campanha já foi finalizada, voltar para PROCESSING
+        ...(campaign.status === "COMPLETED"
+            ? [
+                  tenantPrisma.campaign.update({
+                      where: { id: validId },
+                      data: { status: "PROCESSING" },
+                  }),
+              ]
+            : []),
+    ]);
+
+    revalidatePath("/campaigns");
+    revalidatePath(`/campaigns/${validId}`);
+    return { success: true, retriedCount: deadLetterCount };
+}
+
+// Retry uma mensagem individual DEAD_LETTER
+export async function retryDeadLetterMessage(messageId: string) {
+    const validId = z.string().parse(messageId);
+    const context = await getTenantContext();
+    if (!context) {
+        throw new Error("Banco de dados não configurado");
+    }
+    const { tenantPrisma } = context;
+
+    const message = await tenantPrisma.campaignMessage.findUnique({
+        where: { id: validId },
+    });
+
+    if (!message) {
+        throw new Error("Mensagem não encontrada");
+    }
+
+    if (message.status !== "DEAD_LETTER") {
+        throw new Error("Apenas mensagens com falha permanente podem ser retentadas");
+    }
+
+    await tenantPrisma.campaignMessage.update({
+        where: { id: validId },
+        data: {
+            status: "PENDING",
+            retryCount: 0,
+            error: null,
+            scheduledAt: new Date(),
+        },
+    });
+
+    // Se a campanha associada está COMPLETED, voltar para PROCESSING
+    if (message.campaignId) {
+        const campaign = await tenantPrisma.campaign.findUnique({
+            where: { id: message.campaignId },
+        });
+        if (campaign?.status === "COMPLETED") {
+            await tenantPrisma.campaign.update({
+                where: { id: message.campaignId },
+                data: { status: "PROCESSING" },
+            });
+        }
+        revalidatePath(`/campaigns/${message.campaignId}`);
+    }
+
+    revalidatePath("/campaigns");
+    return { success: true };
+}
+
 // Métricas de campanhas
 export async function getCampaignMetrics() {
     const context = await getTenantContext();
