@@ -33,17 +33,26 @@ Contém as rotas e páginas da aplicação Next.js.
 Funções executadas no servidor, chamadas diretamente pelos componentes Client-Side.
 
 -   `admin.ts`: Ações administrativas (criar usuários).
--   `campaigns.ts`: Lógica de campanhas.
+-   `campaigns.ts`: Lógica de campanhas, criação, cancelamento e **retry de mensagens DEAD_LETTER** (massa e individual).
 -   `chat.ts`: Lógica de histórico de chat.
--   `leads.ts`: CRUD de leads.
+-   `contacts.ts`: Gestão de contatos WhatsApp.
+-   `leads.ts`: CRUD de leads e **importação em massa via CSV/XLSX** com normalização e deduplicação.
+-   `notes.ts`: Notas associadas a leads.
+-   `notifications.ts`: Notificações externas.
+-   `templates.ts`: Gestão de templates de mensagem.
 -   `whatsapp.ts`: Integração com Evolution API.
 
 ### `src/components` (UI)
 Componentes React divididos por contexto.
 
--   **`ui/`**: Componentes base do Shadcn/UI (Button, Input, etc.).
+-   **`ui/`**: Componentes base do Shadcn/UI (Button, Input, Dialog, etc.).
 -   **`layout/`**: Sidebar, Header, Navegação Mobile.
--   **`admin/`, `campaigns/`, `leads/`**: Componentes específicos de cada módulo.
+-   **`admin/`**: Gestão de usuários e tenants.
+-   **`campaigns/`**: Formulário de campanha (`campaign-form`), listagem (`campaign-list`) e **tabela de mensagens com retry** (`campaign-messages`).
+-   **`leads/`**: Lista, Kanban, formulário, detalhes, envio de mensagem, notas e **importação de planilha** (`lead-import`).
+-   **`dashboard/`**: Componentes de métricas e estatísticas.
+-   **`templates/`**: Gestão de templates.
+-   **`notifications/`**: Listagem de notificações.
 
 ### `src/lib` (Core)
 Bibliotecas e utilitários centrais.
@@ -53,6 +62,7 @@ Bibliotecas e utilitários centrais.
 -   `tenant.ts`: **Lógica crítica de Multi-tenancy** (resolução de conexão).
 -   `encryption.ts`: Criptografia de credenciais de banco.
 -   `evolution.ts`: Cliente HTTP para Evolution API.
+-   `worker.ts`: Worker de processamento de mensagens (fila, retry com backoff, DEAD_LETTER).
 
 ## 📁 `prisma/` - Banco de Dados
 

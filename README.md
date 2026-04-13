@@ -6,8 +6,10 @@ Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js 16 (App Rout
 
 -   **Multi-tenancy Híbrido**: Arquitetura "Database-per-tenant" para isolamento de dados e escalabilidade.
 -   **CRM & Gestão de Leads**: Gerenciamento completo de contatos, funil de vendas e tags (Frio, Morno, Quente, etc.).
+-   **Importação de Leads**: Upload de planilhas CSV/XLSX com validação de cabeçalho, normalização de telefone (+55) e deduplicação automática.
 -   **Automação de WhatsApp**: Integração com Evolution API para envio e recebimento de mensagens, com suporte a QR Code.
 -   **Campanhas em Massa**: Criação e agendamento de disparos de mensagens para segmentos de leads, com processamento em background.
+-   **Retry de Campanhas**: Reenvio manual (individual ou em massa) de mensagens com falha permanente (DEAD_LETTER) diretamente pela interface.
 -   **Painel Administrativo**: Gestão de usuários, tenants e configurações globais.
 -   **Templates de Mensagem**: Criação e gestão de templates reutilizáveis para campanhas.
 
@@ -21,6 +23,7 @@ Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js 16 (App Rout
 -   **Autenticação**: [NextAuth.js v4](https://next-auth.js.org/) (Credentials Provider)
 -   **Integração**: [Evolution API](https://github.com/EvolutionAPI/evolution-api)
 -   **Validação**: Zod & React Hook Form
+-   **Parsing de Planilhas**: [PapaParse](https://www.papaparse.com/) (CSV) & [SheetJS](https://sheetjs.com/) (XLSX)
 
 ## 📋 Pré-requisitos
 
@@ -154,8 +157,10 @@ Atualmente, a plataforma está em fase de **Beta / Desenvolvimento Ativo**.
 | **Multi-tenancy** | ✅ Completo | Arquitetura híbrida funcional com criptografia. |
 | **Autenticação** | ✅ Completo | NextAuth com suporte a roles (Admin/User). |
 | **CRM (Leads)** | ⚠️ Parcial | Gestão de Leads e Tags ok. Faltam Pipelines/Deals. |
+| **Importação de Leads** | ✅ Completo | Upload CSV/XLSX com validação, normalização +55 e deduplicação. |
 | **WhatsApp** | ✅ Completo | Integração com Evolution API (QR Code, Envio, Recebimento). |
 | **Campanhas** | ✅ Completo | Disparos em massa com agendamento e fila (suporte a CUIDs). |
+| **Retry de Campanhas** | ✅ Completo | Reenvio de mensagens DEAD_LETTER (individual e em massa). |
 | **Templates** | ✅ Completo | Gestão de templates de mensagens. |
 | **Chat Ao Vivo** | ⚠️ Backend | Lógica de histórico existe, mas falta interface de chat em tempo real. |
 | **Testes** | ✅ Parcial | Testes unitários para Campanhas implementados. |
@@ -172,6 +177,8 @@ Atualmente, a plataforma está em fase de **Beta / Desenvolvimento Ativo**.
 - [ ] Criar interface de "Bate-papo ao vivo" (Live Chat).
 - [ ] Melhorar performance do Webhook.
 - [ ] Implementar Pipelines de Vendas (Kanban).
+- [ ] Exportação de leads para CSV/XLSX.
+- [ ] Relatórios de campanha com gráficos (taxa de entrega, falhas).
 
 ## 📝 Scripts Disponíveis
 
