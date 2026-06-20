@@ -1,0 +1,7 @@
+npx lint-staged
+
+# Varredura de segredos nos arquivos staged (se o gitleaks estiver instalado).
+# O CI sempre roda via gitleaks-action; aqui é best-effort local.
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --staged --no-banner -v || exit 1
+fi

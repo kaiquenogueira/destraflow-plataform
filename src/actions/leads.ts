@@ -245,7 +245,7 @@ const VALID_TAGS = ["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "R
 
 function normalizePhone(raw: string): string {
     // Remove tudo que não é dígito ou +
-    let phone = raw.replace(/[^\d+]/g, "");
+    const phone = raw.replace(/[^\d+]/g, "");
 
     // Se começa com +, manter
     if (phone.startsWith("+")) {

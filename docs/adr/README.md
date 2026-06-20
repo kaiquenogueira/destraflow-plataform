@@ -1,0 +1,28 @@
+# Architecture Decision Records (ADR)
+
+Registros leves de decisões de arquitetura do DestraFlow. Um ADR captura **uma decisão**, seu **contexto** e suas **consequências** — para que decisões não sejam re-litigadas e para que novos contribuidores (humanos ou agentes de IA) entendam o *porquê*.
+
+Formato: variação enxuta do [MADR](https://adr.github.io/madr/). Ver [`0000-template.md`](./0000-template.md).
+
+## Quando criar um ADR
+
+- Uma decisão estrutural com trade-offs (escolha de arquitetura, fronteira, dependência pesada).
+- Uma decisão de **rejeitar** um refactor/abordagem — para travar contra re-sugestão (ex.: [ADR-0005](./0005-rejected-premature-seams.md)).
+- Reverter/superar uma decisão anterior (status `Superseded by NNNN`).
+
+## Status possíveis
+
+`Proposed` · `Accepted` · `Rejected` · `Superseded by NNNN` · `Deprecated`
+
+## Índice
+
+| # | Título | Status |
+|---|--------|--------|
+| [0000](./0000-template.md) | Template | — |
+| [0001](./0001-record-architecture-decisions.md) | Usar Architecture Decision Records | Accepted |
+| [0002](./0002-n8n-owns-messaging-webhooks.md) | N8N é dono dos webhooks de mensageria; app não escuta eventos | Accepted |
+| [0003](./0003-database-per-tenant.md) | Banco por tenant resolvido em runtime, credenciais criptografadas | Accepted |
+| [0004](./0004-shared-evolution-server.md) | Servidor Evolution compartilhado, instância+chave por tenant | Accepted |
+| [0005](./0005-rejected-premature-seams.md) | Costuras prematuras rejeitadas (não re-sugerir) | Accepted |
+
+> Revisões de arquitetura (ex.: skill `improve-codebase-architecture`) devem **ler os ADRs antes** de propor mudanças e **marcar conflitos** explicitamente em vez de re-sugerir o que já foi decidido.

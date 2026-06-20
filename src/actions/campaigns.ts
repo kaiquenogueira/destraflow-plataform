@@ -318,7 +318,7 @@ export async function sendUnitMessage(leadId: string, template: string) {
         throw new Error("Lead não encontrado");
     }
 
-    let finalPayload = processTemplate(template, lead);
+    const finalPayload = processTemplate(template, lead);
 
     // Inserir na fila com prioridade alta e data imediata
     const message = await tenantPrisma.campaignMessage.create({
