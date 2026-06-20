@@ -9,3 +9,11 @@ paths = [
   '''\.env\.example$''',
   '''src/generated/prisma''',
 ]
+
+[[allowlists]]
+description = "Valores dummy de build/CI (não são segredos reais)"
+regexes = [
+  '''0{32,}''',
+  '''ci-dummy-secret''',
+  '''postgresql://ci:ci@localhost''',
+]

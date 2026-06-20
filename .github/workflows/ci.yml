@@ -48,10 +48,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
+      # CLI gitleaks (OSS, sem licença). A action gitleaks-action@v2 exige
+      # GITLEAKS_LICENSE paga para contas de organização — por isso usamos o binário.
+      # Varre a árvore de trabalho (`dir`); lê .gitleaks.toml automaticamente.
       - name: gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
+            dir /repo --no-banner --redact --verbose --exit-code 1
