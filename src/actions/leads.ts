@@ -179,8 +179,8 @@ export async function getLeads(params?: {
         pages: Math.ceil(total / limit),
         currentPage: page,
         aiUsage: {
-            used: context.aiMessagesUsed || 0,
-            limit: context.aiMessagesLimit || 15
+            used: context.aiQuota?.used ?? 0,
+            limit: context.aiQuota?.limit ?? 15
         }
     };
 }

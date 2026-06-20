@@ -8,6 +8,7 @@ import {
   cancelCampaign,
   sendUnitMessage,
   getCampaignMetrics,
+  generateAIPersonalizedMessage,
 } from "./campaigns";
 import { z } from "zod";
 
@@ -67,6 +68,22 @@ vi.mock("@/lib/tenant", () => ({
 vi.mock("next/cache", () => ({
   revalidatePath: mocks.revalidatePath,
 }));
+
+// Handles para asseverar a costura de quota (recordPersonalization) e controlar o LLM.
+const aiMocks = vi.hoisted(() => ({
+  crmUserUpdate: vi.fn(),
+  personalize: vi.fn(),
+}));
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: { crmUser: { update: aiMocks.crmUserUpdate } },
+}));
+
+vi.mock("@/services/ai/campaign-personalizer", () => {
+  const MockCampaignPersonalizer = vi.fn();
+  MockCampaignPersonalizer.prototype.personalize = aiMocks.personalize;
+  return { CampaignPersonalizer: MockCampaignPersonalizer };
+});
 
 import { getTenantContext } from "@/lib/tenant";
 
@@ -352,50 +369,64 @@ describe("Campaign Actions", () => {
   });
 
   describe("generateAIPersonalizedMessage", () => {
-    it("should generate AI personalized message successfully", async () => {
-      // Configurar environment mock antes de qualquer outra coisa
-      const originalEnv = process.env;
-      process.env = { ...originalEnv, DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake" };
-      
+    function mockContext() {
       (getTenantContext as any).mockResolvedValue({
         tenantPrisma: { lead: { findUnique: mocks.findUnique } },
         userId: "user-1",
-        aiMessagesUsed: 5,
-        aiMessagesLimit: 15
+        aiQuota: { used: 5, limit: 15, resetAt: null },
       });
-
       mocks.findUnique.mockResolvedValue({
         id: "lead-1",
         name: "João",
         interest: "Software",
         aiSummary: "Quer desconto",
-        notes: [{ content: "Ligar depois" }]
+        notes: [{ content: "Ligar depois" }],
       });
+    }
 
-      // Mock the module before importing campaigns
-      vi.mock("@/lib/prisma", () => ({
-        prisma: {
-          crmUser: {
-            update: vi.fn().mockResolvedValue({}),
-          }
-        }
-      }));
-
-      // Mock the personalizer
-      const { generateAIPersonalizedMessage } = await import("./campaigns");
-      
-      // We need to mock the underlying personalizer class to avoid actual API calls
-      vi.mock("@/services/ai/campaign-personalizer", () => {
-        const MockCampaignPersonalizer = vi.fn();
-        MockCampaignPersonalizer.prototype.personalize = vi.fn().mockResolvedValue("Mensagem com IA para João");
-        return { CampaignPersonalizer: MockCampaignPersonalizer };
+    it("registra o consumo (recordPersonalization) quando usedLLM=true", async () => {
+      mockContext();
+      aiMocks.personalize.mockResolvedValue({
+        text: "Mensagem com IA para João",
+        usedLLM: true,
+        reason: "rewritten",
       });
 
       const result = await generateAIPersonalizedMessage("lead-1", "Template original");
 
       expect(result.success).toBe(true);
-      // Restaurar o env original
-      process.env = originalEnv;
+      expect(result.personalizedMessage).toBe("Mensagem com IA para João");
+      expect(aiMocks.crmUserUpdate).toHaveBeenCalledWith({
+        where: { id: "user-1" },
+        data: { aiMessagesUsed: { increment: 1 } },
+      });
+    });
+
+    it("NÃO registra consumo quando usedLLM=false (fallback sem cobrança)", async () => {
+      mockContext();
+      aiMocks.personalize.mockResolvedValue({
+        text: "Template original",
+        usedLLM: false,
+        reason: "no_api_key",
+      });
+
+      const result = await generateAIPersonalizedMessage("lead-1", "Template original");
+
+      expect(result.success).toBe(true);
+      expect(aiMocks.crmUserUpdate).not.toHaveBeenCalled();
+    });
+
+    it("lança quando a quota está esgotada", async () => {
+      (getTenantContext as any).mockResolvedValue({
+        tenantPrisma: { lead: { findUnique: mocks.findUnique } },
+        userId: "user-1",
+        aiQuota: { used: 15, limit: 15, resetAt: null },
+      });
+
+      await expect(
+        generateAIPersonalizedMessage("lead-1", "Template original")
+      ).rejects.toThrow("Limite mensal de IA atingido.");
+      expect(aiMocks.personalize).not.toHaveBeenCalled();
     });
   });
 

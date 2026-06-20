@@ -35,6 +35,9 @@ describe("Tenant Context", () => {
       id: "user-1",
       role: "USER",
       databaseUrl: "encrypted-postgresql://tenant-db",
+      aiMessagesUsed: 3,
+      aiMessagesLimit: 15,
+      aiLimitResetAt: null,
     });
     (getTenantPrisma as any).mockReturnValue({ tenant: true });
 
@@ -45,6 +48,7 @@ describe("Tenant Context", () => {
       userId: "user-1",
       userRole: "USER",
       tenantPrisma: { tenant: true },
+      aiQuota: { used: 3, limit: 15, resetAt: null },
     });
   });
 

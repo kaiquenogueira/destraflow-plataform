@@ -4,14 +4,14 @@ import { authConfig } from "@/lib/auth";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/encryption";
 import type { PrismaClient as TenantPrismaClient } from "@/generated/prisma/tenant";
+import type { QuotaState } from "@/services/ai/ai-quota";
 
 export interface TenantContext {
     userId: string;
     userRole: "ADMIN" | "USER";
     tenantPrisma: TenantPrismaClient;
-    aiMessagesUsed?: number;
-    aiMessagesLimit?: number;
-    aiLimitResetAt?: Date | null;
+    /** Quota de personalização por IA (CRM DB). Dona da regra: src/services/ai/ai-quota.ts. */
+    aiQuota?: QuotaState;
 }
 
 /**
@@ -52,9 +52,11 @@ export const getTenantContext = cache(async (): Promise<TenantContext | null> =>
         userId: user.id,
         userRole: user.role,
         tenantPrisma: getTenantPrisma(databaseUrl),
-        aiMessagesUsed: user.aiMessagesUsed,
-        aiMessagesLimit: user.aiMessagesLimit,
-        aiLimitResetAt: user.aiLimitResetAt,
+        aiQuota: {
+            used: user.aiMessagesUsed,
+            limit: user.aiMessagesLimit,
+            resetAt: user.aiLimitResetAt,
+        },
     };
 });
 
