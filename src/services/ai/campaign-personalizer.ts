@@ -27,6 +27,23 @@ export interface AIPersonalizerOptions {
     fetcher?: typeof fetch;
 }
 
+/** Por que `personalize` decidiu o que decidiu. Só `rewritten` significa que o LLM rodou. */
+export type PersonalizeReason =
+    | "rewritten"        // LLM rodou e devolveu texto
+    | "no_api_key"       // sem OPENAI_API_KEY
+    | "no_context"       // lead sem aiSummary/notes/interest
+    | "empty_response"   // LLM respondeu vazio
+    | "http_error"       // status != ok (inclui 401/invalid_api_key)
+    | "exception";       // timeout / network / abort
+
+export interface PersonalizeResult {
+    /** Texto final a enviar (reescrito OU template, sempre seguro). */
+    text: string;
+    /** true SSE houve uma chamada bem-sucedida ao LLM que produziu texto. */
+    usedLLM: boolean;
+    reason: PersonalizeReason;
+}
+
 const DEFAULT_PROMPT = `
 Você é um assistente de vendas especialista em copywriting.
 Seu objetivo é reescrever uma mensagem padrão de campanha para que ela pareça natural, humana e hiper-personalizada para o lead atual, usando o histórico e contexto fornecidos.
@@ -64,18 +81,18 @@ export class CampaignPersonalizer {
     /**
      * Tenta personalizar a mensagem com IA. Se falhar, retorna o original.
      */
-    async personalize(template: string, context: LeadContext): Promise<string> {
+    async personalize(template: string, context: LeadContext): Promise<PersonalizeResult> {
         // 1. Se não houver chave de API, retorna original imediatamente
         if (!this.apiKey) {
-            return template;
+            return { text: template, usedLLM: false, reason: "no_api_key" };
         }
 
         // Se não houver contexto relevante, retorna original
         if (!context.aiSummary && context.notes.length === 0 && !context.interest) {
-            return template;
+            return { text: template, usedLLM: false, reason: "no_context" };
         }
 
-            const prompt = this.buildPrompt(template, context);
+        const prompt = this.buildPrompt(template, context);
 
         try {
             const controller = new AbortController();
@@ -110,26 +127,28 @@ export class CampaignPersonalizer {
 
                 if (response.status === 401 || errorCode === 'invalid_api_key') {
                     console.warn('[AI Personalizer] API Error: chave OPENAI_API_KEY inválida ou revogada');
-                    return template;
+                    return { text: template, usedLLM: false, reason: "http_error" };
                 }
 
                 console.warn(`[AI Personalizer] API Error: ${response.status} ${response.statusText}`);
-                return template; // Fallback
+                return { text: template, usedLLM: false, reason: "http_error" };
             }
 
             const data = await response.json();
             const personalizedMessage = data.choices?.[0]?.message?.content?.trim();
 
             if (!personalizedMessage) {
-                return template; // Fallback
+                return { text: template, usedLLM: false, reason: "empty_response" };
             }
 
-            return personalizedMessage;
+            // usedLLM = true mesmo que o texto coincida com o template (corrige sub-cobrança):
+            // o fato que importa é "houve resposta válida do LLM", não a (des)igualdade de string.
+            return { text: personalizedMessage, usedLLM: true, reason: "rewritten" };
 
         } catch (error) {
             console.warn(`[AI Personalizer] Failed to personalize message:`, error);
             // Fallback seguro em caso de Timeout, Network Error, etc.
-            return template; 
+            return { text: template, usedLLM: false, reason: "exception" };
         }
     }
 

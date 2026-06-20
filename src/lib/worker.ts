@@ -135,10 +135,10 @@ async function processTenantMessages(
                 };
 
                 // 2. Tentar hiper-personalizar a mensagem. Se falhar, retorna a original.
-                const personalizedPayload = await aiPersonalizer.personalize(message.payload, leadContext);
-                
-                if (personalizedPayload !== message.payload) {
-                    finalPayload = personalizedPayload;
+                const { text, usedLLM } = await aiPersonalizer.personalize(message.payload, leadContext);
+                finalPayload = text;
+
+                if (usedLLM) {
                     aiUsed = true;
                     aiMessagesUsed++; // Incrementa localmente para a próxima iteração do loop
                 }
