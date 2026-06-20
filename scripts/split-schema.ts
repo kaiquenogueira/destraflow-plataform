@@ -69,7 +69,7 @@ function extractBlocks(content: string): { type: string, name: string, content: 
         
         // Tenta capturar comentários de documentação (///) imediatamente antes
         // Procura para trás a partir do início do match
-        let blockStartIndex = match.index;
+        const blockStartIndex = match.index;
         
         // Verifica linhas anteriores para ver se são comentários ///
         const beforeBlock = content.substring(0, blockStartIndex);

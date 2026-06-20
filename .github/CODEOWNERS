@@ -1,0 +1,21 @@
+# CODEOWNERS — revisão obrigatória por dono nos caminhos sensíveis.
+# ⚠️ VERIFIQUE o handle GitHub abaixo (placeholder: @kaiquenogueira) e ajuste para
+#    o usuário/equipe reais. Só passa a ter efeito quando o ruleset de `main` exigir
+#    "review from Code Owners" (ver docs/HARNESS-ENGINEERING.md §5).
+
+# Fallback geral
+*                         @kaiquenogueira
+
+# Fronteiras críticas (multi-tenant, credenciais, auth, fila)
+/prisma/                  @kaiquenogueira
+/src/lib/tenant.ts        @kaiquenogueira
+/src/lib/encryption.ts    @kaiquenogueira
+/src/lib/prisma.ts        @kaiquenogueira
+/src/lib/auth.ts          @kaiquenogueira
+/src/lib/worker.ts        @kaiquenogueira
+
+# Governança
+/.github/                 @kaiquenogueira
+/docs/adr/                @kaiquenogueira
+/CLAUDE.md                @kaiquenogueira
+/CONTEXT.md               @kaiquenogueira

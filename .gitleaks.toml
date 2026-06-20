@@ -1,0 +1,11 @@
+# Config do gitleaks (varredura de segredos). Inerte até o gitleaks ser executado
+# (pre-commit e/ou CI) — ver docs/HARNESS-ENGINEERING.md §6.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exemplos de env e clients Prisma gerados"
+paths = [
+  '''\.env\.example$''',
+  '''src/generated/prisma''',
+]
