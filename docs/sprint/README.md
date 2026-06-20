@@ -26,8 +26,9 @@ Ordenado por **prioridade** (bugs ao vivo primeiro) e, dentro da mesma prioridad
 | [05](./sprint-05-contrato-tenant-context.md) | Contrato do TenantContext | 🟡 Média | Média | 2–3 dias | — | ❌ Estrutural (risco de null-deref) |
 | [06](./sprint-06-intake-importacao-leads.md) | Intake / importação de leads | 🟡 Média | Média–Alta | 3–5 dias | Sprint 02 | ⚠️ UX — preview diverge do armazenado |
 | [07](./sprint-07-limpeza-e-honestidade-de-interface.md) | Limpeza e honestidade de interface | ⚪ Baixa | Baixa | 1–2 dias | — | ❌ Sem bug ao vivo |
+| [08](./sprint-08-limpeza-de-lint.md) | Limpeza de lint (ratchet `warn`→`error`) | ⚪ Baixa | Baixa–Média | 2–3 dias | — | ❌ Sem bug ao vivo |
 
-**Esforço total estimado:** ~16–25 dias.
+**Esforço total estimado:** ~18–28 dias.
 
 ## Ordem recomendada de execução
 
@@ -35,7 +36,7 @@ Ordenado por **prioridade** (bugs ao vivo primeiro) e, dentro da mesma prioridad
 2. **Sprint 02** (perda de histórico) — habilita o Sprint 06.
 3. **Sprint 04** e **Sprint 05** (estrutura/drift; independentes).
 4. **Sprint 06** (depende do módulo de telefone do Sprint 02).
-5. **Sprint 07** por último (limpeza; pode entrar a qualquer momento como preenchimento).
+5. **Sprint 07** e **Sprint 08** por último (limpeza/dívida; entram a qualquer momento como preenchimento).
 
 > Dependência forte única: **06 → 02** (a normalização de telefone do intake reusa o módulo de identidade de telefone criado no Sprint 02).
 
@@ -66,8 +67,13 @@ Ordenado por **prioridade** (bugs ao vivo primeiro) e, dentro da mesma prioridad
 
 ### ⚪ Sprint 07 — Limpeza e honestidade de interface
 - Deletar readers mortos/decoy em `chat.ts`.
-- `TenantContext.userRole`: campo mentiroso sem consumidor → tornar load-bearing ou remover.
+- `TenantContext.userRole`: campo populado mas **nunca lido** → remover (ou tornar load-bearing). **Não é vuln:** `src/proxy.ts` (middleware Next 16) autentica todas as rotas e **gateia `/admin` por papel** — a tese original "sem middleware" foi refutada na reverificação.
 - Dedups estreitos: config Evolution duplicada; preâmbulo de validação de principal triplicado; nit de import dinâmico em `admin.ts`.
+
+### ⚪ Sprint 08 — Limpeza de lint (ratchet)
+- Quita a dívida de lint rebaixada a `warn` quando o gate foi ligado (lint vinha **vermelho**: 742 errors). Estratégia **fix-then-flip por regra** (CI verde a cada passo).
+- **7 floating-promises reais** (`void` em effects/handlers) → `error`. ~11 `any` de código tipados (88 em testes ficam `off`). 40 `no-unused-vars`, 5 `error-boundaries`, 2 `unescaped` → `error`.
+- Warns **estruturais** (complexity/max-lines/max-params em `worker.ts`/`personalizer`/`campaign-form`) ficam para **depois** dos Sprints 01/04/06, que os eliminam naturalmente.
 
 ## Achados rejeitados (não re-sugerir)
 
