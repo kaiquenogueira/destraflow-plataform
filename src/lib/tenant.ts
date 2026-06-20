@@ -2,7 +2,6 @@ import { cache } from "react";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
-import { decrypt } from "@/lib/encryption";
 import type { PrismaClient as TenantPrismaClient } from "@/generated/prisma/tenant";
 import type { QuotaState } from "@/services/ai/ai-quota";
 
@@ -46,12 +45,10 @@ export const getTenantContext = cache(async (): Promise<TenantContext | null> =>
         return null;
     }
 
-    const databaseUrl = decrypt(user.databaseUrl);
-
     return {
         userId: user.id,
         userRole: user.role,
-        tenantPrisma: getTenantPrisma(databaseUrl),
+        tenantPrisma: getTenantPrisma({ tenantId: user.id, encryptedUrl: user.databaseUrl }),
         aiQuota: {
             used: user.aiMessagesUsed,
             limit: user.aiMessagesLimit,

@@ -92,7 +92,11 @@ describe("Worker", () => {
       const result = await processAllTenantMessages();
 
       expect(prisma.crmUser.findMany).toHaveBeenCalled();
-      expect(getTenantPrisma).toHaveBeenCalledWith("db-url");
+      // getTenantPrisma agora recebe { tenantId, encryptedUrl } (decifra dentro do cache).
+      expect(getTenantPrisma).toHaveBeenCalledWith({
+        tenantId: "user-1",
+        encryptedUrl: "encrypted-db-url",
+      });
       expect(createEvolutionClient).toHaveBeenCalledWith("instance", "key");
       expect(mockEvolutionClient.sendMessage).toHaveBeenCalledWith(
         "5511988888888",

@@ -68,8 +68,7 @@ async function getTenantDashboardData(userId: string) {
         };
     }
 
-    const databaseUrl = decrypt(user.databaseUrl);
-    const tenantPrisma = getTenantPrisma(databaseUrl);
+    const tenantPrisma = getTenantPrisma({ tenantId: userId, encryptedUrl: user.databaseUrl });
 
     const sevenDaysAgo = subDays(new Date(), 7);
 

@@ -313,12 +313,11 @@ export async function processAllTenantMessages(): Promise<{
         if (!user.databaseUrl || !user.evolutionInstance) return;
 
         try {
-            const databaseUrl = decrypt(user.databaseUrl);
             const evolutionInstance = decrypt(user.evolutionInstance);
             const evolutionApiKey = user.evolutionApiKey ? decrypt(user.evolutionApiKey) : null;
             const evolutionPhone = user.evolutionPhone;
 
-            const tenantPrisma = getTenantPrisma(databaseUrl);
+            const tenantPrisma = getTenantPrisma({ tenantId: user.id, encryptedUrl: user.databaseUrl });
             const result = await processTenantMessages(
                 tenantPrisma,
                 evolutionInstance,
@@ -362,14 +361,13 @@ export async function updateCampaignStatuses(): Promise<number> {
             role: "USER",
             databaseUrl: { not: null },
         },
-        select: { databaseUrl: true },
+        select: { id: true, databaseUrl: true },
     });
 
     for (const user of users) {
         if (!user.databaseUrl) continue;
 
-        const databaseUrl = decrypt(user.databaseUrl);
-        const tenantPrisma = getTenantPrisma(databaseUrl);
+        const tenantPrisma = getTenantPrisma({ tenantId: user.id, encryptedUrl: user.databaseUrl });
 
         // Buscar campanhas ativas
         const campaigns = await tenantPrisma.campaign.findMany({

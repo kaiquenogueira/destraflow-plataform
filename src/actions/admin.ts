@@ -218,9 +218,8 @@ export async function getUserNotifications(userId: string) {
 
     try {
         const { getTenantPrisma } = await import("@/lib/prisma");
-        const { decrypt } = await import("@/lib/encryption");
-        
-        const tenantPrisma = getTenantPrisma(decrypt(user.databaseUrl));
+
+        const tenantPrisma = getTenantPrisma({ tenantId: userId, encryptedUrl: user.databaseUrl });
         
         const notifications = await tenantPrisma.externalNotification.findMany({
             orderBy: { criadoEm: "desc" },
