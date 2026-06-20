@@ -372,13 +372,13 @@ export async function generateAIPersonalizedMessage(leadId: string, template: st
         notes: lead.notes.map(n => n.content)
     };
 
-    const personalizedPayload = await getAIPersonalizer().personalize(finalPayload, leadContext);
-    
-    if (personalizedPayload !== finalPayload) {
+    const { text, usedLLM } = await getAIPersonalizer().personalize(finalPayload, leadContext);
+
+    if (usedLLM) {
         await incrementAIUsage(userId);
     }
 
-    return { success: true, personalizedMessage: personalizedPayload };
+    return { success: true, personalizedMessage: text };
 }
 
 // Retry todas as mensagens DEAD_LETTER de uma campanha
