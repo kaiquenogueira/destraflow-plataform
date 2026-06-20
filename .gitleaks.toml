@@ -17,3 +17,9 @@ regexes = [
   '''ci-dummy-secret''',
   '''postgresql://ci:ci@localhost''',
 ]
+
+[[allowlists]]
+description = "Placeholders de documentação (ex.: curl -H 'Authorization: Bearer SEU_CRON_SECRET')"
+regexes = [
+  '''(SEU|YOUR|MY|EXAMPLE|DUMMY|TEST|XXX)[_-]?[A-Z0-9_]*''',
+]
