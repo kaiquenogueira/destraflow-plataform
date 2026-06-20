@@ -43,7 +43,11 @@ describe("Tenant Context", () => {
 
     const result = await getTenantContext();
 
-    expect(getTenantPrisma).toHaveBeenCalledWith("postgresql://tenant-db");
+    // Resolve por { tenantId, encryptedUrl }; a decifragem estrita vive dentro do pool.
+    expect(getTenantPrisma).toHaveBeenCalledWith({
+      tenantId: "user-1",
+      encryptedUrl: "encrypted-postgresql://tenant-db",
+    });
     expect(result).toEqual({
       userId: "user-1",
       userRole: "USER",

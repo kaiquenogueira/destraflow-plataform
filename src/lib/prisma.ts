@@ -2,6 +2,8 @@ import { PrismaClient as CrmPrismaClient } from "@prisma/client";
 import { PrismaClient as TenantPrismaClient } from "@/generated/prisma/tenant";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import { createTenantPoolCache, type TenantConnection } from "@/lib/tenant-pool";
+import { decryptSecret } from "@/lib/encryption";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: CrmPrismaClient | undefined;
@@ -40,38 +42,22 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
-// Cache de conexões para tenants (LRU - Least Recently Used)
-const tenantClients = new Map<string, TenantPrismaClient>();
-const MAX_TENANT_CLIENTS = 10;
+// Cache LRU de conexões de tenant. A decifragem ESTRITA (decryptSecret) vive aqui:
+// um databaseUrl não-ciphertext LANÇA antes de createTenantPrismaClient — impossível,
+// por construção, abrir um pool com credencial em texto plano.
+const tenantPool = createTenantPoolCache({
+  create: (encryptedUrl) => createTenantPrismaClient(decryptSecret(encryptedUrl)),
+  onEvict: (client) =>
+    client.$disconnect().catch((e: unknown) =>
+      console.error("Failed to disconnect evicted tenant client:", e)
+    ),
+});
 
 /**
- * Obtém um cliente Prisma para o banco do tenant
- * Usa cache LRU para evitar criar pools excessivos e vazamento de memória
+ * Obtém um cliente Prisma para o banco do tenant a partir de { tenantId, encryptedUrl }.
+ * Keyado por tenantId (identidade estável). O segredo é decifrado dentro do cache via
+ * decryptSecret — se não for ciphertext, lança e nenhum pool é aberto.
  */
-export function getTenantPrisma(databaseUrl: string): TenantPrismaClient {
-  if (tenantClients.has(databaseUrl)) {
-    const client = tenantClients.get(databaseUrl)!;
-    // Move para o final (mais recente)
-    tenantClients.delete(databaseUrl);
-    tenantClients.set(databaseUrl, client);
-    return client;
-  }
-
-  // Se atingiu o limite, remove o mais antigo (primeiro inserido)
-  if (tenantClients.size >= MAX_TENANT_CLIENTS) {
-    const oldestKey = tenantClients.keys().next().value;
-    if (oldestKey) {
-      const clientToRemove = tenantClients.get(oldestKey);
-      // Tenta desconectar graciosamente, mas não bloqueia se falhar
-      clientToRemove?.$disconnect().catch((e: unknown) => 
-        console.error("Failed to disconnect evicted tenant client:", e)
-      );
-      tenantClients.delete(oldestKey);
-    }
-  }
-
-  const client = createTenantPrismaClient(databaseUrl);
-  tenantClients.set(databaseUrl, client);
-
-  return client;
+export function getTenantPrisma(conn: TenantConnection): TenantPrismaClient {
+  return tenantPool.getOrCreate(conn);
 }
