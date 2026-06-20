@@ -1,11 +1,11 @@
 "use server";
 
 import { getTenantContext } from "@/lib/tenant";
-import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { LeadTag, CampaignStatus } from "@/types";
 import { CampaignPersonalizer } from "@/services/ai/campaign-personalizer";
+import { canPersonalize, recordPersonalization, applyReset } from "@/services/ai/ai-quota";
 
 // Não inicializar instâncias globais que usem env vars diretamente fora de funções em arquivos de action
 // Isso quebra os testes unitários que fazem mock do ambiente
@@ -16,29 +16,6 @@ function getAIPersonalizer() {
         aiPersonalizerInstance = new CampaignPersonalizer();
     }
     return aiPersonalizerInstance;
-}
-
-interface QuotaPrismaClient {
-    crmUser: {
-        update: (args: {
-            where: { id: string };
-            data: { aiMessagesUsed: { increment: number } | { set: number } };
-        }) => Promise<unknown>;
-    };
-}
-
-async function incrementAIUsage(userId: string, quotaPrisma: QuotaPrismaClient = prisma) {
-    await quotaPrisma.crmUser.update({
-        where: { id: userId },
-        data: { aiMessagesUsed: { increment: 1 } },
-    });
-}
-
-async function resetAIUsage(userId: string, quotaPrisma: QuotaPrismaClient = prisma) {
-    await quotaPrisma.crmUser.update({
-        where: { id: userId },
-        data: { aiMessagesUsed: { set: 0 } },
-    });
 }
 
 // Template processing - substitui variáveis como {{nome}} pelo valor real
@@ -342,15 +319,13 @@ export async function generateAIPersonalizedMessage(leadId: string, template: st
     if (!context) {
         throw new Error("Banco de dados não configurado");
     }
-    const { tenantPrisma, userId, aiMessagesUsed = 0, aiMessagesLimit = 15, aiLimitResetAt } = context;
+    const { tenantPrisma, userId, aiQuota } = context;
 
-    let currentAIMessagesUsed = aiMessagesUsed;
-    if (aiLimitResetAt && new Date() > aiLimitResetAt) {
-        await resetAIUsage(userId);
-        currentAIMessagesUsed = 0;
+    const decision = canPersonalize(aiQuota ?? { used: 0, limit: 15, resetAt: null });
+    if (decision.didReset && decision.nextState.resetAt) {
+        await applyReset(userId, decision.nextState.resetAt);
     }
-
-    if (currentAIMessagesUsed >= aiMessagesLimit) {
+    if (!decision.allowed) {
         throw new Error("Limite mensal de IA atingido.");
     }
 
@@ -375,7 +350,7 @@ export async function generateAIPersonalizedMessage(leadId: string, template: st
     const { text, usedLLM } = await getAIPersonalizer().personalize(finalPayload, leadContext);
 
     if (usedLLM) {
-        await incrementAIUsage(userId);
+        await recordPersonalization(userId);
     }
 
     return { success: true, personalizedMessage: text };

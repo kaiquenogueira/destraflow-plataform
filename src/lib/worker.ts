@@ -12,6 +12,7 @@ import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
 import { decrypt } from "@/lib/encryption";
 import { CampaignPersonalizer } from "@/services/ai/campaign-personalizer";
+import { canPersonalize, recordPersonalization, applyReset, type QuotaState } from "@/services/ai/ai-quota";
 
 const MAX_RETRIES = 3;
 const MAX_CONCURRENT_TENANTS = 5;
@@ -52,8 +53,7 @@ async function processTenantMessages(
     evolutionApiKey: string | null,
     evolutionPhone: string | null,
     crmUserId: string,
-    aiMessagesUsed: number,
-    aiMessagesLimit: number
+    quotaState: QuotaState
 ): Promise<WorkerResult> {
     const result: WorkerResult = {
         processed: 0,
@@ -110,6 +110,10 @@ async function processTenantMessages(
         return result;
     }
 
+    // Estado de quota corrente do batch (relido do DB no próximo cron). Atualizado a
+    // cada reescrita registrada e a cada reset aplicado.
+    let quota = quotaState;
+
     for (const message of pendingMessages) {
         result.processed++;
         const isRetry = message.status === "FAILED";
@@ -124,8 +128,15 @@ async function processTenantMessages(
             let finalPayload = message.payload;
             let aiUsed = false;
 
-            // Só tenta usar IA se o cliente não atingiu o limite
-            if (aiMessagesUsed < aiMessagesLimit) {
+            // Decide pela quota corrente (aplica e AVANÇA o reset devido). Antes o worker
+            // nunca consultava aiLimitResetAt e travava o tenant no limite para sempre.
+            const decision = canPersonalize(quota);
+            if (decision.didReset && decision.nextState.resetAt) {
+                await applyReset(crmUserId, decision.nextState.resetAt);
+            }
+            quota = decision.nextState;
+
+            if (decision.allowed) {
                 // 1. Extrair o contexto do lead para a IA
                 const leadContext = {
                     name: message.lead.name,
@@ -137,11 +148,7 @@ async function processTenantMessages(
                 // 2. Tentar hiper-personalizar a mensagem. Se falhar, retorna a original.
                 const { text, usedLLM } = await aiPersonalizer.personalize(message.payload, leadContext);
                 finalPayload = text;
-
-                if (usedLLM) {
-                    aiUsed = true;
-                    aiMessagesUsed++; // Incrementa localmente para a próxima iteração do loop
-                }
+                aiUsed = usedLLM;
             }
 
             // 3. Enviar a mensagem (personalizada ou original)
@@ -158,12 +165,10 @@ async function processTenantMessages(
                 },
             });
 
-            // 4. Se usou IA, atualiza o contador no banco CRM central
+            // 4. Se usou IA, registra o consumo no banco CRM central
             if (aiUsed) {
-                await prisma.crmUser.update({
-                    where: { id: crmUserId },
-                    data: { aiMessagesUsed: { increment: 1 } }
-                });
+                await recordPersonalization(crmUserId);
+                quota = { ...quota, used: quota.used + 1 };
             }
 
             await persistOutboundMessageAudit(
@@ -300,6 +305,7 @@ export async function processAllTenantMessages(): Promise<{
             evolutionPhone: true,
             aiMessagesLimit: true,
             aiMessagesUsed: true,
+            aiLimitResetAt: true,
         },
     });
 
@@ -319,8 +325,11 @@ export async function processAllTenantMessages(): Promise<{
                 evolutionApiKey,
                 evolutionPhone,
                 user.id,
-                user.aiMessagesUsed,
-                user.aiMessagesLimit
+                {
+                    used: user.aiMessagesUsed,
+                    limit: user.aiMessagesLimit,
+                    resetAt: user.aiLimitResetAt,
+                }
             );
             results[user.name] = result;
         } catch (error) {

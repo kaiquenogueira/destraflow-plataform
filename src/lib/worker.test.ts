@@ -10,6 +10,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     crmUser: {
       findMany: vi.fn(),
+      update: vi.fn(),
     },
   },
   getTenantPrisma: vi.fn(),
@@ -306,6 +307,50 @@ describe("Worker", () => {
       );
 
       consoleSpy.mockRestore();
+    });
+
+    it("should reset an expired AI quota in the worker path (regression: tenant no longer blocked forever)", async () => {
+      // Bug ao vivo: o worker nunca selecionava nem consultava aiLimitResetAt, então
+      // um tenant no limite ficava bloqueado permanentemente no caminho automatizado.
+      const pastReset = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
+        {
+          id: "user-1",
+          name: "User 1",
+          databaseUrl: "encrypted-db-url",
+          evolutionInstance: "encrypted-instance",
+          evolutionApiKey: "encrypted-key",
+          evolutionPhone: "5511999999999",
+          aiMessagesUsed: 15,
+          aiMessagesLimit: 15,
+          aiLimitResetAt: pastReset,
+        },
+      ]);
+
+      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
+        {
+          id: "msg-1",
+          lead: { phone: "5511988888888", name: "Lead", interest: null, aiSummary: null, notes: [] },
+          payload: "Hello",
+          status: "PENDING",
+          retryCount: 0,
+        },
+      ]);
+
+      mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
+      mockEvolutionClient.sendMessage.mockResolvedValue(true);
+      mockTenantPrisma.whatsAppContact.findFirst.mockResolvedValue({ id: "contact-1" });
+
+      const result = await processAllTenantMessages();
+
+      // Reset persistido: used=0 E aiLimitResetAt avançado (não fica no passado).
+      expect(prisma.crmUser.update).toHaveBeenCalledWith({
+        where: { id: "user-1" },
+        data: { aiMessagesUsed: { set: 0 }, aiLimitResetAt: { set: expect.any(Date) } },
+      });
+      // Tenant destravado: a mensagem foi enviada normalmente.
+      expect(result.results["User 1"].sent).toBe(1);
     });
   });
 
