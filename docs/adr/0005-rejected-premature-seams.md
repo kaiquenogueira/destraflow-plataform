@@ -20,7 +20,7 @@ Vamos **não** implementar as costuras abaixo. Revisões de arquitetura devem **
 Um módulo que recebe um `CrmUser` e retorna `{ tenantPrisma, evolutionClient, aiQuota }` num objeto só.
 **Por que rejeitado:** nenhum call site precisa dos três ao mesmo tempo — `getTenantContext` usa `tenantPrisma`+quota e nunca Evolution; `message-history` usa só o cliente Evolution; o worker é batch/sessionless e constrói o cliente Evolution só depois de um check de conectividade. Unificar força **over-fetch** (abrir pool LRU e/ou fazer chamada de rede que o caller não usa). A complexidade real já está corretamente concentrada em `decrypt` (`encryption.ts`), `getTenantPrisma` (`prisma.ts`) e `createEvolutionClient` (`evolution.ts`).
 **Também rejeitado:** um wrapper `connectTenant(encryptedUrl)` de 2 linhas combinando `decrypt`+`getTenantPrisma` — é pass-through raso (interface ≈ implementação).
-**Alternativa legítima (não-gorda):** tornar a invariante "não abrir pool de ciphertext" inesquecível fazendo `getTenantPrisma` aceitar o valor criptografado (ou `getTenantConnectionString(user)`), e endurecer `decrypt` numa costura estrita — ver [Sprint 03](../sprint/sprint-03-seguranca-credenciais-decrypt.md).
+**Alternativa legítima (não-gorda):** tornar a invariante "não abrir pool de ciphertext" inesquecível fazendo `getTenantPrisma` aceitar o valor criptografado (ou `getTenantConnectionString(user)`), e endurecer `decrypt` numa costura estrita — ver [Sprint 03](../sprint/closed/sprint-03-seguranca-credenciais-decrypt.md).
 
 ### R2 — Base-URL da Evolution por tenant
 
@@ -36,7 +36,7 @@ Refatorar `getInstanceStatus`/`EvolutionClient` para injetar o transporte (fetch
 
 Extrair uma interface `rewrite(prompt) -> text` para "hospedar um segundo provider depois".
 **Por que rejeitado:** OpenAI é o **único** provider — sem segundo adaptador, sem ADR pedindo, sem indício no repo. Costura **hipotética** de 1 adaptador. A classe já é profunda (timeout, parsing de erro, fallbacks, montagem de prompt atrás de `personalize(template, context)`).
-**Nota:** o problema **real e aceito** do personalizer é outro — ele esconde o fato "houve chamada faturável?"; a correção é retornar `{ text, usedLLM, reason }`, não criar costura de provider. Ver [Sprint 01](../sprint/sprint-01-quota-ia-e-sinal-de-uso.md).
+**Nota:** o problema **real e aceito** do personalizer é outro — ele esconde o fato "houve chamada faturável?"; a correção é retornar `{ text, usedLLM, reason }`, não criar costura de provider. Ver [Sprint 01](../sprint/closed/sprint-01-quota-ia-e-sinal-de-uso.md).
 
 ### R5 — Helper genérico `findContactByPhone` como movimento de DRY
 
