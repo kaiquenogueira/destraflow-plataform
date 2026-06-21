@@ -1,6 +1,7 @@
 "use server";
 
 import { getTenantContext } from "@/lib/tenant";
+import { canonicalizePhone } from "@/lib/phone";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { LeadTag } from "@/types";
@@ -29,7 +30,7 @@ export async function createLead(data: z.infer<typeof createLeadSchema>) {
     const validated = createLeadSchema.parse(data);
 
     const lead = await tenantPrisma.lead.create({
-        data: validated,
+        data: { ...validated, phoneNormalized: canonicalizePhone(validated.phone) },
     });
 
     revalidatePath("/leads");
@@ -45,9 +46,15 @@ export async function updateLead(data: z.infer<typeof updateLeadSchema>) {
     const validated = updateLeadSchema.parse(data);
     const { id, ...updateData } = validated;
 
+    // Se o telefone muda, recalcula phoneNormalized — senão a forma canônica fica
+    // obsoleta e o match lead↔contato volta a divergir (o bug que o Sprint 02 corrige).
+    const dataToWrite = updateData.phone
+        ? { ...updateData, phoneNormalized: canonicalizePhone(updateData.phone) }
+        : updateData;
+
     const lead = await tenantPrisma.lead.update({
         where: { id },
-        data: updateData,
+        data: dataToWrite,
     });
 
     revalidatePath("/leads");
@@ -243,29 +250,6 @@ const importLeadSchema = z.object({
 
 const VALID_TAGS = ["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"];
 
-function normalizePhone(raw: string): string {
-    // Remove tudo que não é dígito ou +
-    const phone = raw.replace(/[^\d+]/g, "");
-
-    // Se começa com +, manter
-    if (phone.startsWith("+")) {
-        return phone;
-    }
-
-    // Se tem 10-11 dígitos (BR sem código de país), adicionar +55
-    if (phone.length >= 10 && phone.length <= 11) {
-        return `+55${phone}`;
-    }
-
-    // Se tem 12-13 dígitos e começa com 55, adicionar +
-    if ((phone.length === 12 || phone.length === 13) && phone.startsWith("55")) {
-        return `+${phone}`;
-    }
-
-    // Retornar como está para validação posterior
-    return `+${phone}`;
-}
-
 function normalizeTag(raw: string | undefined): LeadTag {
     if (!raw) return "NEW";
     const upper = raw.trim().toUpperCase();
@@ -319,13 +303,13 @@ export async function importLeadsFromCSV(
         throw new Error("Máximo de 5000 leads por importação");
     }
 
-    // Buscar telefones já existentes para deduplicação
+    // Buscar telefones já existentes para deduplicação (por forma canônica, não dígitos crus)
     const existingLeads = await tenantPrisma.lead.findMany({
         select: { phone: true },
     });
-    const existingPhones = new Set(existingLeads.map((l: { phone: string }) => l.phone.replace(/\D/g, "")));
+    const existingPhones = new Set(existingLeads.map((l: { phone: string }) => canonicalizePhone(l.phone)));
 
-    const validLeads: Array<{ name: string; phone: string; interest?: string; tag: LeadTag }> = [];
+    const validLeads: Array<{ name: string; phone: string; phoneNormalized: string; interest?: string; tag: LeadTag }> = [];
     const seenPhonesInBatch = new Set<string>();
 
     for (let i = 0; i < leads.length; i++) {
@@ -343,8 +327,7 @@ export async function importLeadsFromCSV(
             continue;
         }
 
-        const normalizedPhone = normalizePhone(raw.phone.trim());
-        const phoneDigits = normalizedPhone.replace(/\D/g, "");
+        const normalizedPhone = canonicalizePhone(raw.phone.trim());
 
         // Validar formato do telefone normalizado
         if (!/^\+?[1-9]\d{10,14}$/.test(normalizedPhone)) {
@@ -356,23 +339,24 @@ export async function importLeadsFromCSV(
             continue;
         }
 
-        // Deduplicar contra banco existente
-        if (existingPhones.has(phoneDigits)) {
+        // Deduplicar contra banco existente (forma canônica)
+        if (existingPhones.has(normalizedPhone)) {
             result.skipped++;
             continue;
         }
 
         // Deduplicar dentro do batch
-        if (seenPhonesInBatch.has(phoneDigits)) {
+        if (seenPhonesInBatch.has(normalizedPhone)) {
             result.skipped++;
             continue;
         }
 
-        seenPhonesInBatch.add(phoneDigits);
+        seenPhonesInBatch.add(normalizedPhone);
 
         validLeads.push({
             name: raw.name.trim(),
             phone: normalizedPhone,
+            phoneNormalized: normalizedPhone,
             interest: raw.interest?.trim() || undefined,
             tag: normalizeTag(raw.tag),
         });

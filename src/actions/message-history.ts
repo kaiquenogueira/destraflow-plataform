@@ -1,6 +1,7 @@
 "use server";
 
 import { getTenantContext } from "@/lib/tenant";
+import { findContactByPhone } from "@/lib/phone";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -68,10 +69,8 @@ async function getMessagesFromDatabase(
     tenantPrisma: ReturnType<typeof import("@/lib/prisma").getTenantPrisma>,
     phone: string
 ): Promise<NormalizedMessage[]> {
-    // Buscar contato WhatsApp pelo telefone
-    const contact = await tenantPrisma.whatsAppContact.findFirst({
-        where: { whatsapp: phone },
-    });
+    // Buscar contato WhatsApp por identidade de telefone (canônico + fallback legado)
+    const contact = await findContactByPhone(tenantPrisma, phone);
 
     if (!contact) {
         return [];

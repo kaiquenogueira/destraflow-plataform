@@ -8,6 +8,7 @@ import {
   getLeads,
   getLeadById,
   getLeadsByTag,
+  importLeadsFromCSV,
 } from "./leads";
 
 // Mock dependencies
@@ -25,6 +26,7 @@ describe("Leads Actions", () => {
   const mockPrisma = {
     lead: {
       create: vi.fn(),
+      createMany: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
       findMany: vi.fn(),
@@ -47,9 +49,11 @@ describe("Leads Actions", () => {
 
   describe("createLead", () => {
     it("should create a lead successfully", async () => {
+      // Input NÃO-canônico (sem +55): prova que createLead aplica canonicalizePhone,
+      // não apenas copia o phone cru para phoneNormalized.
       const input = {
         name: "Test Lead",
-        phone: "+5511999999999",
+        phone: "11999999999",
         tag: "NEW" as const,
         interest: "Product A",
       };
@@ -63,8 +67,9 @@ describe("Leads Actions", () => {
 
       const result = await createLead(input);
 
+      // Sprint 02: createLead persiste a forma canônica em phoneNormalized (identidade de telefone).
       expect(mockPrisma.lead.create).toHaveBeenCalledWith({
-        data: input,
+        data: { ...input, phoneNormalized: "+5511999999999" },
       });
       expect(result.success).toBe(true);
       expect(result.lead).toBeDefined();
@@ -114,6 +119,17 @@ describe("Leads Actions", () => {
         data: { name: "Updated Name" },
       });
       expect(result.success).toBe(true);
+    });
+
+    it("recomputes phoneNormalized when phone changes (Sprint 02 — no stale canonical)", async () => {
+      mockPrisma.lead.update.mockResolvedValue({ id: "lead-1" });
+
+      await updateLead({ id: "lead-1", phone: "5511999999999" });
+
+      expect(mockPrisma.lead.update).toHaveBeenCalledWith({
+        where: { id: "lead-1" },
+        data: { phone: "5511999999999", phoneNormalized: "+5511999999999" },
+      });
     });
   });
 
@@ -276,6 +292,34 @@ describe("Leads Actions", () => {
       const result = await getLeadsByTag();
 
       expect(result).toEqual({});
+    });
+  });
+
+  describe("importLeadsFromCSV", () => {
+    it("dedupes by canonical form (batch + existing) and persists phoneNormalized", async () => {
+      // Existente no banco (forma crua) que canonicaliza para +5511977777777.
+      mockPrisma.lead.findMany.mockResolvedValue([{ phone: "5511977777777" }]);
+      mockPrisma.lead.createMany.mockResolvedValue({ count: 1 });
+
+      const result = await importLeadsFromCSV([
+        { name: "Keep", phone: "11999999999" },        // novo → importa
+        { name: "Dup batch", phone: "+55 11 99999-9999" }, // mesmo nº, formato diferente → skip
+        { name: "Dup existing", phone: "(11) 97777-7777" }, // casa existente → skip
+      ]);
+
+      expect(result.imported).toBe(1);
+      expect(result.skipped).toBe(2);
+      expect(mockPrisma.lead.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            name: "Keep",
+            phone: "+5511999999999",
+            phoneNormalized: "+5511999999999",
+            interest: undefined,
+            tag: "NEW",
+          },
+        ],
+      });
     });
   });
 });

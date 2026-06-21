@@ -32,6 +32,7 @@ describe("Worker", () => {
     },
     whatsAppContact: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
     },
     chatHistory: {
@@ -355,6 +356,47 @@ describe("Worker", () => {
       });
       // Tenant destravado: a mensagem foi enviada normalmente.
       expect(result.results["User 1"].sent).toBe(1);
+    });
+
+    it("creates the audit contact in CANONICAL form (Sprint 02 — no duplicate-per-format contact)", async () => {
+      (prisma.crmUser.findMany as Mock).mockResolvedValue([
+        {
+          id: "user-1",
+          name: "User 1",
+          databaseUrl: "encrypted-db-url",
+          evolutionInstance: "encrypted-instance",
+          evolutionApiKey: "encrypted-key",
+          evolutionPhone: "5511999999999",
+        },
+      ]);
+
+      mockTenantPrisma.campaignMessage.findMany.mockResolvedValue([
+        {
+          id: "msg-1",
+          lead: { phone: "5511988888888", name: "Lead", interest: null, aiSummary: null, notes: [] },
+          payload: "Hello",
+          status: "PENDING",
+          retryCount: 0,
+        },
+      ]);
+
+      mockEvolutionClient.getInstanceStatus.mockResolvedValue({ connected: true });
+      mockEvolutionClient.sendMessage.mockResolvedValue(true);
+      // Nenhum contato existe ainda: fast-path (findFirst) e fallback (findMany) vazios →
+      // o worker cria o contato pela identidade canônica, não pelo telefone cru.
+      mockTenantPrisma.whatsAppContact.findFirst.mockResolvedValue(null);
+      mockTenantPrisma.whatsAppContact.findMany.mockResolvedValue([]);
+      mockTenantPrisma.whatsAppContact.create.mockResolvedValue({ id: 99 });
+
+      await processAllTenantMessages();
+
+      expect(mockTenantPrisma.whatsAppContact.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          whatsapp: "+5511988888888",
+          phoneNormalized: "+5511988888888",
+          isManual: false,
+        }),
+      });
     });
   });
 
