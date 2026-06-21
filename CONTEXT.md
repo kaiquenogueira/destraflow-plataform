@@ -59,7 +59,7 @@ Estado terminal de falha de uma `CampaignMessage` após `MAX_RETRIES` tentativas
 Texto de mensagem com variáveis (`{{nome}}`, `{{telefone}}`, `{{interesse}}`) resolvidas por `processTemplate`. Pode ser hiper-personalizado por IA antes do envio.
 
 **Personalização de IA / Quota de IA**
-`CampaignPersonalizer` (`src/services/ai/`) reescreve um payload usando contexto do lead. Governado por uma **quota mensal por tenant** (`aiMessagesUsed`/`aiMessagesLimit`/`aiLimitResetAt`) no CRM DB. A regra de quota é hoje divergente entre worker e actions — ver [Sprint 01](./docs/sprint/sprint-01-quota-ia-e-sinal-de-uso.md).
+`CampaignPersonalizer` (`src/services/ai/`) reescreve um payload usando contexto do lead. Governado por uma **quota mensal por tenant** (`aiMessagesUsed`/`aiMessagesLimit`/`aiLimitResetAt`) no CRM DB. A regra de quota é hoje divergente entre worker e actions — ver [Sprint 01](./docs/sprint/closed/sprint-01-quota-ia-e-sinal-de-uso.md).
 
 **WhatsAppContact**
 Registro no Tenant DB representando um número WhatsApp. Identificado por `whatsapp` (telefone). Criado pelo worker (auditoria) ou por sync de contatos. Casamento por telefone deve ser canônico — ver `phone-identity`.
