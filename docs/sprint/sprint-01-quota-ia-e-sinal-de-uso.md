@@ -5,7 +5,7 @@
 > **Esforço estimado:** 2–3 dias
 > **Dependências:** Nenhuma (mas o Ponto 2 deve ser feito ANTES do Ponto 1 dentro deste sprint)
 > **Subsistemas:** Worker de mensagens (`src/lib/worker.ts`), Personalização IA (`src/services/ai/campaign-personalizer.ts`), Actions de campanha (`src/actions/campaigns.ts`), Contexto de tenant (`src/lib/tenant.ts`)
-> **Status:** Não iniciado
+> **Status:** Concluído (2026-06-21, PR #14) — backfill `aiLimitResetAt` aplicado e verificado em produção (idempotente). Follow-up opcional pendente: cron dedicado de reset.
 
 ## Resumo executivo
 

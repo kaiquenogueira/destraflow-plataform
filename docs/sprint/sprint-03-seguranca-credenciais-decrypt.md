@@ -5,7 +5,7 @@
 > - **Esforço estimado:** 2–3 dias
 > - **Dependências:** Nenhuma
 > - **Subsistemas:** Criptografia de dados (`encryption`), Resolução de tenant (`tenant`/`prisma`), Worker de mensagens, Server actions de admin, Dashboard
-> - **Status:** Não iniciado
+> - **Status:** Concluído (2026-06-21, PR #15) — Opção B (keying por `tenantId`). Verificação de ciphertext em produção encontrou 1 `databaseUrl` em texto plano (tenant USER), remediado via `scripts/encrypt-plaintext-databaseurl.ts` antes de ativar `decryptSecret`; estado final 4/4 em ciphertext.
 
 ## Resumo executivo
 
