@@ -1,6 +1,7 @@
 "use server";
 
 import { getTenantContext } from "@/lib/tenant";
+import { canonicalizePhone, findLeadByPhone } from "@/lib/phone";
 
 /**
  * Buscar contatos WhatsApp
@@ -84,10 +85,8 @@ export async function syncContactToLead(contactId: number) {
         throw new Error("Contato não encontrado ou sem número");
     }
 
-    // Verificar se já existe Lead com mesmo telefone
-    let lead = await tenantPrisma.lead.findFirst({
-        where: { phone: contact.whatsapp },
-    });
+    // Verificar se já existe Lead com mesmo telefone (identidade canônica + fallback legado)
+    let lead = await findLeadByPhone(tenantPrisma, contact.whatsapp);
 
     if (!lead) {
         // Criar novo Lead
@@ -95,6 +94,7 @@ export async function syncContactToLead(contactId: number) {
             data: {
                 name: contact.name || contact.whatsapp,
                 phone: contact.whatsapp,
+                phoneNormalized: canonicalizePhone(contact.whatsapp),
                 tag: "NEW",
             },
         });

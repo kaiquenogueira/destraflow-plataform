@@ -63,7 +63,8 @@ enum LeadTag {
 model Lead {
   id        String   @id @default(cuid())
   name      String
-  phone     String   // Formato: +5511999999999
+  phone     String   // Formato: +5511999999999 (valor cru/exibido, como o cliente digitou)
+  phoneNormalized String? @map("phone_normalized") // Forma canônica para match (canonicalizePhone). Sprint 02.
   interest  String?  // Campo de texto livre
   tag       LeadTag  @default(NEW)
   createdAt DateTime @default(now()) @map("created_at")
@@ -83,6 +84,7 @@ model Lead {
   
   @@index([tag])
   @@index([phone])
+  @@index([phoneNormalized])
   @@map("leads")
 }
 
@@ -175,6 +177,7 @@ model WhatsAppContact {
   id            Int       @id @default(autoincrement())
   createdAt     DateTime? @default(now()) @map("created_at")
   whatsapp      String?
+  phoneNormalized String? @map("phone_normalized") // Forma canônica para match (canonicalizePhone). Sprint 02.
   name          String?
   isManual      Boolean?  @map("is_manual")
   isManualData  String?   @map("is_manual_data")
@@ -185,6 +188,7 @@ model WhatsAppContact {
   tokensOut     Int?      @map("tokens_out")
   tokensCache   Int?      @map("tokens_cache")
 
+  @@index([phoneNormalized])
   @@map("users")
 }
 

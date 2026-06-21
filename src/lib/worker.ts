@@ -11,6 +11,7 @@
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
 import { decrypt } from "@/lib/encryption";
+import { canonicalizePhone, findContactByPhone } from "@/lib/phone";
 import { CampaignPersonalizer } from "@/services/ai/campaign-personalizer";
 import { canPersonalize, recordPersonalization, applyReset, type QuotaState } from "@/services/ai/ai-quota";
 
@@ -228,14 +229,17 @@ async function persistOutboundMessageAudit(
     evolutionPhone: string | null
 ): Promise<void> {
     try {
-        let contact = await tenantPrisma.whatsAppContact.findFirst({
-            where: { whatsapp: message.phone },
-        });
+        // Match por identidade de telefone (canônico + fallback legado). Na criação,
+        // grava whatsapp E phoneNormalized canônicos — evita o contato duplicado por
+        // formato que antes fragmentava o histórico a cada número cru novo.
+        const canonical = canonicalizePhone(message.phone);
+        let contact = await findContactByPhone(tenantPrisma, message.phone);
 
         if (!contact) {
             contact = await tenantPrisma.whatsAppContact.create({
                 data: {
-                    whatsapp: message.phone,
+                    whatsapp: canonical,
+                    phoneNormalized: canonical,
                     name: message.name,
                     createdAt: new Date(),
                     isManual: false,

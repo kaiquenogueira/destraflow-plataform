@@ -1,6 +1,7 @@
 "use server";
 
 import { getTenantContext } from "@/lib/tenant";
+import { findContactByPhone } from "@/lib/phone";
 
 interface ChatMessage {
     type: "incoming" | "outgoing";
@@ -61,10 +62,8 @@ export async function getChatHistoryByLead(leadId: string) {
         throw new Error("Lead não encontrado");
     }
 
-    // Buscar contato WhatsApp pelo telefone
-    const contact = await tenantPrisma.whatsAppContact.findFirst({
-        where: { whatsapp: lead.phone },
-    });
+    // Buscar contato WhatsApp por identidade de telefone (canônico + fallback legado)
+    const contact = await findContactByPhone(tenantPrisma, lead.phone);
 
     if (!contact) {
         return { messages: [], contact: null };

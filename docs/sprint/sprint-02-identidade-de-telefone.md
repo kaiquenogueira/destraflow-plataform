@@ -5,7 +5,7 @@
 > - **Esforço estimado:** 3–5 dias
 > - **Dependências:** Nenhuma. (O Sprint 06 — intake/N8N — reutiliza a normalização criada aqui.)
 > - **Subsistemas:** Importação de leads, Histórico de mensagens, Worker de mensagens, Sincronização de contatos, Schema Prisma (Lead / WhatsAppContact)
-> - **Status:** Não iniciado
+> - **Status:** Implementado (código). Pendente deploy-gated: aplicar schema nos Tenant DBs → rodar `scripts/backfill-phone-normalized.ts --apply` → remover o fallback de leitura (passo 8).
 
 ## Resumo executivo
 

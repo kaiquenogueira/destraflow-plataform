@@ -40,6 +40,7 @@ describe("Message History Actions", () => {
     },
     whatsAppContact: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     chatHistory: {
       findMany: vi.fn(),
@@ -51,13 +52,20 @@ describe("Message History Actions", () => {
     mocks.getTenantContext.mockResolvedValue({ tenantPrisma });
   });
 
-  it("should return messages from the local database without calling Evolution", async () => {
+  // Regressão do bug ao vivo (Sprint 02): lead em "+5511999999999" e contato gravado
+  // CRU como "5511999999999" (phoneNormalized=null, legado). O match exato antigo
+  // (where { whatsapp }) falhava e a UI mostrava "Nenhuma mensagem". Agora cruzamos a
+  // costura real: findFirst (canônico) erra, e o fallback casa via samePhone em JS.
+  it("returns history when lead and contact phones differ in format (live-bug regression)", async () => {
     tenantPrisma.lead.findUnique.mockResolvedValue({
       id: "lead-1",
       name: "Lead",
       phone: "+5511999999999",
     });
-    tenantPrisma.whatsAppContact.findFirst.mockResolvedValue({ id: 10 });
+    tenantPrisma.whatsAppContact.findFirst.mockResolvedValue(null); // sem hit canônico (linha legada)
+    tenantPrisma.whatsAppContact.findMany.mockResolvedValue([
+      { id: 10, whatsapp: "5511999999999", phoneNormalized: null }, // cru → casa por samePhone
+    ]);
     tenantPrisma.chatHistory.findMany.mockResolvedValue([
       {
         id: 1,
@@ -100,6 +108,7 @@ describe("Message History Actions", () => {
       phone: "+5511999999999",
     });
     tenantPrisma.whatsAppContact.findFirst.mockResolvedValue(null);
+    tenantPrisma.whatsAppContact.findMany.mockResolvedValue([]); // nenhum contato → cai p/ Evolution
     mocks.getServerSession.mockResolvedValue({ user: { id: "user-1" } });
     mocks.findUnique.mockResolvedValue({
       evolutionInstance: "encrypted-instance",
