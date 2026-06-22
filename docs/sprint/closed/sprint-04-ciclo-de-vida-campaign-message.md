@@ -5,7 +5,7 @@
 > - **Esforço estimado:** 3–4 dias
 > - **Dependências:** Nenhuma (relacionado ao Sprint 02 — ambos tocam persistência de mensagem; coordenar a ordem de merge se houver overlap em `worker.ts`)
 > - **Subsistemas:** Worker de mensagens, Ações de campanha, Histórico de chat (ChatHistory)
-> - **Status:** ✅ Concluído (2026-06-22) — implementação local, gate verde (lint 0-err · typecheck · 190 testes · build). Pendente: commit/PR + merge.
+> - **Status:** ✅ Concluído (2026-06-22). Código mergeado (PR #20). Sem migração (mudança de código). Gate verde: lint 0-err · typecheck · 190 testes · build.
 
 ## Resumo executivo
 

@@ -20,6 +20,6 @@ Vamos delegar **toda** a lógica conversacional, sincronização de mensagens e 
 ## Consequências
 
 - A app fica mais simples e sem acoplamento ao formato de webhook da Evolution.
-- O **contrato do envelope `ChatHistory.message`** passa a ser cross-processo (app + N8N escrevem) e deve ser documentado e estável — ver [Sprint 04](../sprint/sprint-04-ciclo-de-vida-campaign-message.md).
+- O **contrato do envelope `ChatHistory.message`** é cross-processo (app + N8N escrevem); seu encode/decode é codificado em `src/lib/chat-envelope.ts` (dono único do discriminador) — ver [Sprint 04](../sprint/closed/sprint-04-ciclo-de-vida-campaign-message.md).
 - **Proibido:** adicionar rotas de webhook de mensageria no Next.js. (O diretório vazio `src/app/api/webhook/evolution/` não deve ganhar um `route.ts` de ingestão de eventos.)
 - Exceção: o worker (`/api/cron/process-messages`) **envia** mensagens e grava auditoria — isso é saída/escrita, não escuta de webhook, e é permitido.
