@@ -5,7 +5,7 @@
 > - **Esforço estimado:** 2–3 dias
 > - **Dependências:** Nenhuma (refator amplo, porém mecânico)
 > - **Subsistemas:** Camada de Server Actions (leads, campanhas, chat, contatos, notificações, templates, notas, histórico de mensagens), resolução de tenant (`src/lib/tenant.ts`)
-> - **Status:** Não iniciado
+> - **Status:** ✅ Concluído (2026-06-22). Refator puro de código (sem migração de schema/dados). Gate verde: lint 0-err · typecheck · 189 testes · build. Costura dividida: 23 sites Grupo A → `requireTenantContext`, 16 sites Grupo B → `getOptionalTenantContext`; string canônica em `NO_TENANT_DB_MESSAGE`. Revisão adversarial (3 dimensões) sem achados.
 
 ## Resumo executivo
 

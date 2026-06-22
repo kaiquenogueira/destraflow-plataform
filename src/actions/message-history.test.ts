@@ -3,7 +3,7 @@ import { getMessageHistoryByLead } from "./message-history";
 import { encodeOutboundAudit } from "@/lib/chat-envelope";
 
 const mocks = vi.hoisted(() => ({
-  getTenantContext: vi.fn(),
+  requireTenantContext: vi.fn(),
   getServerSession: vi.fn(),
   findUnique: vi.fn(),
   createEvolutionClient: vi.fn(),
@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/tenant", () => ({
-  getTenantContext: mocks.getTenantContext,
+  requireTenantContext: mocks.requireTenantContext,
 }));
 
 vi.mock("next-auth", () => ({
@@ -50,7 +50,7 @@ describe("Message History Actions", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getTenantContext.mockResolvedValue({ tenantPrisma });
+    mocks.requireTenantContext.mockResolvedValue({ tenantPrisma });
   });
 
   // Regressão do bug ao vivo (Sprint 02): lead em "+5511999999999" e contato gravado

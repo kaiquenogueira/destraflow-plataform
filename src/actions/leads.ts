@@ -1,6 +1,6 @@
 "use server";
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 import { canonicalizePhone } from "@/lib/phone";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -22,11 +22,7 @@ const updateLeadSchema = createLeadSchema.partial().extend({
 });
 
 export async function createLead(data: z.infer<typeof createLeadSchema>) {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
     const validated = createLeadSchema.parse(data);
 
     const lead = await tenantPrisma.lead.create({
@@ -38,11 +34,7 @@ export async function createLead(data: z.infer<typeof createLeadSchema>) {
 }
 
 export async function updateLead(data: z.infer<typeof updateLeadSchema>) {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
     const validated = updateLeadSchema.parse(data);
     const { id, ...updateData } = validated;
 
@@ -64,11 +56,7 @@ export async function updateLead(data: z.infer<typeof updateLeadSchema>) {
 
 export async function updateLeadTag(id: string, tag: LeadTag) {
     const validId = z.string().parse(id);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     try {
         const lead = await tenantPrisma.lead.update({
@@ -87,11 +75,7 @@ export async function updateLeadTag(id: string, tag: LeadTag) {
 
 export async function deleteLead(id: string) {
     const validId = z.string().parse(id);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     await tenantPrisma.lead.delete({
         where: { id: validId },
@@ -111,7 +95,7 @@ export async function getLeads(params?: {
     orderBy?: string;
     orderDirection?: "asc" | "desc";
 }) {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         // Retorna vazio para admins sem banco
         return {
@@ -193,11 +177,7 @@ export async function getLeads(params?: {
 }
 
 export async function getLeadById(id: string) {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const lead = await tenantPrisma.lead.findUnique({
         where: { id },
@@ -217,7 +197,7 @@ export async function getLeadById(id: string) {
 }
 
 export async function getLeadsByTag() {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return {} as Record<LeadTag, number>;
     }
@@ -283,11 +263,7 @@ export interface ImportResult {
 export async function importLeadsFromCSV(
     leads: Array<{ name: string; phone: string; interest?: string; tag?: string }>
 ): Promise<ImportResult> {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const result: ImportResult = {
         imported: 0,

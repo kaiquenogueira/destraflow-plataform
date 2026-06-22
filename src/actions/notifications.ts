@@ -1,6 +1,6 @@
 "use server";
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ export async function getNotifications(params?: {
     startDate?: string;
     endDate?: string;
 }) {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return { notifications: [], total: 0, pages: 0, currentPage: 1 };
     }
@@ -63,7 +63,7 @@ export async function getNotifications(params?: {
  * Contar notificações não lidas (para badge)
  */
 export async function getUnreadNotificationCount() {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return 0;
     }
@@ -86,11 +86,7 @@ export async function getUnreadNotificationCount() {
  * Buscar notificação por ID
  */
 export async function getNotificationById(id: number) {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const notification = await tenantPrisma.externalNotification.findUnique({
         where: { id },
@@ -108,11 +104,7 @@ export async function getNotificationById(id: number) {
  */
 export async function deleteNotification(id: number) {
     const validId = z.number().int().positive().parse(id);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     await tenantPrisma.externalNotification.delete({
         where: { id: validId },
@@ -126,7 +118,7 @@ export async function deleteNotification(id: number) {
  * Buscar notificações por cliente (telefone)
  */
 export async function getNotificationsByPhone(phone: string) {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return [];
     }

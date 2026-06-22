@@ -1,6 +1,6 @@
 "use server";
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import xss from "xss";
@@ -11,11 +11,7 @@ const createNoteSchema = z.object({
 });
 
 export async function createNote(data: z.infer<typeof createNoteSchema>) {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
     const validated = createNoteSchema.parse(data);
 
     // Sanitizar o conteúdo da nota para evitar injeção de XSS
@@ -34,7 +30,7 @@ export async function createNote(data: z.infer<typeof createNoteSchema>) {
 
 export async function getNotesByLeadId(leadId: string) {
     const validId = z.string().parse(leadId);
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return [];
     }
@@ -50,11 +46,7 @@ export async function getNotesByLeadId(leadId: string) {
 
 export async function deleteNote(id: string, leadId: string) {
     const validId = z.string().parse(id);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     await (tenantPrisma as any).leadNote.delete({
         where: { id: validId },

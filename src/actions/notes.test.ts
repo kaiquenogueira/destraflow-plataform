@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createNote, getNotesByLeadId, deleteNote } from "./notes";
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 
 // Mock dependencies
 vi.mock("@/lib/tenant", () => ({
-  getTenantContext: vi.fn(),
+  requireTenantContext: vi.fn(),
+  getOptionalTenantContext: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -22,7 +23,10 @@ describe("Notes Actions", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    (getTenantContext as any).mockResolvedValue({
+    (requireTenantContext as any).mockResolvedValue({
+      tenantPrisma: mockTenantPrisma,
+    });
+    (getOptionalTenantContext as any).mockResolvedValue({
       tenantPrisma: mockTenantPrisma,
     });
   });
@@ -51,21 +55,12 @@ describe("Notes Actions", () => {
       });
     });
 
-    it("should throw error if database is not configured", async () => {
-      (getTenantContext as any).mockResolvedValue(null);
-
-      await expect(
-        createNote({
-          leadId: "lead-1",
-          content: "Test note",
-        })
-      ).rejects.toThrow("Banco de dados não configurado");
-    });
+    // Invariante "sem DB → aborta" coberto 1x no resolver (tenant.test.ts), Sprint 05.
   });
 
   describe("getNotesByLeadId", () => {
     it("should return empty array if no context", async () => {
-      (getTenantContext as any).mockResolvedValue(null);
+      (getOptionalTenantContext as any).mockResolvedValue(null);
       const notes = await getNotesByLeadId("lead-1");
       expect(notes).toEqual([]);
     });

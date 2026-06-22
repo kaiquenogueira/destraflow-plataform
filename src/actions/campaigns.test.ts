@@ -38,31 +38,8 @@ const mocks = vi.hoisted(() => ({
 
 // Mock dependencies
 vi.mock("@/lib/tenant", () => ({
-  getTenantContext: vi.fn().mockResolvedValue({
-    tenantPrisma: {
-      lead: {
-        findMany: mocks.findMany,
-        findUnique: mocks.findUnique,
-        count: mocks.count,
-      },
-      campaign: {
-        create: mocks.create,
-        findMany: mocks.findMany,
-        count: mocks.count,
-        findUnique: mocks.findUnique,
-        update: mocks.update,
-      },
-      campaignMessage: {
-        createMany: mocks.createMany,
-        create: mocks.create,
-        groupBy: mocks.groupBy,
-        updateMany: mocks.updateMany,
-        count: mocks.count,
-        findMany: mocks.findMany, // Added this
-      },
-      $transaction: mocks.$transaction,
-    },
-  }),
+  requireTenantContext: vi.fn(),
+  getOptionalTenantContext: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -85,7 +62,7 @@ vi.mock("@/services/ai/campaign-personalizer", () => {
   return { CampaignPersonalizer: MockCampaignPersonalizer };
 });
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 
 describe("Campaign Actions", () => {
   beforeEach(() => {
@@ -93,7 +70,7 @@ describe("Campaign Actions", () => {
     vi.useFakeTimers();
     const mockNow = new Date("2024-01-01T12:00:00Z");
     vi.setSystemTime(mockNow);
-    (getTenantContext as any).mockResolvedValue({
+    const campaignContext = {
       tenantPrisma: {
         lead: {
           findMany: mocks.findMany,
@@ -117,7 +94,9 @@ describe("Campaign Actions", () => {
         },
         $transaction: mocks.$transaction,
       }
-    });
+    };
+    (requireTenantContext as any).mockResolvedValue(campaignContext);
+    (getOptionalTenantContext as any).mockResolvedValue(campaignContext);
   });
 
   afterEach(() => {
@@ -251,7 +230,7 @@ describe("Campaign Actions", () => {
     });
 
     it("should handle no db configured", async () => {
-      (getTenantContext as any).mockResolvedValue(null);
+      (getOptionalTenantContext as any).mockResolvedValue(null);
       const result = await getCampaigns();
       expect(result.noDatabaseConfigured).toBe(true);
     });
@@ -370,7 +349,7 @@ describe("Campaign Actions", () => {
 
   describe("generateAIPersonalizedMessage", () => {
     function mockContext() {
-      (getTenantContext as any).mockResolvedValue({
+      (requireTenantContext as any).mockResolvedValue({
         tenantPrisma: { lead: { findUnique: mocks.findUnique } },
         userId: "user-1",
         aiQuota: { used: 5, limit: 15, resetAt: null },
@@ -417,7 +396,7 @@ describe("Campaign Actions", () => {
     });
 
     it("lança quando a quota está esgotada", async () => {
-      (getTenantContext as any).mockResolvedValue({
+      (requireTenantContext as any).mockResolvedValue({
         tenantPrisma: { lead: { findUnique: mocks.findUnique } },
         userId: "user-1",
         aiQuota: { used: 15, limit: 15, resetAt: null },

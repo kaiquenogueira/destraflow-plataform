@@ -13,14 +13,15 @@ import {
 
 // Mock dependencies
 vi.mock("@/lib/tenant", () => ({
-  getTenantContext: vi.fn(),
+  requireTenantContext: vi.fn(),
+  getOptionalTenantContext: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 
 describe("Leads Actions", () => {
   const mockPrisma = {
@@ -44,7 +45,8 @@ describe("Leads Actions", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    (getTenantContext as any).mockResolvedValue(mockContext);
+    (requireTenantContext as any).mockResolvedValue(mockContext);
+    (getOptionalTenantContext as any).mockResolvedValue(mockContext);
   });
 
   describe("createLead", () => {
@@ -75,17 +77,8 @@ describe("Leads Actions", () => {
       expect(result.lead).toBeDefined();
     });
 
-    it("should throw error if database is not configured", async () => {
-      (getTenantContext as any).mockResolvedValue(null);
-
-      await expect(
-        createLead({
-          name: "Test",
-          phone: "+5511999999999",
-          tag: "NEW",
-        })
-      ).rejects.toThrow("Banco de dados não configurado");
-    });
+    // Invariante "sem DB → aborta" agora coberto 1x no resolver (tenant.test.ts),
+    // não reasserido por action (Sprint 05).
 
     it("should validate input", async () => {
       await expect(
@@ -207,7 +200,7 @@ describe("Leads Actions", () => {
     });
 
     it("should return empty result for admin without db", async () => {
-      (getTenantContext as any).mockResolvedValue(null);
+      (getOptionalTenantContext as any).mockResolvedValue(null);
 
       const result = await getLeads();
 
@@ -287,7 +280,7 @@ describe("Leads Actions", () => {
     });
 
     it("should return empty object if no context", async () => {
-      (getTenantContext as any).mockResolvedValue(null);
+      (getOptionalTenantContext as any).mockResolvedValue(null);
 
       const result = await getLeadsByTag();
 

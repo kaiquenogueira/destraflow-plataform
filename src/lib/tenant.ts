@@ -13,11 +13,23 @@ export interface TenantContext {
     aiQuota?: QuotaState;
 }
 
+/** Mensagem canônica para "usuário sem banco de tenant" (admin ou tenant sem databaseUrl). */
+export const NO_TENANT_DB_MESSAGE = "Banco de dados não configurado";
+
+/** Erro lançado por requireTenantContext quando não há Tenant DB configurado. */
+export class NoTenantDatabaseError extends Error {
+    constructor() {
+        super(NO_TENANT_DB_MESSAGE);
+        this.name = "NoTenantDatabaseError";
+    }
+}
+
 /**
- * Obtém o contexto do tenant atual baseado na sessão
- * Retorna null se o usuário não tem banco configurado (ex: admin)
+ * Obtém o contexto do tenant atual baseado na sessão.
+ * Retorna null quando o usuário não tem banco configurado (ex: admin).
+ * Use em caminhos de LEITURA que degradam graciosamente para um estado-vazio.
  */
-export const getTenantContext = cache(async (): Promise<TenantContext | null> => {
+export const getOptionalTenantContext = cache(async (): Promise<TenantContext | null> => {
     const session = await getServerSession(authConfig);
 
     if (!session?.user?.id) {
@@ -56,5 +68,19 @@ export const getTenantContext = cache(async (): Promise<TenantContext | null> =>
         },
     };
 });
+
+/**
+ * Obtém o contexto do tenant, exigindo um Tenant DB configurado.
+ * Nunca retorna null: lança NoTenantDatabaseError quando não há banco.
+ * Use em operações de MUTAÇÃO ou by-id que não podem prosseguir sem banco.
+ * Reusa o resolver cache()d, então a sessão/DB continua deduplicada por request.
+ */
+export async function requireTenantContext(): Promise<TenantContext> {
+    const context = await getOptionalTenantContext();
+    if (!context) {
+        throw new NoTenantDatabaseError();
+    }
+    return context;
+}
 
 export { requireAdmin } from "@/lib/admin-auth";
