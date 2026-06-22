@@ -24,6 +24,8 @@ vi.mock("@/lib/prisma", () => ({
 
 vi.mock("@/lib/encryption", () => ({
     decrypt: vi.fn((val) => val.replace("encrypted_", "")),
+    // tenant-sync agora decripta a databaseUrl que abre conexão com decryptSecret (estrito).
+    decryptSecret: vi.fn((val) => val.replace("encrypted_", "")),
 }));
 
 vi.mock("@/lib/admin-auth", () => ({

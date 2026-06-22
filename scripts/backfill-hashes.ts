@@ -1,5 +1,5 @@
 
-import { decrypt, hashString } from "../src/lib/encryption";
+import { rehashEncryptedInstance } from "@/lib/tenant-credentials";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -28,15 +28,16 @@ async function main() {
       try {
         if (!user.evolutionInstance) continue;
 
-        const instanceName = decrypt(user.evolutionInstance);
-        const hash = hashString(instanceName);
+        // Codec é dono da derivação instance→hash (não re-derivar à mão).
+        const hash = rehashEncryptedInstance(user.evolutionInstance);
 
         await prisma.crmUser.update({
           where: { id: user.id },
           data: { evolutionInstanceHash: hash },
         });
 
-        console.log(`Updated user ${user.email} with hash for instance: ${instanceName}`);
+        // Não logar a instância decriptada (PII/segredo).
+        console.log(`Updated user ${user.email} with evolutionInstanceHash`);
         updatedCount++;
       } catch (error) {
         console.error(`Failed to update user ${user.email}:`, error);

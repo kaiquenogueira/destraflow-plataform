@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import { decrypt } from "../lib/encryption";
+import { decryptEvolutionPair } from "../lib/tenant-credentials";
 
 async function main() {
     const users = await prisma.crmUser.findMany({ select: { id: true, email: true, evolutionInstance: true } });
@@ -7,7 +7,7 @@ async function main() {
         let instance = "none";
         if (user.evolutionInstance) {
             try {
-                instance = decrypt(user.evolutionInstance);
+                instance = decryptEvolutionPair(user).instanceName;
             } catch {
                 instance = "decryption failed";
             }

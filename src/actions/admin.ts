@@ -4,7 +4,11 @@ import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { z } from "zod";
-import { encrypt, decrypt, hashString } from "@/lib/encryption";
+import {
+    encryptTenantCredentials,
+    decryptTenantCredentials,
+    type TenantCredentialInput,
+} from "@/lib/tenant-credentials";
 import { requireAdmin } from "@/lib/admin-auth";
 import { syncTenantDatabase } from "./tenant-sync";
 
@@ -76,12 +80,10 @@ export async function getUserById(id: string) {
         throw new Error("Usuário não encontrado");
     }
 
-    // Descriptografar dados sensíveis para edição
+    // Descriptografar dados sensíveis para edição (codec é dono do trio)
     return {
         ...user,
-        databaseUrl: decrypt(user.databaseUrl || ""),
-        evolutionInstance: decrypt(user.evolutionInstance || ""),
-        evolutionApiKey: decrypt(user.evolutionApiKey || ""),
+        ...decryptTenantCredentials(user),
     };
 }
 
@@ -107,10 +109,11 @@ export async function createUser(data: z.infer<typeof createUserSchema>) {
             password: hashedPassword,
             name: validated.name,
             role: validated.role,
-            databaseUrl: encrypt(validated.databaseUrl || ""),
-            evolutionInstance: encrypt(validated.evolutionInstance || ""),
-            evolutionInstanceHash: validated.evolutionInstance ? hashString(validated.evolutionInstance) : null,
-            evolutionApiKey: encrypt(validated.evolutionApiKey || ""),
+            ...encryptTenantCredentials({
+                databaseUrl: validated.databaseUrl ?? "",
+                evolutionInstance: validated.evolutionInstance ?? "",
+                evolutionApiKey: validated.evolutionApiKey ?? "",
+            }),
             evolutionPhone: validated.evolutionPhone,
         },
     });
@@ -144,17 +147,12 @@ export async function updateUser(data: z.infer<typeof updateUserSchema>) {
         dataToUpdate.password = await hash(password, 10);
     }
 
-    // Criptografar dados sensíveis se fornecidos
-    if (updateData.databaseUrl) {
-        dataToUpdate.databaseUrl = encrypt(updateData.databaseUrl);
-    }
-    if (updateData.evolutionInstance) {
-        dataToUpdate.evolutionInstance = encrypt(updateData.evolutionInstance);
-        dataToUpdate.evolutionInstanceHash = hashString(updateData.evolutionInstance);
-    }
-    if (updateData.evolutionApiKey) {
-        dataToUpdate.evolutionApiKey = encrypt(updateData.evolutionApiKey);
-    }
+    // Criptografar dados sensíveis se fornecidos (pareamento instance↔hash no codec)
+    const credInput: TenantCredentialInput = {};
+    if (updateData.databaseUrl) credInput.databaseUrl = updateData.databaseUrl;
+    if (updateData.evolutionInstance) credInput.evolutionInstance = updateData.evolutionInstance;
+    if (updateData.evolutionApiKey) credInput.evolutionApiKey = updateData.evolutionApiKey;
+    Object.assign(dataToUpdate, encryptTenantCredentials(credInput));
     if (updateData.evolutionPhone) {
         dataToUpdate.evolutionPhone = updateData.evolutionPhone;
     }

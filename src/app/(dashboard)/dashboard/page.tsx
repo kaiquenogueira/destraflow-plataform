@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
-import { decrypt } from "@/lib/encryption";
+import { decryptEvolutionPair } from "@/lib/tenant-credentials";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -137,8 +137,7 @@ async function WhatsAppStatusCard({ evolutionInstance, evolutionApiKey }: { evol
     let evolutionStatus = { connected: false, state: "not_configured" };
     if (evolutionInstance) {
         try {
-            const instanceName = decrypt(evolutionInstance);
-            const apiKey = evolutionApiKey ? decrypt(evolutionApiKey) : undefined;
+            const { instanceName, apiKey } = decryptEvolutionPair({ evolutionInstance, evolutionApiKey });
             const client = createEvolutionClient(instanceName, apiKey);
             evolutionStatus = await client.getInstanceStatus();
         } catch {

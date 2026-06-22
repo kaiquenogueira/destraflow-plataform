@@ -1,43 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { createDecipheriv } from "crypto";
 import * as dotenv from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+// Estrito: nunca abrir conexão de tenant com texto plano (ADR-0007). Sem crypto hand-rolled.
+import { decryptSecret } from "../src/lib/encryption";
 
 // Carregar variáveis de ambiente
 dotenv.config();
 
 const execFileAsync = promisify(execFile);
-
-// Configuração de criptografia
-const ALGORITHM = "aes-256-gcm";
-const KEY_HEX = process.env.DATA_ENCRYPTION_KEY;
-
-if (!KEY_HEX) {
-    throw new Error("DATA_ENCRYPTION_KEY is not defined");
-}
-
-function decrypt(text: string): string {
-    if (!text || !text.includes(":")) {
-        console.warn("⚠️ Formato inválido de string criptografada:", text);
-        return text; // Tenta retornar como está se não estiver criptografado corretamente
-    }
-    const parts = text.split(":");
-    if (parts.length !== 3) {
-         console.warn("⚠️ Formato inválido de partes criptografadas:", text);
-         return text;
-    }
-    const [ivHex, authTagHex, encryptedText] = parts;
-    const iv = Buffer.from(ivHex, "hex");
-    const authTag = Buffer.from(authTagHex, "hex");
-    const decipher = createDecipheriv(ALGORITHM, Buffer.from(KEY_HEX!, "hex"), iv);
-    decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encryptedText, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-    return decrypted;
-}
 
 function createPrismaClient(url: string) {
     const pool = new pg.Pool({ connectionString: url });
@@ -76,11 +49,8 @@ async function main() {
             console.log(`\n🔹 Processando tenant: ${user.email} (${user.id})`);
 
             try {
-                const connectionString = decrypt(user.databaseUrl);
-                
-                // Mascarar a senha no log
-                const maskedUrl = connectionString.replace(/:([^:@]+)@/, ":****@");
-                console.log(`   URL: ${maskedUrl}`);
+                const connectionString = decryptSecret(user.databaseUrl);
+                // Não logar a connection string (segredo), nem mascarada.
 
                 // Executar prisma db push para este banco
                 console.log("   🚀 Executando push...");

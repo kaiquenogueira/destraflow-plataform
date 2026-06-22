@@ -71,5 +71,5 @@ Bibliotecas e utilitários centrais.
 
 ## 📁 `scripts/` - Automação
 
--   `migrate-hashes.ts`: Utilitário para migração de dados.
+-   `backfill-hashes.ts`: Reparo de `evolutionInstanceHash` legado (re-deriva via `tenant-credentials`).
 -   `sync-tenants.ts`: Sincronização de tenants (exemplo).

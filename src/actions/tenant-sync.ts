@@ -2,7 +2,7 @@
 
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { decrypt } from "@/lib/encryption";
+import { decryptSecret } from "@/lib/encryption";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { Client } from "pg";
@@ -86,8 +86,9 @@ export async function syncTenantDatabase(userId: string): Promise<SyncResult> {
             return { success: false, message: "Usuário sem banco de dados configurado" };
         }
 
-        const connectionString = decrypt(user.databaseUrl);
-        
+        // Estrito: databaseUrl que ABRE conexão nunca aceita texto plano (ADR-0003 / Sprint 03).
+        const connectionString = decryptSecret(user.databaseUrl);
+
         // Validação básica da string de conexão
         if (!isValidPostgresConnectionString(connectionString)) {
             return { success: false, message: "URL do banco de dados inválida" };
