@@ -289,15 +289,18 @@ describe("Leads Actions", () => {
   });
 
   describe("importLeadsFromCSV", () => {
-    it("dedupes by canonical form (batch + existing) and persists phoneNormalized", async () => {
+    // Casca fina: as regras vivem em buildIntakePlan (testado em lib/lead-intake.test.ts).
+    // Aqui só asseveramos a fiação: recebe linhas CRUAS (header → valor), busca os
+    // existentes para dedup de DB e chama createMany com o plano resultante.
+    it("recebe linhas cruas, deduplica (batch + existente) e persiste phoneNormalized", async () => {
       // Existente no banco (forma crua) que canonicaliza para +5511977777777.
       mockPrisma.lead.findMany.mockResolvedValue([{ phone: "5511977777777" }]);
       mockPrisma.lead.createMany.mockResolvedValue({ count: 1 });
 
       const result = await importLeadsFromCSV([
-        { name: "Keep", phone: "11999999999" },        // novo → importa
-        { name: "Dup batch", phone: "+55 11 99999-9999" }, // mesmo nº, formato diferente → skip
-        { name: "Dup existing", phone: "(11) 97777-7777" }, // casa existente → skip
+        { nome: "Keep", telefone: "11999999999" },        // novo → importa
+        { nome: "Dup batch", telefone: "+55 11 99999-9999" }, // mesmo nº, formato diferente → skip
+        { nome: "Dup existing", telefone: "(11) 97777-7777" }, // casa existente → skip
       ]);
 
       expect(result.imported).toBe(1);
@@ -313,6 +316,10 @@ describe("Leads Actions", () => {
           },
         ],
       });
+    });
+
+    it("lança quando não há linhas", async () => {
+      await expect(importLeadsFromCSV([])).rejects.toThrow("Nenhum lead para importar");
     });
   });
 });
