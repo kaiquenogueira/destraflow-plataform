@@ -2,6 +2,7 @@
 
 import { getTenantContext } from "@/lib/tenant";
 import { findContactByPhone } from "@/lib/phone";
+import { decodeChatEnvelope } from "@/lib/chat-envelope";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -84,13 +85,13 @@ async function getMessagesFromDatabase(
     });
 
     return chatMessages.map((msg) => {
-        const messageData = msg.message as { type?: string; content?: string } | null;
-        const isOutgoing = messageData?.type === "system" || messageData?.type === "outgoing";
+        // Decode dono do codec: direção e texto vêm do envelope; sem JSON cru vazando p/ UI.
+        const { direction, text } = decodeChatEnvelope(msg.message);
 
         return {
             id: String(msg.id),
-            direction: isOutgoing ? "outgoing" as const : "incoming" as const,
-            text: messageData?.content || JSON.stringify(msg.message) || "",
+            direction,
+            text,
             timestamp: msg.createdAt || new Date(),
             source: "database" as const,
         };
