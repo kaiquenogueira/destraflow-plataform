@@ -335,6 +335,33 @@ export async function generateAIPersonalizedMessage(leadId: string, template: st
     return { success: true, personalizedMessage: text };
 }
 
+// Reentrada de DEAD_LETTER: devolve a mensagem para a fila com contador zerado.
+// Dono único do shape de reset (usado pelo retry em massa e individual).
+function deadLetterReentryData() {
+    return {
+        status: "PENDING" as const,
+        retryCount: 0,
+        error: null,
+        scheduledAt: new Date(),
+    };
+}
+
+// Reabre a campanha (COMPLETED -> PROCESSING) quando uma mensagem é retentada.
+// Regra de NÍVEL DE CAMPANHA — fica aqui, não no campaign-message-lifecycle,
+// que possui só o estado de CampaignMessage (ver docs/sprint/sprint-04).
+async function reopenCampaignIfCompleted(
+    tenantPrisma: Awaited<ReturnType<typeof requireTenantContext>>["tenantPrisma"],
+    campaignId: string,
+): Promise<void> {
+    const campaign = await tenantPrisma.campaign.findUnique({ where: { id: campaignId } });
+    if (campaign?.status === "COMPLETED") {
+        await tenantPrisma.campaign.update({
+            where: { id: campaignId },
+            data: { status: "PROCESSING" },
+        });
+    }
+}
+
 // Retry todas as mensagens DEAD_LETTER de uma campanha
 export async function retryCampaignDeadLetters(campaignId: string) {
     const validId = z.string().parse(campaignId);
@@ -357,27 +384,12 @@ export async function retryCampaignDeadLetters(campaignId: string) {
         throw new Error("Nenhuma mensagem com falha permanente para retentar");
     }
 
-    // Transação: resetar mensagens + atualizar status da campanha
-    await tenantPrisma.$transaction([
-        tenantPrisma.campaignMessage.updateMany({
-            where: { campaignId: validId, status: "DEAD_LETTER" },
-            data: {
-                status: "PENDING",
-                retryCount: 0,
-                error: null,
-                scheduledAt: new Date(),
-            },
-        }),
-        // Se a campanha já foi finalizada, voltar para PROCESSING
-        ...(campaign.status === "COMPLETED"
-            ? [
-                  tenantPrisma.campaign.update({
-                      where: { id: validId },
-                      data: { status: "PROCESSING" },
-                  }),
-              ]
-            : []),
-    ]);
+    // Resetar mensagens DEAD_LETTER para reentrada na fila e reabrir a campanha.
+    await tenantPrisma.campaignMessage.updateMany({
+        where: { campaignId: validId, status: "DEAD_LETTER" },
+        data: deadLetterReentryData(),
+    });
+    await reopenCampaignIfCompleted(tenantPrisma, validId);
 
     revalidatePath("/campaigns");
     revalidatePath(`/campaigns/${validId}`);
@@ -403,25 +415,12 @@ export async function retryDeadLetterMessage(messageId: string) {
 
     await tenantPrisma.campaignMessage.update({
         where: { id: validId },
-        data: {
-            status: "PENDING",
-            retryCount: 0,
-            error: null,
-            scheduledAt: new Date(),
-        },
+        data: deadLetterReentryData(),
     });
 
-    // Se a campanha associada está COMPLETED, voltar para PROCESSING
+    // Reabrir a campanha associada se estava finalizada
     if (message.campaignId) {
-        const campaign = await tenantPrisma.campaign.findUnique({
-            where: { id: message.campaignId },
-        });
-        if (campaign?.status === "COMPLETED") {
-            await tenantPrisma.campaign.update({
-                where: { id: message.campaignId },
-                data: { status: "PROCESSING" },
-            });
-        }
+        await reopenCampaignIfCompleted(tenantPrisma, message.campaignId);
         revalidatePath(`/campaigns/${message.campaignId}`);
     }
 

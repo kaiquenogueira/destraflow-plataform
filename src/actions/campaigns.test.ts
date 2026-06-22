@@ -9,6 +9,8 @@ import {
   sendUnitMessage,
   getCampaignMetrics,
   generateAIPersonalizedMessage,
+  retryCampaignDeadLetters,
+  retryDeadLetterMessage,
 } from "./campaigns";
 import { z } from "zod";
 
@@ -89,8 +91,10 @@ describe("Campaign Actions", () => {
           create: mocks.create,
           groupBy: mocks.groupBy,
           updateMany: mocks.updateMany,
+          update: mocks.update,
           count: mocks.count,
           findMany: mocks.findMany, // Added this
+          findUnique: mocks.findUnique,
         },
         $transaction: mocks.$transaction,
       }
@@ -304,6 +308,109 @@ describe("Campaign Actions", () => {
       await expect(cancelCampaign("c1")).rejects.toThrow(
         "Apenas campanhas agendadas podem ser canceladas"
       );
+    });
+  });
+
+  describe("retryCampaignDeadLetters (reentrada em massa)", () => {
+    const cuid = "cmm9fzx6c000004jsculodr2a";
+
+    it("reseta DEAD_LETTER (shape de reentrada) e reabre campanha COMPLETED", async () => {
+      // 2 leituras: guard de existência + refetch dentro de reopenCampaignIfCompleted
+      mocks.findUnique
+        .mockResolvedValueOnce({ id: cuid, status: "COMPLETED" })
+        .mockResolvedValueOnce({ id: cuid, status: "COMPLETED" });
+      mocks.count.mockResolvedValue(2);
+
+      const result = await retryCampaignDeadLetters(cuid);
+
+      expect(mocks.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { campaignId: cuid, status: "DEAD_LETTER" },
+          data: expect.objectContaining({
+            status: "PENDING",
+            retryCount: 0,
+            error: null,
+            scheduledAt: expect.any(Date),
+          }),
+        }),
+      );
+      // reabertura COMPLETED -> PROCESSING
+      expect(mocks.update).toHaveBeenCalledWith({
+        where: { id: cuid },
+        data: { status: "PROCESSING" },
+      });
+      expect(result).toEqual({ success: true, retriedCount: 2 });
+    });
+
+    it("NÃO reabre quando a campanha não está COMPLETED", async () => {
+      mocks.findUnique
+        .mockResolvedValueOnce({ id: cuid, status: "PROCESSING" })
+        .mockResolvedValueOnce({ id: cuid, status: "PROCESSING" });
+      mocks.count.mockResolvedValue(1);
+
+      await retryCampaignDeadLetters(cuid);
+
+      expect(mocks.updateMany).toHaveBeenCalled();
+      expect(mocks.update).not.toHaveBeenCalled();
+    });
+
+    it("lança quando não há mensagens DEAD_LETTER", async () => {
+      mocks.findUnique.mockResolvedValue({ id: cuid, status: "COMPLETED" });
+      mocks.count.mockResolvedValue(0);
+
+      await expect(retryCampaignDeadLetters(cuid)).rejects.toThrow(
+        "Nenhuma mensagem com falha permanente para retentar",
+      );
+      expect(mocks.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("retryDeadLetterMessage (reentrada individual)", () => {
+    it("reseta a mensagem (shape de reentrada) e reabre campanha COMPLETED", async () => {
+      mocks.findUnique
+        .mockResolvedValueOnce({ id: "m1", status: "DEAD_LETTER", campaignId: "c1" })
+        .mockResolvedValueOnce({ id: "c1", status: "COMPLETED" });
+
+      const result = await retryDeadLetterMessage("m1");
+
+      expect(mocks.update).toHaveBeenCalledWith({
+        where: { id: "m1" },
+        data: expect.objectContaining({
+          status: "PENDING",
+          retryCount: 0,
+          error: null,
+          scheduledAt: expect.any(Date),
+        }),
+      });
+      expect(mocks.update).toHaveBeenCalledWith({
+        where: { id: "c1" },
+        data: { status: "PROCESSING" },
+      });
+      expect(result).toEqual({ success: true });
+    });
+
+    it("lança quando a mensagem não é DEAD_LETTER", async () => {
+      mocks.findUnique.mockResolvedValueOnce({ id: "m1", status: "SENT", campaignId: "c1" });
+
+      await expect(retryDeadLetterMessage("m1")).rejects.toThrow(
+        "Apenas mensagens com falha permanente podem ser retentadas",
+      );
+      expect(mocks.update).not.toHaveBeenCalled();
+    });
+
+    it("sem campaignId: reseta mas não reabre campanha", async () => {
+      mocks.findUnique.mockResolvedValueOnce({ id: "m1", status: "DEAD_LETTER", campaignId: null });
+
+      await retryDeadLetterMessage("m1");
+
+      expect(mocks.update).toHaveBeenCalledWith({
+        where: { id: "m1" },
+        data: expect.objectContaining({ status: "PENDING", retryCount: 0 }),
+      });
+      expect(mocks.update).not.toHaveBeenCalledWith({
+        where: { id: "c1" },
+        data: { status: "PROCESSING" },
+      });
     });
   });
 
