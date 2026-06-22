@@ -5,7 +5,7 @@
 > - **Esforço estimado:** 4–6 dias
 > - **Dependências:** Nenhuma (Sprints 01–08 fechados; reusa `src/lib/phone.ts` do Sprint 02 e `src/lib/encryption.ts` do Sprint 03)
 > - **Subsistemas:** Credenciais de tenant (CRM DB), Ações de admin/whatsapp, Validação client↔server (campanhas/leads/templates), Ações de campanha, Integração Evolution
-> - **Status:** Planejado (2026-06-22) — derivado de um re-scan de arquitetura pós-Sprint-08. 4 achados sobreviveram à verificação adversarial por **teste de deleção** (8 sub-agentes); 6+ candidatos rejeitados (ver **Nota de verificação**).
+> - **Status:** Implementado (2026-06-22) na branch `sprint-09-costuras-pos-rescan` — 5 commits, cada um com revisão adversarial de subagente (SHIP). Aguardando merge. Ver **Resultado da implementação** ao final. Derivado de um re-scan de arquitetura pós-Sprint-08: 4 achados sobreviveram à verificação adversarial por **teste de deleção** (8 sub-agentes); 6+ candidatos rejeitados (ver **Nota de verificação**).
 
 ## Resumo executivo
 
@@ -345,3 +345,30 @@ Re-scan de 2026-06-22: 3 exploradores levantaram candidatos; **8 sub-agentes adv
 - **Triagem T1–T6** (wrapper `xss()`, range de data, aritmética de paginação, shapes de resposta vazia, superfície do tenant-pool, mock do redis) — todos REJEITADOS: pass-through/churn ou já decididos (shapes vazios = Sprint 05, per-caller).
 
 > **Definition of Done** (ver [HARNESS-ENGINEERING.md §7](../HARNESS-ENGINEERING.md)): `lint` + `typecheck` + `test` + `build` verdes · nenhum teste removido/editado · sem segredo/PII no diff · query de tenant via resolver · ADR-0007 `proposed` no PR do Ponto 1 · CONTEXT.md/ADR-0004 atualizados no Ponto 4.
+
+---
+
+## Resultado da implementação (2026-06-22)
+
+O que efetivamente foi construído — onde diverge do plano acima, **esta seção manda**. 5 commits na branch `sprint-09-costuras-pos-rescan`, cada um com **revisão adversarial de subagente especialista (SHIP)** antes do commit.
+
+### Ponto 1 — Codec de credenciais
+- `src/lib/tenant-credentials.ts` (+ teste): `encryptTenantCredentials` (emite só chaves fornecidas; pareia instance↔hash), `decryptTenantCredentials` (exibição), `decryptEvolutionPair` (uso), `rehashEncryptedInstance` (reparo). Ligados: admin, whatsapp, evolution-config, worker, dashboard, check_instance.
+- **Desvio (ampliação):** o vetor de `decrypt` tolerante abrindo conexão foi fechado **além** do `tenant-sync.ts` — também `scripts/migrate-tenants.ts` e `scripts/sync-tenants.ts` passam a usar `decryptSecret`; `sync-tenants` perdeu o `decrypt` hand-rolled e o log de connection string mascarada.
+- **Desvio (benigno):** `createUser` com apiKey ausente agora grava `null` (era `""`); equivalente downstream (todos os leitores usam checagem falsy).
+- ADR-0007 (`Proposed`) criado; `migrate-hashes.ts` deletado (duplicata); `backfill-hashes.ts` via `rehashEncryptedInstance`.
+
+### Ponto 3 — Reabertura de campanha
+- Helpers in-file `reopenCampaignIfCompleted` + `deadLetterReentryData` em `campaigns.ts`; +6 testes cobrindo reopen/reset nos 2 caminhos.
+- **Desvio (benigno):** o retry em massa deixou de usar `$transaction` (reset+reopen atômico) para dois `await` sequenciais. Self-healing confirmado: o worker seleciona PENDING via `eligibleForSendWhere` independente de `Campaign.status`; o único artefato de falha é um label transitório que converge para correto.
+
+### Ponto 2 — Validação compartilhada
+- `src/lib/validation.ts` (+ teste): `nameSchema`, `phoneSchema`, `campaignTemplateSchema`, `templateContentSchema`, `isScheduledFarEnough` + `SCHEDULE_ERROR_MESSAGE`/`SCHEDULE_MIN_LEAD_MS`. Ligados aos 3 forms + 3 actions; mensagens unificadas; shapes por lado preservados.
+- **Desvio (ampliação):** `admin.ts` `name` também adota `nameSchema` (dono único pleno).
+
+### Ponto 4 — Contrato de telefone Evolution
+- Método **privado** `EvolutionClient.toWhatsAppNumber` (strip + guarda `^\d{11,15}$` alinhada ao `phoneSchema` + throw sem logar PII); JSDoc do contrato; `CONTEXT.md` + ADR-0004 (anexo) documentam a fronteira. **Não** virou módulo exportado. +3 testes.
+
+### Gate (Definition of Done)
+- `typecheck` ✓ · `test` **267 passando** (nenhum removido/editado; 1 mock de `tenant-sync` ajustado para refletir `decryptSecret`) ✓ · `lint` **0 erros** (50 warns estruturais pré-existentes) ✓ · `build` ✓.
+- Revisões adversariais: Ponto 1 (2 passes) · Ponto 3 · Ponto 2 · Ponto 4 — todas **SHIP**.
