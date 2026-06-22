@@ -20,6 +20,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { importLeadsFromCSV, type ImportResult } from "@/actions/leads";
+import { buildIntakePlan, validateHeaders, type IntakePlan, type RawRow } from "@/lib/lead-intake";
 import {
     Upload,
     Download,
@@ -35,80 +36,20 @@ import { useRouter } from "next/navigation";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
-// Mapeamento de cabeçalhos PT → campo interno (acento-insensitive)
-const HEADER_MAP: Record<string, string> = {
-    nome: "name",
-    name: "name",
-    telefone: "phone",
-    phone: "phone",
-    celular: "phone",
-    whatsapp: "phone",
-    interesse: "interest",
-    interest: "interest",
-    etapa: "tag",
-    tag: "tag",
-    status: "tag",
-    fase: "tag",
-};
-
-// Cabeçalhos obrigatórios (pelo menos um de cada grupo deve existir)
-const REQUIRED_HEADERS = {
-    name: ["nome", "name"],
-    phone: ["telefone", "phone", "celular", "whatsapp"],
-};
-
-interface ParsedLead {
-    name: string;
-    phone: string;
-    interest?: string;
-    tag?: string;
-}
+// Header mapping, validação de header e regras de intake vivem em @/lib/lead-intake
+// (dono único — Sprint 06). Este componente só faz I/O de arquivo + UI.
 
 type ImportStep = "upload" | "preview" | "importing" | "result";
-
-function normalizeHeaderKey(raw: string): string {
-    return raw
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-}
-
-function validateHeaders(rawHeaders: string[]): { valid: boolean; missing: string[] } {
-    const normalized = rawHeaders.map(normalizeHeaderKey);
-    const missing: string[] = [];
-
-    // Verificar se tem pelo menos uma coluna de "name"
-    const hasName = REQUIRED_HEADERS.name.some((h) => normalized.includes(h));
-    if (!hasName) missing.push("nome");
-
-    // Verificar se tem pelo menos uma coluna de "phone"
-    const hasPhone = REQUIRED_HEADERS.phone.some((h) => normalized.includes(h));
-    if (!hasPhone) missing.push("telefone");
-
-    return { valid: missing.length === 0, missing };
-}
-
-function mapRowToLead(row: Record<string, string>): ParsedLead {
-    const lead: Partial<ParsedLead> = {};
-
-    for (const [rawKey, value] of Object.entries(row)) {
-        const normalizedKey = normalizeHeaderKey(rawKey);
-        const mappedField = HEADER_MAP[normalizedKey];
-        if (mappedField && value) {
-            (lead as Record<string, string>)[mappedField] = value.trim();
-        }
-    }
-
-    return lead as ParsedLead;
-}
 
 export function LeadImport() {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);
     const [step, setStep] = useState<ImportStep>("upload");
-    const [parsedLeads, setParsedLeads] = useState<ParsedLead[]>([]);
+    // Linhas cruas (header → valor) — enviadas ao servidor, que reaplica o dedup de DB.
+    const [rawRows, setRawRows] = useState<RawRow[]>([]);
+    // Plano calculado no cliente (sem dedup de DB) — o preview mostra exatamente o que será gravado.
+    const [plan, setPlan] = useState<IntakePlan | null>(null);
     const [fileName, setFileName] = useState("");
     const [importing, setImporting] = useState(false);
     const [result, setResult] = useState<ImportResult | null>(null);
@@ -116,7 +57,8 @@ export function LeadImport() {
 
     const resetState = () => {
         setStep("upload");
-        setParsedLeads([]);
+        setRawRows([]);
+        setPlan(null);
         setFileName("");
         setResult(null);
         setImporting(false);
@@ -162,19 +104,18 @@ export function LeadImport() {
             return;
         }
 
-        // Mapear para formato interno
-        const mapped = rows.map(mapRowToLead);
+        // Mesma regra do servidor: o preview mostra os valores normalizados (telefone +55,
+        // tag traduzida) e exclui linhas que o servidor rejeitaria. Sem dedup de DB aqui.
+        const intakePlan = buildIntakePlan(rows);
 
-        // Filtrar linhas completamente vazias
-        const validLeads = mapped.filter((l) => l.name || l.phone);
-
-        if (validLeads.length === 0) {
-            toast.error("Nenhum dado válido encontrado após processar o arquivo.");
+        if (intakePlan.validLeads.length === 0) {
+            toast.error("Nenhum lead válido encontrado após processar o arquivo.");
             return;
         }
 
         setFileName(file.name);
-        setParsedLeads(validLeads);
+        setRawRows(rows);
+        setPlan(intakePlan);
         setStep("preview");
     }, []);
 
@@ -280,7 +221,7 @@ export function LeadImport() {
         setStep("importing");
 
         try {
-            const importResult = await importLeadsFromCSV(parsedLeads);
+            const importResult = await importLeadsFromCSV(rawRows);
             setResult(importResult);
             setStep("result");
 
@@ -296,8 +237,11 @@ export function LeadImport() {
         }
     };
 
-    const previewLeads = parsedLeads.slice(0, 5);
-    const hasMoreLeads = parsedLeads.length > 5;
+    const validLeads = plan?.validLeads ?? [];
+    const previewLeads = validLeads.slice(0, 5);
+    const hasMoreLeads = validLeads.length > 5;
+    const skippedInFile = plan?.skipped.length ?? 0;
+    const invalidRows = plan?.errors.length ?? 0;
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -409,8 +353,21 @@ export function LeadImport() {
                                 <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-medium">{fileName}</span>
                             </div>
-                            <Badge variant="secondary">{parsedLeads.length} leads encontrados</Badge>
+                            <Badge variant="secondary">{validLeads.length} leads válidos</Badge>
                         </div>
+
+                        {/* Os valores abaixo já são os que serão GRAVADOS: telefone normalizado
+                            (+55) e etapa traduzida. Linhas inválidas/duplicadas não aparecem. */}
+                        {(invalidRows > 0 || skippedInFile > 0) && (
+                            <div className="flex items-start gap-2 p-3 rounded-lg border border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30">
+                                <AlertTriangle className="h-4 w-4 mt-0.5 text-yellow-600 shrink-0" />
+                                <p className="text-xs text-yellow-800 dark:text-yellow-300">
+                                    {invalidRows > 0 && `${invalidRows} linha(s) com erro serão ignoradas. `}
+                                    {skippedInFile > 0 && `${skippedInFile} duplicada(s) no arquivo serão ignoradas. `}
+                                    Duplicadas já existentes na base também serão puladas na importação.
+                                </p>
+                            </div>
+                        )}
 
                         <div className="border rounded-md overflow-hidden">
                             <Table>
@@ -425,35 +382,15 @@ export function LeadImport() {
                                 <TableBody>
                                     {previewLeads.map((lead, i) => (
                                         <TableRow key={i}>
-                                            <TableCell className="text-sm">
-                                                {lead.name || (
-                                                    <span className="text-red-500 text-xs">
-                                                        <XCircle className="inline h-3 w-3 mr-1" />
-                                                        Vazio
-                                                    </span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-sm font-mono">
-                                                {lead.phone || (
-                                                    <span className="text-red-500 text-xs">
-                                                        <XCircle className="inline h-3 w-3 mr-1" />
-                                                        Vazio
-                                                    </span>
-                                                )}
-                                            </TableCell>
+                                            <TableCell className="text-sm">{lead.name}</TableCell>
+                                            <TableCell className="text-sm font-mono">{lead.phone}</TableCell>
                                             <TableCell className="text-sm text-muted-foreground">
                                                 {lead.interest || "-"}
                                             </TableCell>
                                             <TableCell className="text-sm">
-                                                {lead.tag ? (
-                                                    <Badge variant="outline" className="text-xs">
-                                                        {lead.tag}
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge variant="outline" className="text-xs text-muted-foreground">
-                                                        NEW
-                                                    </Badge>
-                                                )}
+                                                <Badge variant="outline" className="text-xs">
+                                                    {lead.tag}
+                                                </Badge>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -461,7 +398,7 @@ export function LeadImport() {
                             </Table>
                             {hasMoreLeads && (
                                 <div className="px-4 py-2 bg-muted/30 text-center text-xs text-muted-foreground border-t">
-                                    ... e mais {parsedLeads.length - 5} leads
+                                    ... e mais {validLeads.length - 5} leads
                                 </div>
                             )}
                         </div>
@@ -477,7 +414,7 @@ export function LeadImport() {
                                 disabled={importing}
                             >
                                 <Upload className="mr-2 h-4 w-4" />
-                                Importar {parsedLeads.length} Leads
+                                Importar {validLeads.length} Leads
                             </Button>
                         </div>
                     </div>
@@ -490,7 +427,7 @@ export function LeadImport() {
                         <div className="text-center">
                             <p className="font-medium">Importando leads...</p>
                             <p className="text-sm text-muted-foreground">
-                                Processando {parsedLeads.length} registros
+                                Processando {validLeads.length} registros
                             </p>
                         </div>
                     </div>
