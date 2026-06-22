@@ -32,18 +32,19 @@
  * → (3) dry-run → (4) --apply.
  */
 
-import * as dotenv from "dotenv";
-import { prisma, getTenantPrisma } from "../src/lib/prisma";
+import "dotenv/config"; // PRIMEIRO: carrega .env antes de prisma.ts ler process.env no import
+import { Client } from "pg";
+import { prisma } from "../src/lib/prisma";
+import { decryptSecret } from "../src/lib/encryption";
 import { canonicalizePhone } from "../src/lib/phone";
 
-dotenv.config();
-
 if (!process.env.DATA_ENCRYPTION_KEY) {
-    console.error("DATA_ENCRYPTION_KEY ausente — abortando (getTenantPrisma decifra o databaseUrl).");
+    console.error("DATA_ENCRYPTION_KEY ausente — abortando (não dá para decifrar databaseUrl).");
     process.exit(1);
 }
 
 const APPLY = process.argv.includes("--apply");
+const CHUNK = 500; // linhas por UPDATE em lote (poucos round-trips → conexão remota não cai)
 
 interface TenantStats {
     leadsUpdated: number;
@@ -51,56 +52,76 @@ interface TenantStats {
     contactCollisions: number;
 }
 
-async function backfillTenant(tenantId: string, encryptedUrl: string): Promise<TenantStats> {
-    const tenantPrisma = getTenantPrisma({ tenantId, encryptedUrl });
+/**
+ * Aplica `phone_normalized` em lote via UPDATE ... FROM (VALUES ...) — ~N/CHUNK queries
+ * em vez de uma por linha (o loop por-linha derrubava a conexão remota em tenants grandes).
+ * `idCastInt`: a tabela `users` tem id inteiro; `leads` tem id texto (cuid).
+ */
+async function bulkUpdate(
+    client: Client,
+    table: string,
+    idCastInt: boolean,
+    rows: Array<{ id: string; pn: string }>
+): Promise<void> {
+    for (let i = 0; i < rows.length; i += CHUNK) {
+        const chunk = rows.slice(i, i + CHUNK);
+        const tuples: string[] = [];
+        const params: string[] = [];
+        chunk.forEach((r, j) => {
+            tuples.push(`($${j * 2 + 1}::text, $${j * 2 + 2}::text)`);
+            params.push(r.id, r.pn);
+        });
+        const idMatch = idCastInt ? "t.id = v.id::int" : "t.id = v.id";
+        const sql =
+            `UPDATE "${table}" AS t SET "phone_normalized" = v.pn ` +
+            `FROM (VALUES ${tuples.join(",")}) AS v(id, pn) WHERE ${idMatch}`;
+        await client.query(sql, params);
+    }
+}
+
+async function backfillTenant(name: string, dbUrl: string): Promise<TenantStats> {
     const stats: TenantStats = { leadsUpdated: 0, contactsUpdated: 0, contactCollisions: 0 };
+    const client = new Client({ connectionString: dbUrl });
+    await client.connect();
+    try {
+        // --- Leads (id texto) ---
+        const leads = await client.query<{ id: string; phone: string; phone_normalized: string | null }>(
+            `SELECT "id", "phone", "phone_normalized" FROM "leads"`
+        );
+        const leadUpdates = leads.rows
+            .map((l) => ({ id: l.id, pn: canonicalizePhone(l.phone) }))
+            .filter((u, idx) => leads.rows[idx].phone_normalized !== u.pn);
+        stats.leadsUpdated = leadUpdates.length;
+        if (APPLY && leadUpdates.length) await bulkUpdate(client, "leads", false, leadUpdates);
 
-    // --- Leads ---
-    const leads = await tenantPrisma.lead.findMany({
-        select: { id: true, phone: true, phoneNormalized: true },
-    });
-    for (const lead of leads) {
-        const canonical = canonicalizePhone(lead.phone);
-        if (lead.phoneNormalized === canonical) continue;
-        if (APPLY) {
-            await tenantPrisma.lead.update({ where: { id: lead.id }, data: { phoneNormalized: canonical } });
+        // --- WhatsAppContacts (tabela "users", id inteiro) ---
+        const contacts = await client.query<{ id: number; whatsapp: string | null; phone_normalized: string | null }>(
+            `SELECT "id", "whatsapp", "phone_normalized" FROM "users"`
+        );
+        const byCanonical = new Map<string, number[]>();
+        const contactUpdates: Array<{ id: string; pn: string }> = [];
+        for (const c of contacts.rows) {
+            if (!c.whatsapp) continue; // sem número → nada a normalizar
+            const canonical = canonicalizePhone(c.whatsapp);
+            const ids = byCanonical.get(canonical) ?? [];
+            ids.push(c.id);
+            byCanonical.set(canonical, ids);
+            if (c.phone_normalized !== canonical) contactUpdates.push({ id: String(c.id), pn: canonical });
         }
-        stats.leadsUpdated++;
-    }
+        stats.contactsUpdated = contactUpdates.length;
+        if (APPLY && contactUpdates.length) await bulkUpdate(client, "users", true, contactUpdates);
 
-    // --- WhatsAppContacts ---
-    const contacts = await tenantPrisma.whatsAppContact.findMany({
-        select: { id: true, whatsapp: true, phoneNormalized: true },
-    });
-
-    // Detecta colisões: contatos distintos que canonicalizam para o mesmo número.
-    const byCanonical = new Map<string, number[]>();
-    for (const c of contacts) {
-        if (!c.whatsapp) continue; // sem número → nada a normalizar
-        const canonical = canonicalizePhone(c.whatsapp);
-        const ids = byCanonical.get(canonical) ?? [];
-        ids.push(c.id);
-        byCanonical.set(canonical, ids);
-
-        if (c.phoneNormalized === canonical) continue;
-        if (APPLY) {
-            await tenantPrisma.whatsAppContact.update({
-                where: { id: c.id },
-                data: { phoneNormalized: canonical },
-            });
+        for (const [canonical, ids] of byCanonical) {
+            if (ids.length > 1) {
+                stats.contactCollisions++;
+                console.warn(
+                    `  ⚠️ colisão de contato em ${name}: ${ids.length} contatos → ${canonical} (ids: ${ids.join(", ")}) — merge manual de histórico necessário`
+                );
+            }
         }
-        stats.contactsUpdated++;
+    } finally {
+        await client.end().catch(() => {});
     }
-
-    for (const [canonical, ids] of byCanonical) {
-        if (ids.length > 1) {
-            stats.contactCollisions++;
-            console.warn(
-                `  ⚠️ colisão de contato no tenant ${tenantId}: ${ids.length} contatos → ${canonical} (ids: ${ids.join(", ")}) — merge manual de histórico necessário`
-            );
-        }
-    }
-
     return stats;
 }
 
@@ -109,7 +130,7 @@ async function main() {
 
     const tenants = await prisma.crmUser.findMany({
         where: { role: "USER", databaseUrl: { not: null } },
-        select: { id: true, name: true, databaseUrl: true },
+        select: { name: true, databaseUrl: true },
     });
     console.log(`Tenants a processar: ${tenants.length}`);
 
@@ -117,8 +138,15 @@ async function main() {
 
     for (const tenant of tenants) {
         if (!tenant.databaseUrl) continue;
+        let dbUrl: string;
         try {
-            const s = await backfillTenant(tenant.id, tenant.databaseUrl);
+            dbUrl = decryptSecret(tenant.databaseUrl);
+        } catch {
+            console.error(`  ❌ ${tenant.name}: databaseUrl não está em ciphertext — pulado`);
+            continue;
+        }
+        try {
+            const s = await backfillTenant(tenant.name, dbUrl);
             totals.leadsUpdated += s.leadsUpdated;
             totals.contactsUpdated += s.contactsUpdated;
             totals.contactCollisions += s.contactCollisions;
@@ -127,7 +155,7 @@ async function main() {
             );
         } catch (e) {
             const msg = e instanceof Error ? e.message : "erro desconhecido";
-            console.error(`  ❌ tenant ${tenant.id} falhou: ${msg}`);
+            console.error(`  ❌ ${tenant.name} falhou: ${msg}`);
         }
     }
 
@@ -144,10 +172,6 @@ main()
         process.exitCode = 1;
     })
     .finally(async () => {
-        // Desconecta o client CRM. Os pools de tenant abertos via getTenantPrisma vivem no
-        // cache LRU compartilhado (sem teardown explícito aqui): força a saída para o
-        // processo one-off não pendurar com sockets pg vivos. Todas as escritas já
-        // concluíram (await) antes deste ponto, então é seguro encerrar.
         await prisma.$disconnect();
         process.exit(process.exitCode ?? 0);
     });
