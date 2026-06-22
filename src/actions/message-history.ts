@@ -5,9 +5,8 @@ import { findContactByPhone } from "@/lib/phone";
 import { decodeChatEnvelope } from "@/lib/chat-envelope";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
-import { decrypt } from "@/lib/encryption";
+import { getUserEvolutionConfig } from "@/lib/evolution-config";
 import type { EvolutionMessage } from "@/lib/evolution";
 
 export interface NormalizedMessage {
@@ -98,24 +97,18 @@ async function getMessagesFromDatabase(
  * Buscar mensagens da Evolution API
  */
 async function getMessagesFromEvolution(phone: string): Promise<NormalizedMessage[]> {
+    const session = await getServerSession(authConfig);
+    if (!session?.user?.id) return [];
+
+    let config;
     try {
-        const session = await getServerSession(authConfig);
-        if (!session?.user?.id) return [];
+        config = await getUserEvolutionConfig(session.user.id);
+    } catch {
+        return []; // sem instância configurada → fallback silencioso (não é erro)
+    }
 
-        const user = await prisma.crmUser.findUnique({
-            where: { id: session.user.id },
-            select: {
-                evolutionInstance: true,
-                evolutionApiKey: true,
-            },
-        });
-
-        if (!user?.evolutionInstance) return [];
-
-        const instanceName = decrypt(user.evolutionInstance);
-        const apiKey = user.evolutionApiKey ? decrypt(user.evolutionApiKey) : undefined;
-
-        const client = createEvolutionClient(instanceName, apiKey);
+    try {
+        const client = createEvolutionClient(config.instanceName, config.apiKey);
         const messages = await client.fetchMessages(phone, { limit: 50 });
 
         return normalizeEvolutionMessages(messages);

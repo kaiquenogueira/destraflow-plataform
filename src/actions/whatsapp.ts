@@ -5,7 +5,8 @@ import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
 import { revalidatePath } from "next/cache";
-import { encrypt, decrypt, hashString } from "@/lib/encryption";
+import { encrypt, hashString } from "@/lib/encryption";
+import { getUserEvolutionConfig } from "@/lib/evolution-config";
 
 async function getCurrentUserId(): Promise<string> {
     const session = await getServerSession(authConfig);
@@ -15,30 +16,9 @@ async function getCurrentUserId(): Promise<string> {
     return session.user.id;
 }
 
-async function getUserEvolutionConfig() {
-    const userId = await getCurrentUserId();
-
-    const user = await prisma.crmUser.findUnique({
-        where: { id: userId },
-        select: {
-            evolutionInstance: true,
-            evolutionApiKey: true,
-        },
-    });
-
-    if (!user?.evolutionInstance) {
-        throw new Error("Instância do WhatsApp não configurada");
-    }
-
-    return {
-        instanceName: decrypt(user.evolutionInstance),
-        apiKey: user.evolutionApiKey ? decrypt(user.evolutionApiKey) : undefined,
-    };
-}
-
 export async function getWhatsAppStatus() {
     try {
-        const config = await getUserEvolutionConfig();
+        const config = await getUserEvolutionConfig(await getCurrentUserId());
         const client = createEvolutionClient(config.instanceName, config.apiKey);
         const status = await client.getInstanceStatus();
 
@@ -58,7 +38,7 @@ export async function getWhatsAppStatus() {
 
 export async function generateQRCode() {
     try {
-        const config = await getUserEvolutionConfig();
+        const config = await getUserEvolutionConfig(await getCurrentUserId());
         const client = createEvolutionClient(config.instanceName, config.apiKey);
         const qrCode = await client.generateQRCode();
 
@@ -77,7 +57,7 @@ export async function generateQRCode() {
 
 export async function disconnectWhatsApp() {
     try {
-        const config = await getUserEvolutionConfig();
+        const config = await getUserEvolutionConfig(await getCurrentUserId());
         const client = createEvolutionClient(config.instanceName, config.apiKey);
         const disconnected = await client.disconnect();
 

@@ -39,7 +39,6 @@ describe("Leads Actions", () => {
 
   const mockContext = {
     userId: "user-123",
-    userRole: "USER",
     tenantPrisma: mockPrisma,
   };
 

@@ -2,12 +2,12 @@ import { cache } from "react";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { prisma, getTenantPrisma } from "@/lib/prisma";
+import { validatePrincipal } from "@/lib/principal";
 import type { PrismaClient as TenantPrismaClient } from "@/generated/prisma/tenant";
 import type { QuotaState } from "@/services/ai/ai-quota";
 
 export interface TenantContext {
     userId: string;
-    userRole: "ADMIN" | "USER";
     tenantPrisma: TenantPrismaClient;
     /** Quota de personalização por IA (CRM DB). Dona da regra: src/services/ai/ai-quota.ts. */
     aiQuota?: QuotaState;
@@ -31,16 +31,12 @@ export class NoTenantDatabaseError extends Error {
  */
 export const getOptionalTenantContext = cache(async (): Promise<TenantContext | null> => {
     const session = await getServerSession(authConfig);
-
-    if (!session?.user?.id) {
-        throw new Error("Não autorizado");
-    }
+    // Identidade (e seu vocabulário de erro) é dona de src/lib/principal.ts.
+    const principal = await validatePrincipal(session);
 
     const user = await prisma.crmUser.findUnique({
-        where: { id: session.user.id },
+        where: { id: principal.id },
         select: {
-            id: true,
-            role: true,
             databaseUrl: true,
             aiMessagesUsed: true,
             aiMessagesLimit: true,
@@ -48,19 +44,14 @@ export const getOptionalTenantContext = cache(async (): Promise<TenantContext | 
         },
     });
 
-    if (!user) {
-        throw new Error("Usuário não encontrado");
-    }
-
     // Admin ou usuário sem banco configurado
-    if (!user.databaseUrl) {
+    if (!user?.databaseUrl) {
         return null;
     }
 
     return {
-        userId: user.id,
-        userRole: user.role,
-        tenantPrisma: getTenantPrisma({ tenantId: user.id, encryptedUrl: user.databaseUrl }),
+        userId: principal.id,
+        tenantPrisma: getTenantPrisma({ tenantId: principal.id, encryptedUrl: user.databaseUrl }),
         aiQuota: {
             used: user.aiMessagesUsed,
             limit: user.aiMessagesLimit,

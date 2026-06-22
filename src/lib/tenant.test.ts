@@ -50,7 +50,6 @@ describe("Tenant Context", () => {
     });
     expect(result).toEqual({
       userId: "user-1",
-      userRole: "USER",
       tenantPrisma: { tenant: true },
       aiQuota: { used: 3, limit: 15, resetAt: null },
     });
@@ -98,7 +97,6 @@ describe("Tenant Context", () => {
     // em vez de reasserido em cada action (Sprint 05).
     expect(result).toMatchObject({
       userId: "user-1",
-      userRole: "USER",
       tenantPrisma: { tenant: true },
     });
   });
