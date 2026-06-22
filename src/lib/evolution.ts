@@ -136,10 +136,29 @@ export class EvolutionClient {
         }
     }
 
+    /**
+     * Contrato de telefone na fronteira Evolution (ver ADR-0004 / CONTEXT.md):
+     * ENTRA a forma canônica do sistema (E.164 `+55…`, como `lead.phone` armazenado);
+     * SAI dígitos crus, sem `+` — o formato que a Evolution espera no fio (`number`
+     * do sendText e `<n>@s.whatsapp.net` do remoteJid). O `+` é removido AQUI, de
+     * propósito; o resto do sistema canonicaliza COM `+`.
+     *
+     * Guarda: rejeita resultado vazio/curto antes de chamar a API. Não loga o
+     * número (PII). Método PRIVADO interno ao cliente — não é uma costura exportada
+     * (ADR-0005 rejeita um helper de telefone Evolution compartilhado).
+     */
+    private toWhatsAppNumber(phone: string): string {
+        const number = phone.replace(/\D/g, "");
+        // Alinhado ao phoneSchema (11–15 dígitos após remover o '+').
+        if (!/^\d{11,15}$/.test(number)) {
+            throw new Error("Número de telefone inválido para a Evolution API");
+        }
+        return number;
+    }
+
     async sendMessage(phone: string, text: string): Promise<boolean> {
         try {
-            // Normalizar número de telefone
-            const number = phone.replace(/\D/g, "");
+            const number = this.toWhatsAppNumber(phone);
 
             await this.request(`/message/sendText/${this.config.instanceName}`, {
                 method: "POST",
@@ -164,7 +183,7 @@ export class EvolutionClient {
         params?: { limit?: number }
     ): Promise<EvolutionMessage[]> {
         try {
-            const number = phone.replace(/\D/g, "");
+            const number = this.toWhatsAppNumber(phone);
             const response = await this.request<EvolutionMessage[]>(
                 `/chat/findMessages/${this.config.instanceName}`,
                 {
