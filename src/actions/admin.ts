@@ -10,6 +10,7 @@ import {
     type TenantCredentialInput,
 } from "@/lib/tenant-credentials";
 import { requireAdmin } from "@/lib/admin-auth";
+import { nameSchema } from "@/lib/validation";
 import { syncTenantDatabase } from "./tenant-sync";
 
 // Validar se o formato de conexão do banco é seguro, exigindo um formato PostgreSQL válido sem queries extras que poderiam causar SSRF/injeções.
@@ -23,7 +24,7 @@ const databaseUrlSchema = z.string()
 const createUserSchema = z.object({
     email: z.string().email("Email inválido"),
     password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+    name: nameSchema,
     role: z.enum(["ADMIN", "USER"]),
     databaseUrl: databaseUrlSchema,
     evolutionInstance: z.string().optional(),

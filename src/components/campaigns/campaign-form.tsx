@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { nameSchema, campaignTemplateSchema, isScheduledFarEnough, SCHEDULE_ERROR_MESSAGE } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,13 +36,10 @@ import {
 } from "@/components/ui/select";
 
 const campaignSchema = z.object({
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    template: z.string().min(10, "Template deve ter pelo menos 10 caracteres"),
-    scheduledAt: z.string().refine((val) => {
-        if (!val) return false;
-        const date = new Date(val);
-        return date.getTime() > Date.now() + (9.5 * 60 * 1000);
-    }, "A data deve ser pelo menos 10 minutos no futuro"),
+    name: nameSchema,
+    template: campaignTemplateSchema,
+    // Mesma janela load-bearing da action (validation.ts); aqui a entrada é string.
+    scheduledAt: z.string().refine((val) => isScheduledFarEnough(new Date(val)), SCHEDULE_ERROR_MESSAGE),
     leadIds: z.array(z.string()).min(1, "Selecione pelo menos um lead"),
 });
 

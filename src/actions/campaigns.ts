@@ -6,6 +6,7 @@ import { z } from "zod";
 import type { LeadTag, CampaignStatus } from "@/types";
 import { CampaignPersonalizer } from "@/services/ai/campaign-personalizer";
 import { canPersonalize, recordPersonalization, applyReset } from "@/services/ai/ai-quota";
+import { nameSchema, campaignTemplateSchema, isScheduledFarEnough, SCHEDULE_ERROR_MESSAGE } from "@/lib/validation";
 
 // Não inicializar instâncias globais que usem env vars diretamente fora de funções em arquivos de action
 // Isso quebra os testes unitários que fazem mock do ambiente
@@ -31,16 +32,12 @@ function processTemplate(
 
 // Validation schemas
 const createCampaignSchema = z.object({
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    template: z.string().min(10, "Template deve ter pelo menos 10 caracteres"),
+    name: nameSchema,
+    template: campaignTemplateSchema,
     targetTag: z.enum(["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"]).optional(),
     leadIds: z.array(z.string()).optional(),
-    scheduledAt: z.coerce.date().refine((date) => {
-        // Permitir uma margem de erro de alguns segundos para latência de rede, 
-        // mas garantir que seja pelo menos ~10 minutos no futuro.
-        // Usando 9.5 minutos para evitar rejeições por milissegundos na borda.
-        return date.getTime() > Date.now() + (9.5 * 60 * 1000);
-    }, "A campanha deve ser agendada com no mínimo 10 minutos de antecedência"),
+    // Janela de agendamento: regra load-bearing compartilhada com o form (validation.ts).
+    scheduledAt: z.coerce.date().refine(isScheduledFarEnough, SCHEDULE_ERROR_MESSAGE),
 });
 
 export async function getLeadsForCampaignSelection() {

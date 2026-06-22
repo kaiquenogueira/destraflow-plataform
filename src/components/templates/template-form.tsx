@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { nameSchema, templateContentSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +15,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 const templateSchema = z.object({
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    content: z.string().min(10, "Conteúdo deve ter pelo menos 10 caracteres"),
+    name: nameSchema,
+    content: templateContentSchema,
 });
 
 type TemplateFormData = z.infer<typeof templateSchema>;

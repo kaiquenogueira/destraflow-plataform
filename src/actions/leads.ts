@@ -2,6 +2,7 @@
 
 import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 import { canonicalizePhone } from "@/lib/phone";
+import { nameSchema, phoneSchema } from "@/lib/validation";
 import { buildIntakePlan, MAX_IMPORT, type RawRow } from "@/lib/lead-intake";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -10,10 +11,8 @@ import { startOfDay, endOfDay, parseISO } from "date-fns";
 
 // Validation schemas
 const createLeadSchema = z.object({
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    phone: z
-        .string()
-        .regex(/^\+?[1-9]\d{10,14}$/, "Telefone inválido (use formato +5511999999999)"),
+    name: nameSchema,
+    phone: phoneSchema,
     interest: z.string().optional(),
     tag: z.enum(["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"]),
 });
