@@ -1,8 +1,6 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authConfig } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { z } from "zod";
@@ -217,8 +215,6 @@ export async function getUserNotifications(userId: string) {
     }
 
     try {
-        const { getTenantPrisma } = await import("@/lib/prisma");
-
         const tenantPrisma = getTenantPrisma({ tenantId: userId, encryptedUrl: user.databaseUrl });
         
         const notifications = await tenantPrisma.externalNotification.findMany({

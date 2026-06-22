@@ -5,7 +5,7 @@
 > - **Esforço estimado:** 1–2 dias
 > - **Dependências:** Nenhuma
 > - **Subsistemas:** Leitura de histórico de chat, Contexto de tenant, Autorização (gates), Integração Evolution
-> - **Status:** Não iniciado
+> - **Status:** Concluído (2026-06-22) — `chat.ts` deletado; `userRole` removido do `TenantContext` (path b, [ADR-0006](../../adr/0006-tenant-action-authorization.md)); helpers `evolution-config` + `principal` extraídos; nit de import em `admin.ts`. Gates verdes; revisão adversarial sem defeitos.
 
 ## Resumo executivo
 

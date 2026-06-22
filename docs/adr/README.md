@@ -24,5 +24,6 @@ Formato: variação enxuta do [MADR](https://adr.github.io/madr/). Ver [`0000-te
 | [0003](./0003-database-per-tenant.md) | Banco por tenant resolvido em runtime, credenciais criptografadas | Accepted |
 | [0004](./0004-shared-evolution-server.md) | Servidor Evolution compartilhado, instância+chave por tenant | Accepted |
 | [0005](./0005-rejected-premature-seams.md) | Costuras prematuras rejeitadas (não re-sugerir) | Accepted |
+| [0006](./0006-tenant-action-authorization.md) | Autorização de ações de tenant: auth + posse de `databaseUrl` (`userRole` removido) | Accepted |
 
 > Revisões de arquitetura (ex.: skill `improve-codebase-architecture`) devem **ler os ADRs antes** de propor mudanças e **marcar conflitos** explicitamente em vez de re-sugerir o que já foi decidido.

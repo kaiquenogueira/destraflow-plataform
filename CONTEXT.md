@@ -30,7 +30,7 @@ _Evite_: "organização", "workspace", "conta".
 Registro no CRM DB central. Guarda identidade (login, papel `ADMIN`/`USER`), a `databaseUrl` **criptografada** do Tenant DB, as credenciais Evolution criptografadas (`evolutionInstance`, `evolutionApiKey`, `evolutionPhone`) e a **quota de IA** (`aiMessagesUsed`, `aiMessagesLimit`, `aiLimitResetAt`).
 
 **TenantContext**
-Objeto resolvido por `getTenantContext()` (`src/lib/tenant.ts`): a sessão atual → `CrmUser` validado → `{ tenantPrisma, userId, userRole, ...quota }`. Retorna `null` quando o usuário não tem `databaseUrl` (ex.: admin). Ver [Sprint 05](./docs/sprint/sprint-05-contrato-tenant-context.md) para o contrato `require` vs `optional`.
+Objeto resolvido por `getTenantContext()` (`src/lib/tenant.ts`): a sessão atual → principal validado (`src/lib/principal.ts`) → `{ tenantPrisma, userId, ...quota }`. Retorna `null` quando o usuário não tem `databaseUrl` (ex.: admin). Ver [Sprint 05](./docs/sprint/sprint-05-contrato-tenant-context.md) para o contrato `require` vs `optional`. **Não carrega papel**: autorização por papel vive na borda (`src/proxy.ts`) e em `requireAdmin`, não no contexto de tenant — ver [ADR-0006](./docs/adr/0006-tenant-action-authorization.md).
 
 **Lead**
 Contato de CRM dentro de um Tenant DB. Tem `tag` (estágio do funil), `phone`, `interest`, `aiSummary`, e `notes` (`LeadNote`). Telefone é **identidade**: ver `phone-identity` ([Sprint 02](./docs/sprint/sprint-02-identidade-de-telefone.md)).
