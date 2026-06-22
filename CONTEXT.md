@@ -74,6 +74,8 @@ Notificação externa (Tenant DB), exibida em `/notifications`.
 **Evolution instance**
 A instância WhatsApp de um tenant na Evolution API (servidor **compartilhado**). Identificada por `evolutionInstance` (nome) + `evolutionApiKey`. **Não há base-URL por tenant** — ver [ADR-0004](./docs/adr/0004-shared-evolution-server.md).
 
+**Formato de telefone na fronteira Evolution:** o sistema canonicaliza telefone para E.164 **com `+`** (`+55…`, ver `phone-identity`); a Evolution API espera **dígitos crus, sem `+`** (campo `number` e `remoteJid` `<n>@s.whatsapp.net`). A conversão `+55… → dígitos` acontece **só** em `EvolutionClient` (`src/lib/evolution.ts`, método privado), com guarda que rejeita números inválidos antes da chamada. Não é um helper compartilhado (ver [ADR-0004](./docs/adr/0004-shared-evolution-server.md) e a rejeição de costura em [Sprint 09](./docs/sprint/sprint-09-costuras-verificadas-pos-rescan.md)).
+
 ---
 
 ## Vocabulário de arquitetura

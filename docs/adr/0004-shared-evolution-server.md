@@ -24,3 +24,8 @@ Vamos usar **um servidor Evolution compartilhado** para todos os tenants, com **
 - A tenancy é identificada pelo **nome da instância** no servidor compartilhado.
 - **Não** introduzir uma costura de "base-URL por tenant" — não existe segundo servidor no modelo de dados; seria uma costura de zero adaptadores (ver ADR-0005).
 - Se um dia houver multi-servidor, este ADR deve ser **superado** por um novo, adicionando a coluna no schema primeiro.
+
+### Formato de telefone na fronteira (anexado em 2026-06-22, Sprint 09)
+
+- **Contrato:** o sistema canonicaliza telefone para E.164 **com `+`** (`+55…`, ver `phone-identity`/Sprint 02). A Evolution API espera **dígitos crus, sem `+`** (campo `number` do `sendText` e `remoteJid` `<n>@s.whatsapp.net`). A conversão `+55… → dígitos` ocorre **apenas** em `EvolutionClient` (método privado `toWhatsAppNumber`), que também **valida** o resultado (rejeita vazio/curto) antes de chamar a API e não loga o número (PII).
+- **Não** extrair um helper `toEvolutionNumber` compartilhado/exportado: a conversão é interna ao único cliente que a usa (2 sites no mesmo arquivo) — costura prematura pela regra do 1-adaptador (ver [ADR-0005](./0005-rejected-premature-seams.md) e [Sprint 09](../sprint/sprint-09-costuras-verificadas-pos-rescan.md)).

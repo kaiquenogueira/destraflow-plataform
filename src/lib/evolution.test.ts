@@ -222,6 +222,39 @@ describe("EvolutionClient", () => {
       );
       consoleSpy.mockRestore();
     });
+
+    it("rejeita número inválido antes de chamar a API (guarda de contrato)", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      await expect(client.sendMessage("123", "Hello")).rejects.toThrow(
+        "Número de telefone inválido para a Evolution API"
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("fetchMessages", () => {
+    it("envia dígitos crus no remoteJid (contrato +55… -> dígitos)", async () => {
+      fetchMock.mockResolvedValueOnce({ ok: true, json: async () => [] });
+
+      await client.fetchMessages("+5511999999999");
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "http://test-api.com/chat/findMessages/test-instance",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("5511999999999@s.whatsapp.net"),
+        })
+      );
+    });
+
+    it("retorna [] e não chama a API quando o número é inválido (guarda)", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const result = await client.fetchMessages("123");
+      expect(result).toEqual([]);
+      expect(fetchMock).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
   });
 });
 
