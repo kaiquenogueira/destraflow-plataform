@@ -24,7 +24,7 @@ Ordenado por **prioridade** (bugs ao vivo primeiro) e, dentro da mesma prioridad
 | [03](./closed/sprint-03-seguranca-credenciais-decrypt.md) ✅ | Segurança de credenciais (decrypt) | 🟠 Alta | Baixa–Média | 2–3 dias | — | ⚠️ Vetor de segurança — credencial em texto plano abre pool |
 | [04](./closed/sprint-04-ciclo-de-vida-campaign-message.md) ✅ | Ciclo de vida de CampaignMessage | 🟡 Média | Média | 3–4 dias | — | ⚠️ Latente — drift de conclusão de campanha |
 | [05](./closed/sprint-05-contrato-tenant-context.md) ✅ | Contrato do TenantContext | 🟡 Média | Média | 2–3 dias | — | ❌ Estrutural (risco de null-deref) |
-| [06](./sprint-06-intake-importacao-leads.md) | Intake / importação de leads | 🟡 Média | Média–Alta | 3–5 dias | Sprint 02 | ⚠️ UX — preview diverge do armazenado |
+| [06](./closed/sprint-06-intake-importacao-leads.md) ✅ | Intake / importação de leads | 🟡 Média | Média–Alta | 3–5 dias | Sprint 02 | ⚠️ UX — preview diverge do armazenado |
 | [07](./sprint-07-limpeza-e-honestidade-de-interface.md) | Limpeza e honestidade de interface | ⚪ Baixa | Baixa | 1–2 dias | — | ❌ Sem bug ao vivo |
 | [08](./sprint-08-limpeza-de-lint.md) | Limpeza de lint (ratchet `warn`→`error`) | ⚪ Baixa | Baixa–Média | 2–3 dias | — | ❌ Sem bug ao vivo |
 

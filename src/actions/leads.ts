@@ -2,6 +2,7 @@
 
 import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 import { canonicalizePhone } from "@/lib/phone";
+import { buildIntakePlan, MAX_IMPORT, type RawRow } from "@/lib/lead-intake";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { LeadTag } from "@/types";
@@ -217,135 +218,46 @@ export async function getLeadsByTag() {
     );
 }
 
-// Schema para validação de cada lead importado
-const importLeadSchema = z.object({
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    phone: z.string().min(8, "Telefone inválido"),
-    interest: z.string().optional(),
-    tag: z
-        .enum(["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"])
-        .optional()
-        .default("NEW"),
-});
-
-const VALID_TAGS = ["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"];
-
-function normalizeTag(raw: string | undefined): LeadTag {
-    if (!raw) return "NEW";
-    const upper = raw.trim().toUpperCase();
-    if (VALID_TAGS.includes(upper)) return upper as LeadTag;
-
-    // Tentar mapear nomes em português
-    const PT_TAG_MAP: Record<string, LeadTag> = {
-        NOVO: "NEW",
-        "QUALIFICAÇÃO": "QUALIFICATION",
-        QUALIFICACAO: "QUALIFICATION",
-        "PROSPECÇÃO": "PROSPECTING",
-        PROSPECCAO: "PROSPECTING",
-        "LIGAÇÃO": "CALL",
-        LIGACAO: "CALL",
-        "REUNIÃO": "MEETING",
-        REUNIAO: "MEETING",
-        RETORNO: "RETURN",
-        PERDIDO: "LOST",
-        CLIENTE: "CUSTOMER",
-    };
-
-    return PT_TAG_MAP[upper] || "NEW";
-}
-
 export interface ImportResult {
     imported: number;
     skipped: number;
     errors: Array<{ row: number; field: string; message: string }>;
 }
 
-export async function importLeadsFromCSV(
-    leads: Array<{ name: string; phone: string; interest?: string; tag?: string }>
-): Promise<ImportResult> {
+/**
+ * Casca fina sobre `buildIntakePlan` (dono único das regras de import — ver
+ * src/lib/lead-intake.ts). Aqui só vive o I/O: cap de linhas, leitura dos
+ * telefones existentes para dedup de existência e o `createMany`. Recebe linhas
+ * CRUAS (header → valor) para reaplicar o dedup de DB de forma autoritativa,
+ * idêntico ao que o preview do cliente já mostrou.
+ */
+export async function importLeadsFromCSV(rows: RawRow[]): Promise<ImportResult> {
     const { tenantPrisma } = await requireTenantContext();
 
-    const result: ImportResult = {
-        imported: 0,
-        skipped: 0,
-        errors: [],
-    };
-
-    if (!leads || leads.length === 0) {
+    if (!rows || rows.length === 0) {
         throw new Error("Nenhum lead para importar");
     }
 
-    if (leads.length > 5000) {
-        throw new Error("Máximo de 5000 leads por importação");
+    if (rows.length > MAX_IMPORT) {
+        throw new Error(`Máximo de ${MAX_IMPORT} leads por importação`);
     }
 
-    // Buscar telefones já existentes para deduplicação (por forma canônica, não dígitos crus)
-    const existingLeads = await tenantPrisma.lead.findMany({
-        select: { phone: true },
-    });
-    const existingPhones = new Set(existingLeads.map((l: { phone: string }) => canonicalizePhone(l.phone)));
+    // Telefones já existentes, na forma canônica, para dedup de existência.
+    const existingLeads = await tenantPrisma.lead.findMany({ select: { phone: true } });
+    const existingCanonicalPhones = new Set(
+        existingLeads.map((l: { phone: string }) => canonicalizePhone(l.phone))
+    );
 
-    const validLeads: Array<{ name: string; phone: string; phoneNormalized: string; interest?: string; tag: LeadTag }> = [];
-    const seenPhonesInBatch = new Set<string>();
+    const plan = buildIntakePlan(rows, { existingCanonicalPhones });
 
-    for (let i = 0; i < leads.length; i++) {
-        const raw = leads[i];
-        const rowNum = i + 2; // +2: header + 0-indexed
-
-        // Validar campos obrigatórios
-        if (!raw.name || raw.name.trim().length < 2) {
-            result.errors.push({ row: rowNum, field: "nome", message: "Nome é obrigatório (mín. 2 caracteres)" });
-            continue;
-        }
-
-        if (!raw.phone || raw.phone.trim().length < 8) {
-            result.errors.push({ row: rowNum, field: "telefone", message: "Telefone é obrigatório" });
-            continue;
-        }
-
-        const normalizedPhone = canonicalizePhone(raw.phone.trim());
-
-        // Validar formato do telefone normalizado
-        if (!/^\+?[1-9]\d{10,14}$/.test(normalizedPhone)) {
-            result.errors.push({
-                row: rowNum,
-                field: "telefone",
-                message: `Formato inválido: "${raw.phone}" → "${normalizedPhone}"`,
-            });
-            continue;
-        }
-
-        // Deduplicar contra banco existente (forma canônica)
-        if (existingPhones.has(normalizedPhone)) {
-            result.skipped++;
-            continue;
-        }
-
-        // Deduplicar dentro do batch
-        if (seenPhonesInBatch.has(normalizedPhone)) {
-            result.skipped++;
-            continue;
-        }
-
-        seenPhonesInBatch.add(normalizedPhone);
-
-        validLeads.push({
-            name: raw.name.trim(),
-            phone: normalizedPhone,
-            phoneNormalized: normalizedPhone,
-            interest: raw.interest?.trim() || undefined,
-            tag: normalizeTag(raw.tag),
-        });
-    }
-
-    // Inserir em batch
-    if (validLeads.length > 0) {
-        await tenantPrisma.lead.createMany({
-            data: validLeads,
-        });
-        result.imported = validLeads.length;
+    if (plan.validLeads.length > 0) {
+        await tenantPrisma.lead.createMany({ data: plan.validLeads });
     }
 
     revalidatePath("/leads");
-    return result;
+    return {
+        imported: plan.validLeads.length,
+        skipped: plan.skipped.length,
+        errors: plan.errors,
+    };
 }
