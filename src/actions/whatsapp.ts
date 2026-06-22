@@ -5,7 +5,7 @@ import { authConfig } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
 import { revalidatePath } from "next/cache";
-import { encrypt, hashString } from "@/lib/encryption";
+import { encryptTenantCredentials } from "@/lib/tenant-credentials";
 import { getUserEvolutionConfig } from "@/lib/evolution-config";
 
 async function getCurrentUserId(): Promise<string> {
@@ -86,11 +86,10 @@ export async function saveEvolutionConfig(
 
     await prisma.crmUser.update({
         where: { id: userId },
-        data: {
-            evolutionInstance: encrypt(instanceName),
-            evolutionInstanceHash: hashString(instanceName),
-            evolutionApiKey: apiKey ? encrypt(apiKey) : null,
-        },
+        data: encryptTenantCredentials({
+            evolutionInstance: instanceName,
+            evolutionApiKey: apiKey ?? "",
+        }),
     });
 
     revalidatePath("/whatsapp");

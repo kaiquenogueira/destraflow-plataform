@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { prisma } from '../src/lib/prisma';
-import { decrypt } from '../src/lib/encryption';
+import { decryptSecret } from '../src/lib/encryption';
 
 const execFileAsync = promisify(execFile);
 
@@ -81,7 +81,8 @@ async function main() {
         if (!user.databaseUrl) continue;
 
         try {
-            const dbUrl = decrypt(user.databaseUrl);
+            // Estrito: conexão de tenant nunca abre com texto plano (ADR-0007).
+            const dbUrl = decryptSecret(user.databaseUrl);
             await migrateTenant(dbUrl, user.email);
         } catch (error) {
             const err = error as { message?: string };

@@ -10,7 +10,7 @@
 
 import { prisma, getTenantPrisma } from "@/lib/prisma";
 import { createEvolutionClient } from "@/lib/evolution";
-import { decrypt } from "@/lib/encryption";
+import { decryptEvolutionPair } from "@/lib/tenant-credentials";
 import { canonicalizePhone, findContactByPhone } from "@/lib/phone";
 import { CampaignPersonalizer } from "@/services/ai/campaign-personalizer";
 import { canPersonalize, recordPersonalization, applyReset, type QuotaState } from "@/services/ai/ai-quota";
@@ -282,8 +282,8 @@ export async function processAllTenantMessages(): Promise<{
         if (!user.databaseUrl || !user.evolutionInstance) return;
 
         try {
-            const evolutionInstance = decrypt(user.evolutionInstance);
-            const evolutionApiKey = user.evolutionApiKey ? decrypt(user.evolutionApiKey) : null;
+            const { instanceName: evolutionInstance, apiKey } = decryptEvolutionPair(user);
+            const evolutionApiKey = apiKey ?? null;
             const evolutionPhone = user.evolutionPhone;
 
             const tenantPrisma = getTenantPrisma({ tenantId: user.id, encryptedUrl: user.databaseUrl });

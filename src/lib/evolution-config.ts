@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { decrypt } from "@/lib/encryption";
+import { decryptEvolutionPair } from "@/lib/tenant-credentials";
 
 export interface EvolutionConfig {
     instanceName: string;
@@ -25,8 +25,5 @@ export async function getUserEvolutionConfig(userId: string): Promise<EvolutionC
         throw new Error("Instância do WhatsApp não configurada");
     }
 
-    return {
-        instanceName: decrypt(user.evolutionInstance),
-        apiKey: user.evolutionApiKey ? decrypt(user.evolutionApiKey) : undefined,
-    };
+    return decryptEvolutionPair(user);
 }
