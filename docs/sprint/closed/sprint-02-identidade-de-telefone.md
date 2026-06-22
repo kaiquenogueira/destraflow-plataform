@@ -5,7 +5,14 @@
 > - **Esforço estimado:** 3–5 dias
 > - **Dependências:** Nenhuma. (O Sprint 06 — intake/N8N — reutiliza a normalização criada aqui.)
 > - **Subsistemas:** Importação de leads, Histórico de mensagens, Worker de mensagens, Sincronização de contatos, Schema Prisma (Lead / WhatsAppContact)
-> - **Status:** Implementado (código). Pendente deploy-gated: aplicar schema nos Tenant DBs → rodar `scripts/backfill-phone-normalized.ts --apply` → remover o fallback de leitura (passo 8).
+> - **Status:** ✅ Concluído (2026-06-21). Código mergeado (PR #18) + migração aplicada em produção (4 tenants).
+
+## Resultado da execução (2026-06-21)
+
+- **Schema aplicado** nos 4 Tenant DBs via `scripts/migrate-phone-normalized-schema.ts --apply` (DDL aditivo e idempotente: `ADD COLUMN IF NOT EXISTS phone_normalized` + índice em `leads` e `users`). **Não** se usou `prisma db push --accept-data-loss` (risco de dropar colunas legadas).
+- **Backfill aplicado** via `scripts/backfill-phone-normalized.ts --apply`: **3872 leads + 3622 contatos** canonicalizados; 0 linhas pendentes na reverificação. (Reescrito para UPDATE em lote `FROM (VALUES …)` com `pg.Client` dedicado — o loop por-linha original derrubava a conexão remota em tenants grandes.)
+- **340 colisões de contato** detectadas e **logadas** (Shalom 339, Pfoods 1): contatos distintos que canonicalizam para o mesmo número (histórico fragmentado pré-existente). **Não mescladas** — merge de histórico é decisão de produto (ver "Riscos & migração"). **Follow-up pendente.**
+- **Fallback de leitura mantido** (passo 8 do plano **não** executado de propósito): rede de segurança barata para linhas futuras com `phone_normalized` nulo (ex.: contatos crus escritos pelo N8N). `findContactByPhone`/`findLeadByPhone` pré-filtram por sufixo no banco + `orderBy` estável, então o custo é baixo. Remover é otimização opcional futura.
 
 ## Resumo executivo
 

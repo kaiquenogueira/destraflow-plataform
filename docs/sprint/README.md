@@ -20,7 +20,7 @@ Ordenado por **prioridade** (bugs ao vivo primeiro) e, dentro da mesma prioridad
 | # | Sprint | Prioridade | Complexidade | Esforço | Depende de | Bug ao vivo? |
 |---|--------|-----------|--------------|---------|-----------|--------------|
 | [01](./closed/sprint-01-quota-ia-e-sinal-de-uso.md) ✅ | Quota de IA e sinal de uso | 🔴 Crítica | Média | 2–3 dias | — | ✅ Sim — worker nunca reseta quota (throttle permanente) |
-| [02](./sprint-02-identidade-de-telefone.md) | Identidade de telefone | 🔴 Crítica | Média | 3–5 dias | — | ✅ Sim — histórico de chat some na UI |
+| [02](./closed/sprint-02-identidade-de-telefone.md) ✅ | Identidade de telefone | 🔴 Crítica | Média | 3–5 dias | — | ✅ Sim — histórico de chat some na UI |
 | [03](./closed/sprint-03-seguranca-credenciais-decrypt.md) ✅ | Segurança de credenciais (decrypt) | 🟠 Alta | Baixa–Média | 2–3 dias | — | ⚠️ Vetor de segurança — credencial em texto plano abre pool |
 | [04](./sprint-04-ciclo-de-vida-campaign-message.md) | Ciclo de vida de CampaignMessage | 🟡 Média | Média | 3–4 dias | — | ⚠️ Latente — drift de conclusão de campanha |
 | [05](./sprint-05-contrato-tenant-context.md) | Contrato do TenantContext | 🟡 Média | Média | 2–3 dias | — | ❌ Estrutural (risco de null-deref) |
