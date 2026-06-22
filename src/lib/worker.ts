@@ -14,8 +14,15 @@ import { decrypt } from "@/lib/encryption";
 import { canonicalizePhone, findContactByPhone } from "@/lib/phone";
 import { CampaignPersonalizer } from "@/services/ai/campaign-personalizer";
 import { canPersonalize, recordPersonalization, applyReset, type QuotaState } from "@/services/ai/ai-quota";
+import {
+    MAX_RETRIES,
+    eligibleForSendWhere,
+    unfinishedMessagesWhere,
+    applyOutcome,
+    calculateDelay,
+} from "@/lib/campaign-message-lifecycle";
+import { encodeOutboundAudit } from "@/lib/chat-envelope";
 
-const MAX_RETRIES = 3;
 const MAX_CONCURRENT_TENANTS = 5;
 const MESSAGES_PER_BATCH = 20;
 
@@ -29,20 +36,6 @@ export interface WorkerResult {
     deadLettered: number;
     retried: number;
     errors: string[];
-}
-
-/**
- * Calcula delay com backoff exponencial + jitter para evitar detecção
- * Base: 2-8s para primeira tentativa, escala com retryCount
- */
-function calculateDelay(retryCount: number): number {
-    const baseMin = 2000;
-    const baseMax = 8000;
-    const base = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
-    const backoff = base * Math.pow(1.5, retryCount);
-    // Jitter: ±20%
-    const jitter = backoff * (0.8 + Math.random() * 0.4);
-    return Math.min(jitter, 30000); // Cap at 30s
 }
 
 /**
@@ -65,21 +58,10 @@ async function processTenantMessages(
         errors: [],
     };
 
-    // Buscar mensagens pendentes e mensagens falhadas elegíveis para retry
+    // Buscar mensagens pendentes e mensagens falhadas elegíveis para retry.
+    // Elegibilidade é dona do módulo de ciclo de vida (mesma fonte de updateCampaignStatuses).
     const pendingMessages = await tenantPrisma.campaignMessage.findMany({
-        where: {
-            OR: [
-                {
-                    status: "PENDING",
-                    scheduledAt: { lte: new Date() },
-                },
-                {
-                    status: "FAILED",
-                    retryCount: { lt: MAX_RETRIES },
-                    scheduledAt: { lte: new Date() },
-                },
-            ],
-        },
+        where: eligibleForSendWhere(),
         include: {
             lead: {
                 select: { 
@@ -118,6 +100,7 @@ async function processTenantMessages(
     for (const message of pendingMessages) {
         result.processed++;
         const isRetry = message.status === "FAILED";
+        const currentRetry = message.retryCount ?? 0;
 
         // Marcar como PROCESSING
         await tenantPrisma.campaignMessage.update({
@@ -155,13 +138,14 @@ async function processTenantMessages(
             // 3. Enviar a mensagem (personalizada ou original)
             await evolutionClient.sendMessage(message.lead.phone, finalPayload);
 
-            // Sucesso — marcar como SENT
+            // Sucesso — transição via applyOutcome (dona da decisão de estado)
+            const sent = applyOutcome(currentRetry, { kind: "sent" });
             await tenantPrisma.campaignMessage.update({
                 where: { id: message.id },
                 data: {
-                    status: "SENT",
-                    sentAt: new Date(),
-                    error: null,
+                    status: sent.status,
+                    sentAt: sent.sentAt,
+                    error: sent.error,
                     payload: finalPayload, // Atualizamos o payload no banco para refletir o que realmente foi enviado
                 },
             });
@@ -186,37 +170,21 @@ async function processTenantMessages(
             if (isRetry) result.retried++;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
-            const newRetryCount = (message.retryCount ?? 0) + 1;
 
-            if (newRetryCount >= MAX_RETRIES) {
-                // Dead letter — falha permanente
-                await tenantPrisma.campaignMessage.update({
-                    where: { id: message.id },
-                    data: {
-                        status: "DEAD_LETTER",
-                        error: `Falha permanente após ${MAX_RETRIES} tentativas: ${errorMessage}`,
-                        retryCount: newRetryCount,
-                    },
-                });
-                result.deadLettered++;
-            } else {
-                // Marcar como FAILED para retry na próxima execução
-                await tenantPrisma.campaignMessage.update({
-                    where: { id: message.id },
-                    data: {
-                        status: "FAILED",
-                        error: errorMessage,
-                        retryCount: newRetryCount,
-                    },
-                });
-                result.failed++;
-            }
+            // Decisão FAILED-vs-DEAD_LETTER delegada ao módulo de ciclo de vida; aqui só I/O.
+            const upd = applyOutcome(currentRetry, { kind: "error", message: errorMessage });
+            await tenantPrisma.campaignMessage.update({
+                where: { id: message.id },
+                data: { status: upd.status, error: upd.error, retryCount: upd.retryCount },
+            });
+            if (upd.status === "DEAD_LETTER") result.deadLettered++;
+            else result.failed++;
 
-            result.errors.push(`Message ${message.id} (retry ${newRetryCount}/${MAX_RETRIES}): ${errorMessage}`);
+            result.errors.push(`Message ${message.id} (retry ${upd.retryCount}/${MAX_RETRIES}): ${errorMessage}`);
         }
 
         // Rate limiting — delay entre mensagens para evitar bloqueio no WhatsApp
-        const delay = calculateDelay(message.retryCount ?? 0);
+        const delay = calculateDelay(currentRetry);
         await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
@@ -256,10 +224,7 @@ async function persistOutboundMessageAudit(
                 userId: contact.id,
                 sessionId,
                 threadId,
-                message: {
-                    type: "system",
-                    content: message.payload,
-                },
+                message: encodeOutboundAudit(message.payload),
                 createdAt: new Date(),
             },
         });
@@ -383,16 +348,16 @@ export async function updateCampaignStatuses(): Promise<number> {
                     select: { messages: true },
                 },
                 messages: {
-                    where: { status: { in: ["PENDING", "FAILED"] } },
+                    where: unfinishedMessagesWhere(),
                     select: { id: true },
                 },
             },
         });
 
         for (const campaign of campaigns) {
-            const hasPendingOrFailed = campaign.messages.length > 0;
+            const hasUnfinished = campaign.messages.length > 0;
 
-            if (!hasPendingOrFailed && campaign._count.messages > 0) {
+            if (!hasUnfinished && campaign._count.messages > 0) {
                 await tenantPrisma.campaign.update({
                     where: { id: campaign.id },
                     data: { status: "COMPLETED" },

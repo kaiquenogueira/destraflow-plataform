@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getMessageHistoryByLead } from "./message-history";
+import { encodeOutboundAudit } from "@/lib/chat-envelope";
 
 const mocks = vi.hoisted(() => ({
   getTenantContext: vi.fn(),
@@ -70,7 +71,8 @@ describe("Message History Actions", () => {
       {
         id: 1,
         createdAt: new Date("2024-01-01T12:00:00Z"),
-        message: { type: "system", content: "Mensagem enviada" },
+        // Constrói o envelope via writer real — cruza a costura writer↔reader.
+        message: encodeOutboundAudit("Mensagem enviada"),
       },
     ]);
 

@@ -5,7 +5,7 @@
 > - **Esforço estimado:** 3–4 dias
 > - **Dependências:** Nenhuma (relacionado ao Sprint 02 — ambos tocam persistência de mensagem; coordenar a ordem de merge se houver overlap em `worker.ts`)
 > - **Subsistemas:** Worker de mensagens, Ações de campanha, Histórico de chat (ChatHistory)
-> - **Status:** Não iniciado
+> - **Status:** ✅ Concluído (2026-06-22) — implementação local, gate verde (lint 0-err · typecheck · 190 testes · build). Pendente: commit/PR + merge.
 
 ## Resumo executivo
 
@@ -256,13 +256,13 @@ Os testes de `src/lib/worker.test.ts` que hoje assertam `status: "SENT"`/`"FAILE
 
 **Critérios de aceite**
 
-- [ ] `src/lib/campaign-message-lifecycle.ts` existe e é dono de `MAX_RETRIES`, predicados de elegibilidade/terminalidade, `applyOutcome` e `calculateDelay`.
-- [ ] `worker.ts` não declara mais `MAX_RETRIES` nem `calculateDelay` localmente; usa os helpers do módulo.
-- [ ] `updateCampaignStatuses` e a query do worker referenciam a mesma definição de "não-terminado"/"elegível".
-- [ ] `applyOutcome` tem cobertura unit completa sem mockar `prisma`/`evolution`/`setTimeout`.
-- [ ] `calculateDelay` tem teste unit próprio.
-- [ ] Decisão sobre `DEAD_LETTER` em `UNFINISHED_STATUSES` está documentada no topo do módulo.
-- [ ] `src/lib/worker.test.ts` continua verde.
+- [x] `src/lib/campaign-message-lifecycle.ts` existe e é dono de `MAX_RETRIES`, predicados de elegibilidade/terminalidade, `applyOutcome` e `calculateDelay`.
+- [x] `worker.ts` não declara mais `MAX_RETRIES` nem `calculateDelay` localmente; usa os helpers do módulo.
+- [x] `updateCampaignStatuses` e a query do worker referenciam a mesma definição de "não-terminado"/"elegível".
+- [x] `applyOutcome` tem cobertura unit completa sem mockar `prisma`/`evolution`/`setTimeout`.
+- [x] `calculateDelay` tem teste unit próprio.
+- [x] Decisão sobre `DEAD_LETTER` em `UNFINISHED_STATUSES` está documentada no topo do módulo.
+- [x] `src/lib/worker.test.ts` continua verde.
 
 ---
 
@@ -416,11 +416,11 @@ Costura cruzada: adicionar um teste que importa `OUTBOUND_AUDIT_TYPE` do mesmo m
 
 **Critérios de aceite**
 
-- [ ] `src/lib/chat-envelope.ts` existe com `OUTBOUND_AUDIT_TYPE`, `encodeOutboundAudit`, `decodeChatEnvelope`.
-- [ ] Writer (`worker.ts`) e reader (`message-history.ts`) usam o codec; nenhum literal `"system"` solto para direção.
-- [ ] O fallback de `JSON.stringify(msg.message)` foi removido — UI nunca recebe JSON cru.
-- [ ] Existe teste que cruza a costura writer↔reader compartilhando `OUTBOUND_AUDIT_TYPE`.
-- [ ] `src/actions/message-history.test.ts` continua verde e constrói o envelope via `encodeOutboundAudit`.
+- [x] `src/lib/chat-envelope.ts` existe com `OUTBOUND_AUDIT_TYPE`, `encodeOutboundAudit`, `decodeChatEnvelope`.
+- [x] Writer (`worker.ts`) e reader (`message-history.ts`) usam o codec; nenhum literal `"system"` solto para direção.
+- [x] O fallback de `JSON.stringify(msg.message)` foi removido — UI nunca recebe JSON cru.
+- [x] Existe teste que cruza a costura writer↔reader compartilhando `OUTBOUND_AUDIT_TYPE`.
+- [x] `src/actions/message-history.test.ts` continua verde e constrói o envelope via `encodeOutboundAudit`.
 
 ---
 
@@ -436,3 +436,25 @@ Os pontos 1 e 2 são independentes e podem ser feitos em PRs separados; o movime
 ## Nota de verificação
 
 A verificação adversarial **confirmou** o Ponto 1: a divergência entre a query do worker (só `FAILED` com `retryCount < MAX_RETRIES`), `updateCampaignStatuses` (qualquer `FAILED`, ignora `DEAD_LETTER`) e as ações de campanha é real e está nas linhas citadas; o teste atual de fato só exercita a regra `FAILED`-vs-`DEAD_LETTER` atravessando `processAllTenantMessages` com tudo mockado. A severidade foi **revisada para Média** porque o bug #1 (completar cedo demais) hoje é mascarado pelo worker mover falhas terminais para `DEAD_LETTER` antes do cap — é drift latente, não falha ativa garantida; ainda assim, as definições já discordam e qualquer mexida reabre o buraco, o que justifica a costura (passa no teste de deleção: a complexidade reaparece em 4 chamadores). O Ponto 2 também foi confirmado (writer/reader/`chat.ts` nas linhas citadas, sem teste cruzando a costura), mas a severidade fica em **Baixa-Média**: a ressalva é não fazer over-engineering — o cenário do N8N escrevendo `incoming` com outro shape é especulativo (nenhum produtor de `incoming` existe no repo), então o valor está em localidade, pin de um discriminador e teste de costura, **não** em profundidade. O codec deve permanecer fino.
+
+---
+
+## Resultado da implementação (2026-06-22)
+
+O que efetivamente foi construído — onde diverge do plano acima, **esta seção manda**.
+
+### Decisões de estado
+- **`UNFINISHED_STATUSES = ["PENDING", "FAILED"]`** — o plano propunha `["PENDING","PROCESSING","FAILED","DEAD_LETTER"]`. Os **dois** estados extras foram excluídos:
+  - **DEAD_LETTER** (decisão do produto): **terminal para conclusão**. Campanha COMPLETA mesmo com dead letters; ficam visíveis e reentráveis manualmente. Mantém vivo o ramo `retryCampaignDeadLetters`/`retryDeadLetterMessage` (COMPLETED → PROCESSING).
+  - **PROCESSING** (achado de revisão adversarial, **high-sev**): incluí-lo criava um **estado de campanha presa para sempre**. PROCESSING é marcado *fora* do `try` (antes do envio) e **nunca** é re-selecionado por `eligibleForSendWhere` — não há caminho de recuperação. Um cron morto (timeout/crash de 300s; batch de 20 msgs × até 30s de delay) entre a marca e a transição terminal deixaria a mensagem órfã e a campanha travada. Excluir reproduz o contrato deliberado do código original (`[PENDING, FAILED]`): a campanha auto-cura e conclui. Invariante agora explícita no módulo + **teste de regressão** garante que todo status que bloqueia conclusão é re-selecionável pelo worker. (Gap pré-existente — mensagem órfã perdida — fica fora de escopo; `updatedAt` já existe e habilitaria um requeue por janela numa sprint futura.)
+- A consolidação ainda entrega **todos** os ganhos do sprint: fonte única (worker query ↔ `updateCampaignStatuses` referenciam o módulo, não podem mais divergir), bug #2 corrigido (`applyOutcome` nunca persiste FAILED-no-cap → tudo em `UNFINISHED` é drenável pelo worker), e a decisão DEAD_LETTER centralizada numa linha.
+
+### Desvio do plano — `src/actions/campaigns.ts` NÃO editado
+O plano sugeria importar `MAX_RETRIES` e literais de status. **Não feito**: `campaigns.ts` não usa `MAX_RETRIES` numericamente (só `retryCount: 0` em resets e literais de enum `"DEAD_LETTER"` já tipados pelo Prisma). Import não usado quebraria `no-unused-vars`; um set paralelo de consts de status brigaria com a convenção do repo (literais crus checados pelo Prisma em todo lugar). Não é critério de aceite — só item da tabela "arquivos afetados". Alinhado ao ADR-0005 (sem costuras prematuras).
+
+### Revisão adversarial (workflow, 6 agentes)
+- **2 confirmados** (mesma causa: PROCESSING em `UNFINISHED`) → corrigidos (exclusão + invariante + teste).
+- **1 descartado**: remover o fallback `JSON.stringify` "perderia texto de `incoming` do N8N" — improcedente: N8N deve conformar ao envelope `{ type, content }` (CONTEXT.md), e o fallback antigo era ele próprio um bug documentado (vazava JSON cru no balão).
+
+### Gate (Definition of Done)
+`lint` 0-erros (warns estruturais pré-existentes em `worker.ts` reduzidos de 4→2) · `typecheck` verde · **190 testes** verdes (2 suítes puras novas, sem mock de prisma/evolution/setTimeout) · `build` verde. Nenhum teste removido/editado para passar.
