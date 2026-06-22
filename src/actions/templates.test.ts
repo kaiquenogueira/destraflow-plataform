@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createTemplate, updateTemplate } from "./templates";
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext } from "@/lib/tenant";
 
 // Mock dependencies
 vi.mock("@/lib/tenant", () => ({
-  getTenantContext: vi.fn(),
+  requireTenantContext: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -21,7 +21,7 @@ describe("Templates Actions", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    (getTenantContext as any).mockResolvedValue({
+    (requireTenantContext as any).mockResolvedValue({
       tenantPrisma: mockTenantPrisma,
     });
   });
@@ -49,16 +49,7 @@ describe("Templates Actions", () => {
       });
     });
 
-    it("should throw error if database is not configured", async () => {
-      (getTenantContext as any).mockResolvedValue(null);
-
-      await expect(
-        createTemplate({
-          name: "Test",
-          content: "Valid content here",
-        })
-      ).rejects.toThrow("Banco de dados não configurado");
-    });
+    // Invariante "sem DB → aborta" coberto 1x no resolver (tenant.test.ts), Sprint 05.
   });
 
   describe("updateTemplate", () => {

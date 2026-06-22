@@ -1,6 +1,6 @@
 "use server";
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext } from "@/lib/tenant";
 import { findContactByPhone } from "@/lib/phone";
 import { decodeChatEnvelope } from "@/lib/chat-envelope";
 import { getServerSession } from "next-auth";
@@ -25,11 +25,7 @@ export interface NormalizedMessage {
 export async function getMessageHistoryByLead(
     leadId: string
 ): Promise<{ messages: NormalizedMessage[]; leadName: string; leadPhone: string }> {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     // Buscar lead
     const lead = await tenantPrisma.lead.findUnique({

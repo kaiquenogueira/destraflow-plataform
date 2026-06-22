@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { syncContactToLead } from "./contacts";
 
 vi.mock("@/lib/tenant", () => ({
-  getTenantContext: vi.fn(),
+  requireTenantContext: vi.fn(),
 }));
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext } from "@/lib/tenant";
 
 describe("syncContactToLead", () => {
   const tenantPrisma = {
@@ -22,7 +22,7 @@ describe("syncContactToLead", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (getTenantContext as any).mockResolvedValue({ tenantPrisma });
+    (requireTenantContext as any).mockResolvedValue({ tenantPrisma });
   });
 
   it("creates a Lead persisting phoneNormalized canônico quando não há lead casando (raw contact)", async () => {

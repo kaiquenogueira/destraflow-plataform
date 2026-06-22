@@ -1,6 +1,6 @@
 "use server";
 
-import { getTenantContext } from "@/lib/tenant";
+import { getOptionalTenantContext } from "@/lib/tenant";
 import { findContactByPhone } from "@/lib/phone";
 
 interface ChatMessage {
@@ -17,7 +17,7 @@ export async function getChatHistoryByContact(
     contactId: number,
     params?: { page?: number; limit?: number }
 ) {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return { messages: [], total: 0, pages: 0, currentPage: 1 };
     }
@@ -46,7 +46,7 @@ export async function getChatHistoryByContact(
  * Buscar histórico de chat por Lead (via telefone)
  */
 export async function getChatHistoryByLead(leadId: string) {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return { messages: [], contact: null };
     }
@@ -83,7 +83,7 @@ export async function getChatHistoryByLead(leadId: string) {
  * Buscar últimas mensagens (para dashboard)
  */
 export async function getRecentMessages(limit: number = 10) {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return [];
     }
@@ -119,7 +119,7 @@ export async function getRecentMessages(limit: number = 10) {
  * Estatísticas de chat
  */
 export async function getChatStats() {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return { totalMessages: 0, todayMessages: 0, tokensUsed: 0 };
     }

@@ -1,6 +1,6 @@
 "use server";
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import xss from "xss";
@@ -15,7 +15,7 @@ const updateTemplateSchema = createTemplateSchema.partial().extend({
 });
 
 export async function getTemplates() {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) return [];
     
     const templates = await context.tenantPrisma.template.findMany({
@@ -26,8 +26,7 @@ export async function getTemplates() {
 }
 
 export async function createTemplate(data: z.infer<typeof createTemplateSchema>) {
-    const context = await getTenantContext();
-    if (!context) throw new Error("Banco de dados não configurado");
+    const context = await requireTenantContext();
     
     const validated = createTemplateSchema.parse(data);
 
@@ -43,8 +42,7 @@ export async function createTemplate(data: z.infer<typeof createTemplateSchema>)
 }
 
 export async function updateTemplate(data: z.infer<typeof updateTemplateSchema>) {
-    const context = await getTenantContext();
-    if (!context) throw new Error("Banco de dados não configurado");
+    const context = await requireTenantContext();
     
     const { id, content, ...updateData } = updateTemplateSchema.parse(data);
 
@@ -63,8 +61,7 @@ export async function updateTemplate(data: z.infer<typeof updateTemplateSchema>)
 }
 
 export async function deleteTemplate(id: string) {
-    const context = await getTenantContext();
-    if (!context) throw new Error("Banco de dados não configurado");
+    const context = await requireTenantContext();
     
     await context.tenantPrisma.template.delete({
         where: { id },

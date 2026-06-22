@@ -1,6 +1,6 @@
 "use server";
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { LeadTag, CampaignStatus } from "@/types";
@@ -44,7 +44,7 @@ const createCampaignSchema = z.object({
 });
 
 export async function getLeadsForCampaignSelection() {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) return [];
 
     const leads = await context.tenantPrisma.lead.findMany({
@@ -96,11 +96,7 @@ export async function getLeadsForCampaignSelection() {
 export async function createCampaign(
     data: z.infer<typeof createCampaignSchema>
 ) {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
     const validated = createCampaignSchema.parse(data);
 
     // 1. Criar campanha
@@ -153,7 +149,7 @@ export async function getCampaigns(params?: {
     page?: number;
     limit?: number;
 }) {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return {
             campaigns: [],
@@ -193,11 +189,7 @@ export async function getCampaigns(params?: {
 
 export async function getCampaignById(id: string) {
     const validId = z.string().parse(id);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const [campaign, messages, count, statusCounts] = await Promise.all([
         tenantPrisma.campaign.findUnique({
@@ -242,11 +234,7 @@ export async function getCampaignById(id: string) {
 
 export async function cancelCampaign(id: string) {
     const validId = z.string().parse(id);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const existing = await tenantPrisma.campaign.findUnique({
         where: { id: validId },
@@ -280,11 +268,7 @@ export async function cancelCampaign(id: string) {
 // Envio unitário (imediato)
 export async function sendUnitMessage(leadId: string, template: string) {
     const validLeadId = z.string().parse(leadId);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const lead = await tenantPrisma.lead.findUnique({
         where: { id: validLeadId },
@@ -315,11 +299,7 @@ export async function sendUnitMessage(leadId: string, template: string) {
 // Gerar sugestão de mensagem via IA
 export async function generateAIPersonalizedMessage(leadId: string, template: string) {
     const validLeadId = z.string().parse(leadId);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma, userId, aiQuota } = context;
+    const { tenantPrisma, userId, aiQuota } = await requireTenantContext();
 
     const decision = canPersonalize(aiQuota ?? { used: 0, limit: 15, resetAt: null });
     if (decision.didReset && decision.nextState.resetAt) {
@@ -359,11 +339,7 @@ export async function generateAIPersonalizedMessage(leadId: string, template: st
 // Retry todas as mensagens DEAD_LETTER de uma campanha
 export async function retryCampaignDeadLetters(campaignId: string) {
     const validId = z.string().parse(campaignId);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const campaign = await tenantPrisma.campaign.findUnique({
         where: { id: validId },
@@ -412,11 +388,7 @@ export async function retryCampaignDeadLetters(campaignId: string) {
 // Retry uma mensagem individual DEAD_LETTER
 export async function retryDeadLetterMessage(messageId: string) {
     const validId = z.string().parse(messageId);
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const message = await tenantPrisma.campaignMessage.findUnique({
         where: { id: validId },
@@ -460,7 +432,7 @@ export async function retryDeadLetterMessage(messageId: string) {
 
 // Métricas de campanhas
 export async function getCampaignMetrics() {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return { pending: 0, sent: 0, failed: 0 };
     }

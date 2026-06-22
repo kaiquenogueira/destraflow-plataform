@@ -1,6 +1,6 @@
 "use server";
 
-import { getTenantContext } from "@/lib/tenant";
+import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
 import { canonicalizePhone, findLeadByPhone } from "@/lib/phone";
 
 /**
@@ -11,7 +11,7 @@ export async function getContacts(params?: {
     page?: number;
     limit?: number;
 }) {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return { contacts: [], total: 0, pages: 0, currentPage: 1 };
     }
@@ -49,11 +49,7 @@ export async function getContacts(params?: {
  * Buscar contato por ID
  */
 export async function getContactById(id: number) {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const contact = await tenantPrisma.whatsAppContact.findUnique({
         where: { id },
@@ -71,11 +67,7 @@ export async function getContactById(id: number) {
  * Cria Lead se não existir
  */
 export async function syncContactToLead(contactId: number) {
-    const context = await getTenantContext();
-    if (!context) {
-        throw new Error("Banco de dados não configurado");
-    }
-    const { tenantPrisma } = context;
+    const { tenantPrisma } = await requireTenantContext();
 
     const contact = await tenantPrisma.whatsAppContact.findUnique({
         where: { id: contactId },
@@ -107,7 +99,7 @@ export async function syncContactToLead(contactId: number) {
  * Buscar estatísticas de contatos
  */
 export async function getContactStats() {
-    const context = await getTenantContext();
+    const context = await getOptionalTenantContext();
     if (!context) {
         return { total: 0, withThread: 0, manual: 0 };
     }
