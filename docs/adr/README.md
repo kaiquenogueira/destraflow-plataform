@@ -26,5 +26,6 @@ Formato: variação enxuta do [MADR](https://adr.github.io/madr/). Ver [`0000-te
 | [0005](./0005-rejected-premature-seams.md) | Costuras prematuras rejeitadas (não re-sugerir) | Accepted |
 | [0006](./0006-tenant-action-authorization.md) | Autorização de ações de tenant: auth + posse de `databaseUrl` (`userRole` removido) | Accepted |
 | [0007](./0007-codec-de-credenciais-de-tenant.md) | Codec de credenciais de tenant (encode/decode com dono único) | Proposed |
+| [0008](./0008-postura-seguranca-dependencias.md) | Postura de segurança de dependências (xlsx via CDN, overrides, deferrals) | Accepted |
 
 > Revisões de arquitetura (ex.: skill `improve-codebase-architecture`) devem **ler os ADRs antes** de propor mudanças e **marcar conflitos** explicitamente em vez de re-sugerir o que já foi decidido.
