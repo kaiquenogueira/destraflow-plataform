@@ -5,7 +5,9 @@
 > - **Esforço estimado:** 3–5 dias
 > - **Dependências:** Sprint 02 (reutilizar a normalização de telefone do módulo de identidade de telefone)
 > - **Subsistemas:** Intake de leads, Importação de planilhas (CSV/XLSX), Identidade de telefone (Sprint 02)
-> - **Status:** Não iniciado
+> - **Status:** ✅ Concluído (2026-06-22)
+
+> **Nota de implementação (2026-06-22):** o módulo do Sprint 02 aterrissou como `src/lib/phone.ts` exportando `canonicalizePhone`/`samePhone` (não `normalizePhoneBR`/`phoneDigits` como este doc antecipava); o dedup já era feito por **forma canônica**, então `buildIntakePlan` recebe `existingCanonicalPhones: Set<string>` (canônicos), não dígitos. `lead-intake` consome `canonicalizePhone` — sem reimplementar a lógica BR. Demais critérios de aceite cumpridos. Cobertura: `src/lib/lead-intake.test.ts` (table-driven, sem DOM/DB).
 
 ## Resumo executivo
 
