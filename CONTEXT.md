@@ -46,7 +46,7 @@ Disparo em massa de uma mensagem-template para um conjunto de leads (por `target
 Unidade de entrega na fila do Tenant DB. É a **máquina de estados central** da plataforma.
 **MessageStatus (ciclo de vida):**
 `PENDING → PROCESSING → SENT`, ou em falha `→ FAILED` (com `retryCount++`, elegível a retry enquanto `retryCount < MAX_RETRIES`), ou `→ DEAD_LETTER` (falha permanente). Cancelamento de campanha move `PENDING → FAILED`. Retry de dead-letter move `DEAD_LETTER → PENDING` (reset `retryCount=0`).
-A definição de "terminado" e o predicado de elegibilidade são **load-bearing** e hoje duplicados — ver [Sprint 04](./docs/sprint/sprint-04-ciclo-de-vida-campaign-message.md).
+A definição de "terminado" e o predicado de elegibilidade são **load-bearing** e têm dono único em `src/lib/campaign-message-lifecycle.ts` (`eligibleForSendWhere` / `unfinishedMessagesWhere` / `applyOutcome` / `MAX_RETRIES`). Invariante: todo status que bloqueia conclusão é re-selecionável pelo worker (`UNFINISHED_STATUSES ⊆` elegível) — ver [Sprint 04](./docs/sprint/closed/sprint-04-ciclo-de-vida-campaign-message.md).
 _Evite_: "job", "task" (use **mensagem de campanha**).
 
 **DEAD_LETTER**
@@ -65,7 +65,7 @@ Texto de mensagem com variáveis (`{{nome}}`, `{{telefone}}`, `{{interesse}}`) r
 Registro no Tenant DB representando um número WhatsApp. Identificado por `whatsapp` (telefone). Criado pelo worker (auditoria) ou por sync de contatos. Casamento por telefone deve ser canônico — ver `phone-identity`.
 
 **ChatHistory**
-Histórico de conversa no Tenant DB. Campo `message` é um **envelope JSON** (`{ type, content }`); `type === "system"` significa mensagem **outgoing** de auditoria gravada pelo worker. N8N também escreve nesta tabela. O contrato do envelope não tem dono único — ver [Sprint 04](./docs/sprint/sprint-04-ciclo-de-vida-campaign-message.md).
+Histórico de conversa no Tenant DB. Campo `message` é um **envelope JSON** (`{ type, content }`); `type === "system"` (`OUTBOUND_AUDIT_TYPE`) significa mensagem **outgoing** de auditoria gravada pelo worker. N8N também escreve nesta tabela. O encode/decode do envelope tem dono único em `src/lib/chat-envelope.ts` (`encodeOutboundAudit` / `decodeChatEnvelope`); nenhum lado repete o discriminador solto — ver [Sprint 04](./docs/sprint/closed/sprint-04-ciclo-de-vida-campaign-message.md).
 _Evite_: "mensagem" sem qualificar (ambíguo com `CampaignMessage`).
 
 **ExternalNotification**
