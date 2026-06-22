@@ -76,7 +76,7 @@ export function CampaignForm() {
 
     // Templates state
     const [templates, setTemplates] = useState<Template[]>([]);
-    const [loadingTemplates, setLoadingTemplates] = useState(false);
+    const [, setLoadingTemplates] = useState(false);
 
     const {
         register,
@@ -101,9 +101,8 @@ export function CampaignForm() {
             setLoadingTemplates(true);
             try {
                 const data = await getTemplates();
-                // Map Prisma template to local interface if needed, though they match
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                setTemplates(data.map((t: any) => ({ id: t.id, name: t.name, content: t.content })));
+                // Map Prisma template to local interface (tipo inferido de getTemplates()).
+                setTemplates(data.map((t) => ({ id: t.id, name: t.name, content: t.content })));
             } catch (error) {
                 console.error("Failed to load templates", error);
                 toast.error("Erro ao carregar templates");
@@ -112,13 +111,13 @@ export function CampaignForm() {
             }
         };
 
-        loadTemplates();
+        void loadTemplates();
     }, []);
 
     // Fetch leads on step 2
     useEffect(() => {
         if (step === 2 && leads.length === 0) {
-            fetchLeads();
+            void fetchLeads();
         }
     }, [step]);
 
@@ -127,7 +126,7 @@ export function CampaignForm() {
         try {
             const data = await getLeadsForCampaignSelection();
             setLeads(data);
-        } catch (error) {
+        } catch {
             toast.error("Erro ao carregar leads");
         } finally {
             setLoadingLeads(false);
@@ -186,14 +185,6 @@ export function CampaignForm() {
             ? current.filter((i) => i !== id)
             : [...current, id];
         setValue("leadIds", updated, { shouldValidate: true });
-    };
-
-    const toggleAllLeads = () => {
-        if (selectedLeadIds?.length === leads.length) {
-            setValue("leadIds", []);
-        } else {
-            setValue("leadIds", leads.map((l) => l.id));
-        }
     };
 
     // Data mínima: agora + 10 minutos

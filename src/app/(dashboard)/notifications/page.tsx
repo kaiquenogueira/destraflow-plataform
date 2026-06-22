@@ -15,7 +15,7 @@ export default async function NotificationsPage({
     const { page, startDate, endDate } = await searchParams;
     const currentPage = Number(page) || 1;
     
-    const { notifications, total, pages } = await getNotifications({
+    const { notifications } = await getNotifications({
         page: currentPage,
         limit: 20,
         startDate,

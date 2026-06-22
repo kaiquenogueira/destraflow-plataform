@@ -104,7 +104,7 @@ export function KanbanBoard({ initialLeads, aiUsage }: KanbanBoardProps) {
       try {
         await updateLeadTag(activeId, newTag);
         toast.success(`Lead movido para ${COLUMNS.find(c => c.id === newTag)?.title}`);
-      } catch (error) {
+      } catch {
         toast.error("Erro ao atualizar tag");
         // Revert on error
         setLeads(initialLeads);
@@ -116,11 +116,7 @@ export function KanbanBoard({ initialLeads, aiUsage }: KanbanBoardProps) {
     const { active, over } = event;
     if (!over) return;
 
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
     const isActiveTask = active.data.current?.type === "Lead";
-    const isOverTask = over.data.current?.type === "Lead";
 
     if (!isActiveTask) return;
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { requireTenantContext, getOptionalTenantContext } from "@/lib/tenant";
+import type { Prisma } from "@/generated/prisma/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import xss from "xss";
@@ -46,7 +47,7 @@ export async function updateTemplate(data: z.infer<typeof updateTemplateSchema>)
     
     const { id, content, ...updateData } = updateTemplateSchema.parse(data);
 
-    const dataToUpdate: any = { ...updateData };
+    const dataToUpdate: Prisma.TemplateUpdateInput = { ...updateData };
     if (content) {
         dataToUpdate.content = xss(content);
     }

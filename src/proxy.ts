@@ -47,9 +47,8 @@ async function checkRateLimit(ip: string): Promise<{ success: boolean; limit?: n
 
 export default withAuth(
     async function proxy(req) {
-        // 1. Rate Limiting
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ip = req.headers.get("x-forwarded-for") || (req as any).ip || "unknown";
+        // 1. Rate Limiting (req.ip não está no tipo NextRequest, mas existe em runtime)
+        const ip = req.headers.get("x-forwarded-for") || (req as unknown as { ip?: string }).ip || "unknown";
 
         const rateLimitResult = await checkRateLimit(ip);
         if (!rateLimitResult.success) {

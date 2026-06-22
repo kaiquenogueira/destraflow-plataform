@@ -84,19 +84,10 @@ export function NotificationList({ notifications, isAdminView = false }: Notific
             await deleteNotification(id);
             toast.success("Notificação excluída com sucesso");
             router.refresh();
-        } catch (error) {
+        } catch {
             toast.error("Erro ao excluir notificação");
         } finally {
             setDeletingId(null);
-        }
-    };
-
-    const getBadgeColor = (type: string) => {
-        switch (type.toLowerCase()) {
-            case 'error': return 'destructive';
-            case 'warning': return 'warning'; // Assumindo que existe variant warning ou usar default
-            case 'info': return 'secondary';
-            default: return 'outline';
         }
     };
 

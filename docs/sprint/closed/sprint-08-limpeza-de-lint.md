@@ -5,11 +5,11 @@
 > - **Esforço estimado:** 2–3 dias
 > - **Dependências:** Nenhuma. Coordenar com Sprints 01/04/06 (refatoram os arquivos que hoje disparam os *warns estruturais*).
 > - **Subsistemas:** Configuração de lint, componentes/pages client, actions, scripts
-> - **Status:** Não iniciado
+> - **Status:** Concluído (2026-06-22) — 5 regras subidas para `error` (`no-floating-promises`, `no-explicit-any` no código, `no-unused-vars`, `react/no-unescaped-entities`, `react-hooks/error-boundaries`). Lint **0 errors / 50 warnings** (46 estruturais do Ponto 5 + 4 de regras do preset fora de escopo). `any` = `off` em testes. Ver "Nota de fechamento" abaixo.
 
 ## Resumo executivo
 
-Quando os guardrails foram ligados (ver [docs/HARNESS-ENGINEERING.md](../HARNESS-ENGINEERING.md)), o lint estava **vermelho** (742 erros; ~1533 problemas vinham de `src/generated`, agora ignorado). Para tornar o gate **funcional e verde**, várias regras pré-existentes foram **rebaixadas para `warn`** em `eslint.config.mjs`, com a dívida rastreada. Este sprint **quita essa dívida em fases** e sobe cada regra de volta para `error`, deixando o lint estrito de verdade.
+Quando os guardrails foram ligados (ver [docs/HARNESS-ENGINEERING.md](../../HARNESS-ENGINEERING.md)), o lint estava **vermelho** (742 erros; ~1533 problemas vinham de `src/generated`, agora ignorado). Para tornar o gate **funcional e verde**, várias regras pré-existentes foram **rebaixadas para `warn`** em `eslint.config.mjs`, com a dívida rastreada. Este sprint **quita essa dívida em fases** e sobe cada regra de volta para `error`, deixando o lint estrito de verdade.
 
 Estado atual: **0 errors / 200 warnings**. Distribuição dos warnings:
 
@@ -229,6 +229,17 @@ Os ~88 restantes estão em `admin.test.ts` (33), `auth.test.ts` (18), `tenant-sy
 5. **Ponto 5** — só registro; revisitar após Sprints 01/04/06.
 
 A cada ponto: corrigir → flip da regra em `eslint.config.mjs` → `npm run lint` 0 errors → `npm run typecheck` → commit. O CI (`lint` + `typecheck`) permanece verde a cada passo.
+
+## Nota de fechamento (2026-06-22)
+
+Executado em uma branch única (`chore/sprint-08-lint-ratchet`), com as correções aplicadas site-a-site antes de subir cada regra a `error` no `eslint.config.mjs`. Estado final: `lint` 0 errors, `typecheck` verde, 239 testes verdes, `build` ok.
+
+- **P1 (floating-promises, 7 sites):** `void` em `lead-notes.tsx` (2), `campaign-form.tsx` (2), `whatsapp/page.tsx` (3). Regra → `error`.
+- **P2 (no-explicit-any):** 11 sites de código tipados (de `migrate-tenants.ts`, `campaigns.ts`, `notes.ts`, `templates.ts`, `tenant-sync.ts`, `dashboard/page.tsx`). Regra → `error` no código, `off` em `*.test.*`. Além dos 11 reportados, removidos 3 `eslint-disable` de `any` em código (`campaign-form.tsx`, `campaigns.ts`, `proxy.ts`) tipando corretamente, e 2 `eslint-disable` redundantes em testes.
+  - **Resíduo deliberado:** 2 `eslint-disable no-explicit-any` permanecem nos *builders* dinâmicos de `where` Prisma (`actions/notes.ts:where`, `actions/leads.ts:where`). Re-tipar com `Prisma.XWhereInput` esbarra no spread de união (`...where.criadoEm`) e exigiria refactor do bloco — fora do escopo dos 11 enumerados. Documentado como dívida pequena.
+- **P3 (no-unused-vars, 36):** imports/vars/funções mortas removidas; bindings de `catch` não usados → optional catch binding (`catch {`); param posicional `connectionString` → `_connectionString`. Regra → `error` com `argsIgnorePattern`/`varsIgnorePattern`/`caughtErrorsIgnorePattern: "^_"`.
+- **P4 (entities + error-boundaries):** 2 entidades escapadas em `lead-details-modal.tsx`; `campaigns/[id]/page.tsx` reestruturado (fetch antes do render, JSX fora do `try/catch`, `notFound()` no `catch`). Ambas as regras → `error`.
+- **P5 (estruturais):** mantidas em `warn`. Reverificado: mesmo após Sprints 01/04/06, `worker.ts` (`processTenantMessages`: 114 linhas, 6 params) e `campaign-personalizer.ts` (`personalize`: complexity 17) **ainda excedem** os limites. Subir a `error` agora forçaria refactor adicional não planejado — **follow-up futuro**, não este sprint.
 
 ## Nota de verificação
 

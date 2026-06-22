@@ -16,7 +16,7 @@ export function buildTenantSyncCommand(connectionString: string) {
     };
 }
 
-export function buildTenantDiffCommand(connectionString: string) {
+export function buildTenantDiffCommand(_connectionString: string) {
     return {
         file: "npx",
         args: [

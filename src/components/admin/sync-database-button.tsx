@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Database, Check, AlertTriangle } from "lucide-react";
+import { Loader2, Database } from "lucide-react";
 import { syncTenantDatabase } from "@/actions/tenant-sync";
 import { toast } from "sonner";
 

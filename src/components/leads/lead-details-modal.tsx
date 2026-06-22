@@ -106,7 +106,7 @@ export function LeadDetailsModal({ lead, open, onClose, aiUsage }: LeadDetailsMo
                 Sugestão de Mensagem
               </h4>
               <div className="p-4 rounded-md bg-slate-100 dark:bg-slate-800 text-sm italic border-l-4 border-primary">
-                "{lead.aiMessageSuggestion || "Nenhuma sugestão disponível."}"
+                &ldquo;{lead.aiMessageSuggestion || "Nenhuma sugestão disponível."}&rdquo;
               </div>
             </div>
 

@@ -21,7 +21,6 @@ describe("syncContactToLead", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (requireTenantContext as any).mockResolvedValue({ tenantPrisma });
   });
 

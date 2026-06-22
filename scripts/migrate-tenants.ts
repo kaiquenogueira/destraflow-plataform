@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import crypto from 'crypto';
 import { prisma } from '../src/lib/prisma';
 import { decrypt } from '../src/lib/encryption';
 
@@ -21,9 +20,10 @@ async function migrateTenant(dbUrl: string, email: string) {
         const addEnumValue = async (val: string) => {
             try {
                 await client.query(`ALTER TYPE "LeadTag" ADD VALUE '${val}'`);
-            } catch (e: any) {
-                if (e.code !== '42710') { // 42710 = duplicate_object
-                    console.log(`Warning adding ${val}:`, e.message);
+            } catch (e) {
+                const err = e as { code?: string; message?: string };
+                if (err.code !== '42710') { // 42710 = duplicate_object
+                    console.log(`Warning adding ${val}:`, err.message);
                 }
             }
         };
@@ -40,8 +40,9 @@ async function migrateTenant(dbUrl: string, email: string) {
             await client.query(`UPDATE "leads" SET "tag" = 'NEW' WHERE "tag"::text = 'COLD'`);
             await client.query(`UPDATE "leads" SET "tag" = 'PROSPECTING' WHERE "tag"::text = 'WARM'`);
             await client.query(`UPDATE "leads" SET "tag" = 'MEETING' WHERE "tag"::text = 'HOT'`);
-        } catch (updateError: any) {
-            console.log(`Warning updating tags: ${updateError.message} (Isso é normal se os valores antigos não existirem mais)`);
+        } catch (updateError) {
+            const err = updateError as { message?: string };
+            console.log(`Warning updating tags: ${err.message} (Isso é normal se os valores antigos não existirem mais)`);
         }
 
         await client.end();
@@ -60,7 +61,7 @@ async function migrateTenant(dbUrl: string, email: string) {
         `--url=${dbUrl}`
     ];
     
-    const { stdout, stderr } = await execFileAsync('npx', args, {
+    const { stdout } = await execFileAsync('npx', args, {
         env: { ...process.env },
         shell: false
     });
@@ -82,8 +83,9 @@ async function main() {
         try {
             const dbUrl = decrypt(user.databaseUrl);
             await migrateTenant(dbUrl, user.email);
-        } catch (error: any) {
-            console.error(`Error migrating tenant for ${user.email}:`, error?.message || error);
+        } catch (error) {
+            const err = error as { message?: string };
+            console.error(`Error migrating tenant for ${user.email}:`, err?.message || error);
         }
     }
 }

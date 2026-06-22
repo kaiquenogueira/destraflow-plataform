@@ -15,7 +15,6 @@ import { sendUnitMessage, generateAIPersonalizedMessage } from "@/actions/campai
 import { Loader2, Send, Bot, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Switch } from "@/components/ui/switch";
 
 interface SendMessageModalProps {
     lead: { id: string; name: string; phone: string } | null;

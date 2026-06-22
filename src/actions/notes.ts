@@ -17,7 +17,7 @@ export async function createNote(data: z.infer<typeof createNoteSchema>) {
     // Sanitizar o conteúdo da nota para evitar injeção de XSS
     const sanitizedContent = xss(validated.content);
 
-    const note = await (tenantPrisma as any).leadNote.create({
+    const note = await tenantPrisma.leadNote.create({
         data: {
             leadId: validated.leadId,
             content: sanitizedContent,
@@ -36,7 +36,7 @@ export async function getNotesByLeadId(leadId: string) {
     }
     const { tenantPrisma } = context;
 
-    const notes = await (tenantPrisma as any).leadNote.findMany({
+    const notes = await tenantPrisma.leadNote.findMany({
         where: { leadId: validId },
         orderBy: { createdAt: "desc" },
     });
@@ -48,7 +48,7 @@ export async function deleteNote(id: string, leadId: string) {
     const validId = z.string().parse(id);
     const { tenantPrisma } = await requireTenantContext();
 
-    await (tenantPrisma as any).leadNote.delete({
+    await tenantPrisma.leadNote.delete({
         where: { id: validId },
     });
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Bot, Zap, BarChart3, Building2, CheckCircle2, MessageCircle, Code2, Sparkles, BrainCircuit, Activity } from "lucide-react";
+import { ArrowRight, Zap, Sparkles, BrainCircuit, Activity } from "lucide-react";
 
 export default function HomePage() {
   return (
