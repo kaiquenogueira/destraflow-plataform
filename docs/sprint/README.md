@@ -27,8 +27,9 @@ Ordenado por **prioridade** (bugs ao vivo primeiro) e, dentro da mesma prioridad
 | [06](./closed/sprint-06-intake-importacao-leads.md) ✅ | Intake / importação de leads | 🟡 Média | Média–Alta | 3–5 dias | Sprint 02 | ⚠️ UX — preview diverge do armazenado |
 | [07](./closed/sprint-07-limpeza-e-honestidade-de-interface.md) ✅ | Limpeza e honestidade de interface | ⚪ Baixa | Baixa | 1–2 dias | — | ❌ Sem bug ao vivo |
 | [08](./closed/sprint-08-limpeza-de-lint.md) ✅ | Limpeza de lint (ratchet `warn`→`error`) | ⚪ Baixa | Baixa–Média | 2–3 dias | — | ❌ Sem bug ao vivo |
+| [09](./sprint-09-costuras-verificadas-pos-rescan.md) | Costuras verificadas pós-rescan | 🟠 Alta | Média | 4–6 dias | — | ⚠️ Sim — `decrypt` tolerante abre conexão (`tenant-sync`) + drift de hash de instância em prod |
 
-**Esforço total estimado:** ~18–28 dias.
+**Esforço total estimado:** ~22–34 dias.
 
 ## Ordem recomendada de execução
 
@@ -37,6 +38,7 @@ Ordenado por **prioridade** (bugs ao vivo primeiro) e, dentro da mesma prioridad
 3. **Sprint 04** e **Sprint 05** (estrutura/drift; independentes).
 4. **Sprint 06** (depende do módulo de telefone do Sprint 02).
 5. **Sprint 07** e **Sprint 08** por último (limpeza/dívida; entram a qualquer momento como preenchimento).
+6. **Sprint 09** (re-scan pós-08): Ponto 1 (codec de credenciais) primeiro pelo vetor de segurança + drift de prod; demais Pontos independentes, viram PRs separados.
 
 > Dependência forte única: **06 → 02** (a normalização de telefone do intake reusa o módulo de identidade de telefone criado no Sprint 02).
 
@@ -75,6 +77,12 @@ Ordenado por **prioridade** (bugs ao vivo primeiro) e, dentro da mesma prioridad
 - **7 floating-promises reais** (`void` em effects/handlers) → `error`. ~11 `any` de código tipados (88 em testes ficam `off`). 40 `no-unused-vars`, 5 `error-boundaries`, 2 `unescaped` → `error`.
 - Warns **estruturais** (complexity/max-lines/max-params em `worker.ts`/`personalizer`/`campaign-form`) ficam para **depois** dos Sprints 01/04/06, que os eliminam naturalmente.
 
+### 🟠 Sprint 09 — Costuras verificadas pós-rescan
+- Trio de credenciais `{databaseUrl, evolutionInstance, evolutionApiKey}` + `evolutionInstanceHash` encriptado/decriptado à mão em 3 sites de escrita + 6 de leitura → módulo `tenant-credentials` (codec puro; invariante instance↔hash com dono único). **Bug ao vivo:** `tenant-sync.ts` abre conexão com `decrypt` tolerante (plaintext passa) → trocar por `decryptSecret`. **Drift de prod:** 2 scripts re-derivam o hash de instância (invariante já quebrou).
+- Regras Zod load-bearing duplicadas client↔server (janela 9.5 min; regex de telefone) já divergentes → módulo plain-TS `validation` importável pelos dois lados (precedente `phone.ts`).
+- Reabertura de campanha `COMPLETED → PROCESSING` escrita 2x em `campaigns.ts` → helper in-file `reopenCampaignIfCompleted` (**não** mover para o lifecycle de mensagem).
+- Contrato de telefone na fronteira Evolution (`+55…` entra, dígitos crus saem) não-documentado → documentar (código + `CONTEXT.md` + ADR-0004) + guarda pós-strip; **não** extrair `toEvolutionNumber`.
+
 ## Achados rejeitados (não re-sugerir)
 
 A verificação adversarial **descartou** estes como costuras prematuras / framing incorreto:
@@ -83,3 +91,8 @@ A verificação adversarial **descartou** estes como costuras prematuras / frami
 - **`baseUrl` de Evolution por tenant** — não existe coluna de base-URL por tenant (servidor compartilhado, instância+chave por tenant). Costura de 0 adaptadores.
 - **Transporte HTTP injetável no EvolutionClient** e **costura de provider LLM** (OpenAI é o único) — costuras hipotéticas de 1 adaptador.
 - **Helper compartilhado `findContactByPhone` genérico** (Sprint 07) — após deletar o código morto, sobram só 2 sites com semânticas diferentes sobre um `findFirst` de 2 linhas.
+- **`toEvolutionNumber` extraído** (re-scan 09) — `phone.replace(/\D/g,"")` de 1 linha em 2 sites internos do mesmo arquivo, 1 implementação. Falha no teste de deleção → vira documentação de contrato + guarda (Sprint 09 Ponto 4), não módulo.
+- **Quota de IA / personalizer "divergente"** (re-scan 09) — já unificado no Sprint 01 (`ai-quota.ts`); worker totalmente cabeado, `{text,usedLLM,reason}` presente. Sem bug.
+- **`encryption.ts` "sem testes"** (re-scan 09) — `encryption.test.ts` existe (11 testes, AES-GCM real). Candidato obsoleto.
+- **Vocabulário de auth "inconsistente"** (re-scan 09) — `auth.ts` (callback NextAuth), `admin-auth.ts` (autorização≠identidade) e `message-history.ts` (fallback) são altitudes distintas legítimas; só `whatsapp.ts:getCurrentUserId` é micro-dup já aceita no Sprint 07.
+- **Churn de pass-through** (re-scan 09): wrapper `xss()`, range de data, aritmética de paginação, mock do redis, superfície do tenant-pool — 1-liners/observabilidade; shapes de resposta vazia já decididos como per-caller no Sprint 05.
