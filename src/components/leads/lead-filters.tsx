@@ -3,8 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, Calendar as CalendarIcon, Filter } from "lucide-react";
-import { TAG_LABELS, type LeadTag } from "@/types";
+import { Search, X } from "lucide-react";
+import { TAG_LABELS } from "@/types";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {

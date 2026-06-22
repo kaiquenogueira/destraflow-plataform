@@ -33,7 +33,7 @@ export function TemplateList({ templates }: TemplateListProps) {
             await deleteTemplate(id);
             toast.success("Template excluído");
             router.refresh();
-        } catch (error) {
+        } catch {
             toast.error("Erro ao excluir template");
         } finally {
             setDeleting(null);

@@ -67,14 +67,6 @@ function extractBlocks(content: string): { type: string, name: string, content: 
             break;
         }
         
-        // Tenta capturar comentários de documentação (///) imediatamente antes
-        // Procura para trás a partir do início do match
-        const blockStartIndex = match.index;
-        
-        // Verifica linhas anteriores para ver se são comentários ///
-        const beforeBlock = content.substring(0, blockStartIndex);
-        const lines = beforeBlock.split('\n');
-        
         // Simplesmente pega o bloco do início da palavra-chave até o fecha chaves
         // (Ignorando a complexidade de comentários por enquanto para garantir robustez)
         // Se quisermos comentários, teríamos que olhar linha a linha para trás.

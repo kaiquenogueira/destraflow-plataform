@@ -46,7 +46,7 @@ export default function WhatsAppPage() {
     }, []);
 
     useEffect(() => {
-        fetchStatus();
+        void fetchStatus();
     }, [fetchStatus]);
 
     // Auto-refresh every 10 segundos apenas quando o QR code estiver sendo exibido
@@ -85,7 +85,7 @@ export default function WhatsAppPage() {
             !generating &&
             !disconnecting
         ) {
-            handleGenerateQR();
+            void handleGenerateQR();
         }
     }, [status, qrCode, generating, disconnecting, handleGenerateQR]);
 
@@ -120,7 +120,7 @@ export default function WhatsAppPage() {
             await saveEvolutionConfig(instanceName, apiKey || undefined);
             toast.success("Configuração salva!");
             setShowConfig(false);
-            fetchStatus();
+            void fetchStatus();
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Erro ao salvar");
         } finally {

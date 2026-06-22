@@ -39,7 +39,7 @@ export function LeadNotes({ leadId }: LeadNotesProps) {
     }, [leadId]);
 
     useEffect(() => {
-        fetchNotes();
+        void fetchNotes();
     }, [fetchNotes]);
 
     const handleCreate = async () => {
@@ -73,7 +73,7 @@ export function LeadNotes({ leadId }: LeadNotesProps) {
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            handleCreate();
+            void handleCreate();
         }
     };
 

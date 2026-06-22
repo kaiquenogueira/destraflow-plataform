@@ -162,7 +162,7 @@ export function LeadImport() {
                 // Extrair cabeçalhos da primeira linha
                 const headers = Object.keys(jsonData[0] || {});
                 processRows(headers, jsonData, file);
-            } catch (err) {
+            } catch {
                 toast.error("Erro ao processar arquivo XLSX. Verifique se o arquivo não está corrompido.");
             }
         };

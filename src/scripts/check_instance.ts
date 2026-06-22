@@ -8,7 +8,7 @@ async function main() {
         if (user.evolutionInstance) {
             try {
                 instance = decrypt(user.evolutionInstance);
-            } catch (e) {
+            } catch {
                 instance = "decryption failed";
             }
         }

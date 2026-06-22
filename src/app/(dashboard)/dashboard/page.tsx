@@ -11,11 +11,9 @@ import {
     Users,
     Flame,
     Snowflake,
-    ThermometerSun,
     UserX,
     UserCheck,
     MessageSquare,
-    Send,
     Clock,
     UserCog,
     Plus,
@@ -24,7 +22,8 @@ import {
     Phone,
     AlertTriangle,
     Zap,
-    UserPlus
+    UserPlus,
+    type LucideIcon
 } from "lucide-react";
 import { TAG_LABELS, TAG_COLORS, LeadTag } from "@/types";
 import { formatDistanceToNow, subDays, differenceInDays } from "date-fns";
@@ -243,7 +242,7 @@ export default async function DashboardPage() {
         );
     }
 
-    const tagIcons: Record<LeadTag, any> = {
+    const tagIcons: Record<LeadTag, LucideIcon> = {
         NEW: Snowflake,
         QUALIFICATION: Users,
         PROSPECTING: TrendingUp,

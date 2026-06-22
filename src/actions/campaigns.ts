@@ -75,8 +75,7 @@ export async function getLeadsForCampaignSelection() {
         return true;
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return unique.map((lead: any) => {
+    return unique.map((lead) => {
         const lastMessage = lead.messages[0];
         return {
             id: lead.id,
@@ -87,8 +86,8 @@ export async function getLeadsForCampaignSelection() {
                 ? { name: lastMessage.campaign.name, date: lastMessage.createdAt }
                 : null,
             campaigns: lead.messages
-                .filter((m: any) => m.campaign)
-                .map((m: any) => ({ name: m.campaign.name, date: m.createdAt })),
+                .filter((m: { campaign: { name: string } | null; createdAt: Date }) => m.campaign)
+                .map((m: { campaign: { name: string } | null; createdAt: Date }) => ({ name: m.campaign!.name, date: m.createdAt })),
         };
     });
 }

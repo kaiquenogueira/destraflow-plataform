@@ -10,27 +10,30 @@ interface PageProps {
 
 export default async function CampaignDetailsPage({ params }: PageProps) {
   const { id } = await params;
-  
+
+  // Resolve dados ANTES do render: getCampaignById lança quando não existe → notFound().
+  // Manter o JSX fora do try/catch (React não captura erros de render assim).
+  let campaign: Awaited<ReturnType<typeof getCampaignById>>;
   try {
-    const campaign = await getCampaignById(id);
-
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{campaign.name}</h1>
-          <p className="text-muted-foreground mt-1">
-            Detalhes da campanha e status de envio
-          </p>
-        </div>
-
-        <CampaignMessages
-          campaignId={id}
-          messages={campaign.messages}
-          statusCounts={campaign.statusCounts}
-        />
-      </div>
-    );
-  } catch (error) {
+    campaign = await getCampaignById(id);
+  } catch {
     notFound();
   }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold">{campaign.name}</h1>
+        <p className="text-muted-foreground mt-1">
+          Detalhes da campanha e status de envio
+        </p>
+      </div>
+
+      <CampaignMessages
+        campaignId={id}
+        messages={campaign.messages}
+        statusCounts={campaign.statusCounts}
+      />
+    </div>
+  );
 }

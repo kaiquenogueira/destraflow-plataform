@@ -39,28 +39,35 @@ const eslintConfig = defineConfig([
       },
     },
     rules: {
-      // Dívida: 7 promises não-aguardadas reais. "warn" agora (type-aware); subir para
-      // "error" após corrigir os 7 sites (ver docs/sprint, limpeza de lint).
-      "@typescript-eslint/no-floating-promises": "warn",
+      // Sprint 08: 7 sites corrigidos com `void` (fire-and-forget explícito); regra em error.
+      "@typescript-eslint/no-floating-promises": "error",
     },
   },
   // NOTA: `no-restricted-imports` proibindo `@/lib/prisma` fora de src/lib/tenant.ts
   // NÃO é aplicado ainda — worker.ts/campaigns.ts usam o client CRM central de forma
   // legítima (quota de IA). Ativar após a migração feature-slice (ver docs/HARNESS-ENGINEERING.md §4).
   //
-  // DÍVIDA DE LINT PRÉ-EXISTENTE — o lint já estava vermelho (742 erros; ~1533 problemas
-  // vinham de src/generated, agora ignorado). Rebaixado para "warn" para tornar o gate
-  // FUNCIONAL (verde) e ratchetável. Backlog a subir de volta para "error":
-  //   - no-explicit-any: 99 ocorrências (dívida de tipagem)
-  //   - no-floating-promises: 7 ocorrências — promises não-aguardadas REAIS (corrigir; ver sprint de limpeza)
-  //   - no-unused-vars: 5 · react/no-unescaped-entities: 2 · react-hooks: 5
+  // Sprint 08 — ratchet warn→error: a dívida de lint pré-existente (lint vinha vermelho
+  // quando o gate foi ligado) foi quitada site-a-site e estas regras voltaram para "error".
+  // `any` permanece "off" em testes (mocks): tipar ~94 mocks = alto custo/baixo valor (P2).
   {
     files: ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "__mocks__/**/*.ts"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "react/no-unescaped-entities": "warn",
-      "react-hooks/error-boundaries": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": ["error", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+      }],
+      "react/no-unescaped-entities": "error",
+      "react-hooks/error-boundaries": "error",
+    },
+  },
+  // `any` em mocks de teste é tolerado (ver Sprint 08 P2).
+  {
+    files: ["**/*.test.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 ]);

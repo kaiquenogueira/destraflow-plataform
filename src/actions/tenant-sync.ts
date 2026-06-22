@@ -127,9 +127,10 @@ export async function syncTenantDatabase(userId: string): Promise<SyncResult> {
             details: stdout,
         };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("❌ Erro na sincronização:", error);
-        const details = sanitizeErrorDetails(error?.message || String(error));
+        const message = error instanceof Error ? error.message : "";
+        const details = sanitizeErrorDetails(message || String(error));
         return {
             success: false,
             message: "Falha ao sincronizar banco de dados",

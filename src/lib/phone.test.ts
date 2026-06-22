@@ -58,7 +58,6 @@ function makeTenantPrisma(overrides: {
             findFirst: vi.fn().mockResolvedValue(overrides.leadFindFirst ?? null),
             findMany: vi.fn().mockResolvedValue(overrides.leadFindMany ?? []),
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 }
 
