@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { nameSchema, phoneSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,10 +23,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 const leadSchema = z.object({
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    phone: z
-        .string()
-        .regex(/^\+?[1-9]\d{10,14}$/, "Telefone inválido (ex: +5511999999999)"),
+    name: nameSchema,
+    phone: phoneSchema,
     interest: z.string().optional(),
     tag: z.enum(["NEW", "QUALIFICATION", "PROSPECTING", "CALL", "MEETING", "RETURN", "LOST", "CUSTOMER"]),
     aiPotential: z.string().optional(),

@@ -5,10 +5,11 @@ import type { Prisma } from "@/generated/prisma/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import xss from "xss";
+import { nameSchema, templateContentSchema } from "@/lib/validation";
 
 const createTemplateSchema = z.object({
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    content: z.string().min(10, "Conteúdo deve ter pelo menos 10 caracteres"),
+    name: nameSchema,
+    content: templateContentSchema,
 });
 
 const updateTemplateSchema = createTemplateSchema.partial().extend({
