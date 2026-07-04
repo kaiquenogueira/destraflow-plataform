@@ -67,7 +67,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "husky": "^9.1.7",
-    "jsdom": "^28.0.0",
+    "jsdom": "^29.1.1",
     "lint-staged": "^17.0.8",
     "prisma": "^7.8.0",
     "shadcn": "^3.8.4",
