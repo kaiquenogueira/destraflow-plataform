@@ -1,192 +1,73 @@
-# DestraFlow Platform
+# Destraflow — Site institucional
 
-Plataforma SaaS Multi-tenant ("DestraFlow") construída com Next.js 16 (App Router), desenhada para fornecer funcionalidades de CRM e automação de atendimentos via WhatsApp (Evolution API).
+Landing page e páginas legais da Destraflow, hospedadas na Vercel.
 
-## 🚀 Funcionalidades
+## Stack
 
--   **Multi-tenancy Híbrido**: Arquitetura "Database-per-tenant" para isolamento de dados e escalabilidade.
--   **CRM & Gestão de Leads**: Gerenciamento completo de contatos, funil de vendas e tags (Frio, Morno, Quente, etc.).
--   **Importação de Leads**: Upload de planilhas CSV/XLSX com validação de cabeçalho, normalização de telefone (+55) e deduplicação automática.
--   **Automação de WhatsApp**: Integração com Evolution API para envio e recebimento de mensagens, com suporte a QR Code.
--   **Campanhas em Massa**: Criação e agendamento de disparos de mensagens para segmentos de leads, com processamento em background.
--   **Retry de Campanhas**: Reenvio manual (individual ou em massa) de mensagens com falha permanente (DEAD_LETTER) diretamente pela interface.
--   **Painel Administrativo**: Gestão de usuários, tenants e configurações globais.
--   **Templates de Mensagem**: Criação e gestão de templates reutilizáveis para campanhas.
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- Vercel (deploy)
 
-## 🛠 Tech Stack
+## Desenvolvimento
 
--   **Framework**: [Next.js 16.1.6](https://nextjs.org/) (App Router)
--   **Linguagem**: [TypeScript](https://www.typescriptlang.org/)
--   **Banco de Dados**: [PostgreSQL](https://www.postgresql.org/)
--   **ORM**: [Prisma v7.3.0](https://www.prisma.io/)
--   **Estilização**: [Tailwind CSS v4](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
--   **Autenticação**: [NextAuth.js v4](https://next-auth.js.org/) (Credentials Provider)
--   **Integração**: [Evolution API](https://github.com/EvolutionAPI/evolution-api)
--   **Validação**: Zod & React Hook Form
--   **Parsing de Planilhas**: [PapaParse](https://www.papaparse.com/) (CSV) & [SheetJS](https://sheetjs.com/) (XLSX)
+```bash
+npm install
+npm run dev
+```
 
-## 📋 Pré-requisitos
+## Build
 
--   Node.js 18+
--   PostgreSQL (Local ou Cloud)
--   Instância da Evolution API (para funcionalidades de WhatsApp)
+```bash
+npm run build
+npm start
+```
 
-## ⚡ Instalação e Configuração
+## Deploy na Vercel
 
-1.  **Clone o repositório**
+1. Crie um projeto na Vercel conectado ao repositório.
+2. Adicione o domínio `www.destraflow.com.br` nas configurações do projeto.
+3. O domínio `destraflow.com.br` deve apontar para o deploy via redirect (ver DNS abaixo).
 
-    ```bash
-    git clone https://github.com/seu-usuario/destraflow-plataform-1.git
-    cd destraflow-plataform-1
-    ```
+## DNS na Cloudflare
 
-2.  **Instale as dependências**
+Configure os seguintes registros DNS para o domínio `destraflow.com.br`:
 
-    ```bash
-    npm install
-    # ou
-    yarn install
-    # ou
-    pnpm install
-    ```
+| Tipo | Nome  | Conteúdo              | Proxy |
+|------|-------|-----------------------|-------|
+| CNAME | www   | cname.vercel-dns.com  | DNS only (cinza) |
+| A    | @     | 76.76.21.21           | DNS only (cinza) |
 
-3.  **Configure as Variáveis de Ambiente**
+Na Vercel, adicione ambos os domínios (`destraflow.com.br` e `www.destraflow.com.br`). A Vercel faz o redirect automático de `destraflow.com.br` para `www.destraflow.com.br`.
 
-    Crie um arquivo `.env` na raiz do projeto baseando-se no exemplo:
+> **Importante:** mantenha o proxy do Cloudflare desligado (DNS only) para os registros da Vercel, caso contrário o SSL pode conflitar.
 
-    ```bash
-    cp .env.example .env
-    ```
+## Páginas
 
-    Edite o arquivo `.env` com suas credenciais do banco de dados e segredos.
-    
-    > **Nota de Segurança**: Para gerar chaves seguras, você pode usar o comando `openssl`:
-    > - `openssl rand -base64 32` (para Secrets)
-    > - `openssl rand -hex 32` (para Chave de Criptografia - `DATA_ENCRYPTION_KEY`)
+| Rota                       | Descrição                  |
+|----------------------------|----------------------------|
+| `/`                        | Landing page               |
+| `/politica-de-privacidade` | Política de Privacidade    |
+| `/termos-de-uso`           | Termos de Uso              |
+| `/termos-de-servico`       | Redirect 301 → /termos-de-uso |
+| `/exclusao-de-dados`       | Exclusão de Dados          |
+| `/politica-de-reembolso`   | Política de Reembolso      |
 
-4.  **Configure o Banco de Dados**
+## Placeholders
 
-    Gere o cliente do Prisma e envie o schema para o banco:
+Os seguintes placeholders foram preenchidos com os dados do CNPJ:
 
-    ```bash
-    npx prisma generate
-    npx prisma db push
-    ```
+| Placeholder | Valor |
+|---|---|
+| `[RAZÃO SOCIAL]` | Kaique Nogueira Meneses Consultoria em Tecnologia da Informação LTDA |
+| `[CNPJ]` | 59.459.911/0001-24 |
+| `[ENDEREÇO COMPLETO]` | Av. Paulista, 1106, Sala 01 Andar 16, Bela Vista, São Paulo - SP, CEP 01.310-914 |
+| `[EMAIL DE CONTATO]` | contato@destraflow.com.br |
+| `[EMAIL DE PRIVACIDADE]` | privacidade@destraflow.com.br |
+| `[CIDADE/UF]` | São Paulo/SP |
 
-5.  **Inicie o Servidor de Desenvolvimento**
+Ainda pendente: nenhum — todos os placeholders preenchidos.
 
-    ```bash
-    npm run dev
-    ```
+## Produto
 
-    Acesse [http://localhost:3000](http://localhost:3000).
-
-## 🔒 Segurança
-
-A plataforma implementa diversas camadas de segurança para proteger dados e infraestrutura:
-
-### 1. Criptografia de Dados Sensíveis
-Dados críticos de configuração dos tenants (como `databaseUrl` e chaves de API) são criptografados antes de serem persistidos no banco de dados usando **AES-256-GCM**.
-*   Utilize a variável `DATA_ENCRYPTION_KEY` para definir a chave mestra (32 bytes em hex).
-*   A descriptografia ocorre apenas em memória no servidor, no momento exato do uso.
-
-### 2. Rate Limiting
-O Middleware da aplicação implementa proteção contra abuso (Rate Limiting) baseada em IP.
-*   Limite padrão: **60 requisições/minuto** por IP.
-*   Aplica-se a rotas de login, admin, dashboard e webhooks.
-*   **Nota**: Em ambientes serverless (como Vercel), o armazenamento é volátil. Para produção, recomenda-se usar Redis (Upstash).
-
-### 3. Proteção de Webhook e Cron
-*   **Webhook**: O endpoint de recebimento de mensagens (`/api/webhook/evolution`) é protegido por um segredo compartilhado. Configure `EVOLUTION_WEBHOOK_SECRET` no `.env` e no header `x-webhook-secret` na Evolution API.
-*   **Cron Jobs**: As rotas de agendamento (`/api/cron/*`) são protegidas por `CRON_SECRET`. O middleware (`src/middleware.ts`) permite acesso público a essas rotas desde que o header `Authorization: Bearer <CRON_SECRET>` seja enviado.
-
-## 🚀 Deploy
-
-### Vercel (Recomendado)
-
-1.  Faça o push do código para seu repositório Git.
-2.  Importe o projeto na Vercel.
-3.  Configure as **Environment Variables** (baseado no `.env.example`).
-    *   **Importante**: Não esqueça de gerar e adicionar a `DATA_ENCRYPTION_KEY` e `CRON_SECRET`.
-4.  Configure os **Cron Jobs** no `vercel.json` (ou use um serviço externo apontando para `/api/cron/process-messages` com o header de autorização).
-5.  O script `postinstall` configurado no `package.json` irá gerar o cliente Prisma automaticamente.
-
----
-
-## 📂 Estrutura do Projeto
-
-A estrutura segue o padrão **Next.js App Router**:
-
--   **`src/app`**: Rotas da aplicação.
-    -   `(auth)`: Rotas públicas de autenticação.
-    -   `(dashboard)`: Área logada protegida.
-    -   `api`: Endpoints de API (NextAuth, Webhooks, Cron).
--   **`src/middleware.ts`**: Controle de acesso e proteção de rotas (Auth, Cron, API).
--   **`src/actions`**: Server Actions para lógica de negócios (Admin, Campanhas, Chat, Leads).
--   **`src/components`**: Componentes React modulares.
--   **`src/lib`**: Lógica core (Autenticação, Prisma, Multi-tenancy, Integração Evolution API).
--   **`prisma`**: Definição do esquema do banco de dados unificado.
-
-## 🏗 Arquitetura
-
-### Modelo de Dados (Multi-tenancy)
-
-O sistema utiliza uma abordagem híbrida onde existe um banco central para autenticação e roteamento, e bancos dedicados (ou esquemas lógicos) para cada tenant.
-
-1.  **Banco de Dados Central (CRM Operacional)**
-    *   **Responsabilidade**: Gerenciamento de usuários da plataforma, autenticação e roteamento de tenants.
-    *   **Tabela Principal**: `CrmUser`
-    *   **Configuração**: Armazena a `databaseUrl` que define onde estão os dados isolados do cliente.
-
-2.  **Banco de Dados do Tenant (Dados do Cliente)**
-    *   **Responsabilidade**: Armazenar os dados de negócio (Leads, Conversas, Campanhas).
-    *   **Tabelas Principais**: `Lead`, `Campaign` (IDs via CUID), `CampaignMessage`.
-
-### Fluxos de Dados
-
-*   **Entrada (Webhook)**: A Evolution API recebe mensagens e o sistema identifica o tenant proprietário para persistir a mensagem no banco correto.
-*   **Visualização**: O middleware e a lib `tenant.ts` identificam o banco do usuário logado para realizar as consultas no contexto correto.
-*   **Processamento em Background (Cron)**: O endpoint `/api/cron/process-messages` varre todos os tenants e processa mensagens pendentes de campanhas agendadas.
-
-## 🚧 Status do Projeto
-
-Atualmente, a plataforma está em fase de **Beta / Desenvolvimento Ativo**.
-
-| Funcionalidade | Status | Detalhes |
-| :--- | :--- | :--- |
-| **Multi-tenancy** | ✅ Completo | Arquitetura híbrida funcional com criptografia. |
-| **Autenticação** | ✅ Completo | NextAuth com suporte a roles (Admin/User). |
-| **CRM (Leads)** | ⚠️ Parcial | Gestão de Leads e Tags ok. Faltam Pipelines/Deals. |
-| **Importação de Leads** | ✅ Completo | Upload CSV/XLSX com validação, normalização +55 e deduplicação. |
-| **WhatsApp** | ✅ Completo | Integração com Evolution API (QR Code, Envio, Recebimento). |
-| **Campanhas** | ✅ Completo | Disparos em massa com agendamento e fila (suporte a CUIDs). |
-| **Retry de Campanhas** | ✅ Completo | Reenvio de mensagens DEAD_LETTER (individual e em massa). |
-| **Templates** | ✅ Completo | Gestão de templates de mensagens. |
-| **Chat Ao Vivo** | ⚠️ Backend | Lógica de histórico existe, mas falta interface de chat em tempo real. |
-| **Testes** | ✅ Parcial | Testes unitários para Campanhas implementados. |
-
-## ⚠️ Limitações Conhecidas
-
-1.  **Escalabilidade do Webhook**: O processamento atual de mensagens recebidas itera sobre todos os usuários para encontrar o tenant correto. Isso precisará ser otimizado (ex: indexar hash da instância) para escalar.
-2.  **Rate Limiting**: O controle de taxa atual é em memória e não persiste entre reinicializações ou em ambiente serverless.
-3.  **Migrações**: A sincronização de schema usa `db push`. Scripts de migração de tenants (`scripts/migrate-tenants.ts`) disponíveis para atualizações de schema.
-
-## 🚀 Próximos Passos
-
-- [ ] Implementar Testes de Integração E2E.
-- [ ] Criar interface de "Bate-papo ao vivo" (Live Chat).
-- [ ] Melhorar performance do Webhook.
-- [ ] Implementar Pipelines de Vendas (Kanban).
-- [ ] Exportação de leads para CSV/XLSX.
-- [ ] Relatórios de campanha com gráficos (taxa de entrega, falhas).
-
-## 📝 Scripts Disponíveis
-
--   `npm run dev`: Inicia o servidor de desenvolvimento.
--   `npm run build`: Compila a aplicação para produção.
--   `npm run start`: Inicia o servidor de produção.
--   `npm run lint`: Executa a verificação de código com ESLint.
-
----
-
-Desenvolvido com ❤️ pela equipe DestraFlow.
+O CRM em produção está em `https://crm.destraflow.com.br`. O botão "Entrar" aponta para o login do produto.
