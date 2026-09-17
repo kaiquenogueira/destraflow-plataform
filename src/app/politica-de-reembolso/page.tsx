@@ -1,43 +1,59 @@
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import type { Metadata } from "next";
+import { LegalPage, H2, P, Ul } from "@/components/legal-page";
 
-export default function PoliticaReembolso() {
-    return (
-        <div className="min-h-screen bg-slate-950 text-slate-300 font-sans py-12 px-6">
-            <div className="max-w-3xl mx-auto mb-8">
-                <Link href="/" className="inline-flex items-center text-sm font-medium text-slate-400 hover:text-white transition-colors">
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Voltar para Home
-                </Link>
-            </div>
-            <div className="max-w-3xl mx-auto border border-white/5 bg-slate-900/50 p-8 md:p-12">
-                <h1 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">Política de <span className="text-cyan-400">Reembolso</span></h1>
+export const metadata: Metadata = {
+  title: "Política de Reembolso — Destraflow",
+  description: "Política de Reembolso da plataforma Destraflow.",
+};
 
-                <div className="prose prose-invert prose-slate max-w-none prose-headings:font-bold prose-headings:text-white prose-a:text-cyan-400">
-                    <p className="text-sm text-slate-500 mb-8 uppercase tracking-widest font-bold">Transparência em Pagamentos</p>
+export default function PoliticaDeReembolsoPage() {
+  return (
+    <LegalPage title="Política de Reembolso" lastUpdated="16 de setembro de 2026">
+      <H2>1. Generalidades</H2>
+      <P>
+        Esta Política de Reembolso complementa os Termos de Uso da plataforma Destraflow e aplica-se a todos os
+        pagamentos realizados pela agência junto a Kaique Nogueira Meneses Consultoria em Tecnologia da Informação LTDA.
+      </P>
 
-                    <h2 className="text-xl mt-8 mb-4 text-white font-bold">1. Prazo de Arrependimento</h2>
-                    <p className="mb-6 leading-relaxed">
-                        Em conformidade com o Código de Defesa do Consumidor, você tem o direito de solicitar reembolso integral no prazo de 7 (sete) dias após a primeira assinatura do plano, caso não esteja satisfeito com a plataforma.
-                    </p>
+      <H2>2. Solicitação de reembolso</H2>
+      <P>
+        A agência pode solicitar o reembolso de valores pagos nos seguintes casos:
+      </P>
+      <Ul>
+        <li>Cobrança indevida ou em desacordo com o plano contratado.</li>
+        <li>Falha comprovada na prestação do serviço por período superior a 24 horas consecutivas.</li>
+        <li>Cancelamento do serviço dentro do prazo de arrependimento previsto no Código de Defesa do Consumidor (7 dias).</li>
+      </Ul>
 
-                    <h2 className="text-xl mt-8 mb-4 text-white font-bold">2. Processamento de Pagamento</h2>
-                    <p className="mb-6 leading-relaxed">
-                        Todos os reembolsos são processados na mesma forma de pagamento utilizada original.
-                        O processamento é administrado com total segurança pelos nossos provedores homologados, e o tempo de crédito na fatura dependerá exclusivamente da sua instituição financeira.
-                    </p>
+      <H2>3. Como solicitar</H2>
+      <P>
+        Envie um e-mail para <strong>contato@destraflow.com.br</strong> com o assunto &quot;Solicitação de Reembolso&quot;,
+        informando:
+      </P>
+      <Ul>
+        <li>Nome da agência e e-mail cadastrado.</li>
+        <li>Data e valor da cobrança.</li>
+        <li>Motivo da solicitação.</li>
+      </Ul>
 
-                    <h2 className="text-xl mt-8 mb-4 text-white font-bold">3. Cancelamentos Mensais</h2>
-                    <p className="mb-6 leading-relaxed">
-                        Assinaturas recorrentes podem ser canceladas a qualquer momento diretamente no painel do usuário (Dashboard). O cancelamento cessa cobranças futuras, mas após o prazo inicial de 7 dias, não fazemos estornos de mensalidades em curso.
-                    </p>
+      <H2>4. Prazo de análise</H2>
+      <P>
+        A solicitação será analisada em até <strong>10 dias úteis</strong>. Em caso de aprovação, o reembolso será
+        realizado pelo mesmo meio de pagamento original em até 30 dias.
+      </P>
 
-                    <h2 className="text-xl mt-8 mb-4 text-white font-bold">4. Solicitação</h2>
-                    <p className="mb-6 leading-relaxed">
-                        Para solicitar um estorno ou tirar dúvidas sobre sua fatura, entre em contato através de nossos canais oficiais no próprio dashboard ou envie um e-mail para o nosso time de suporte operando com foco no seu sucesso!
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
+      <H2>5. Exclusões</H2>
+      <P>Não são passíveis de reembolso:</P>
+      <Ul>
+        <li>Cobranças referentes a períodos em que o serviço foi utilizado normalmente.</li>
+        <li>Valores cobrados diretamente pela Meta pelo uso da API do WhatsApp Business.</li>
+        <li>Solicitações realizadas fora do prazo de arrependimento legal, sem justa causa.</li>
+      </Ul>
+
+      <H2>6. Contato</H2>
+      <P>
+        Para dúvidas sobre esta política, entre em contato pelo e-mail <strong>contato@destraflow.com.br</strong>.
+      </P>
+    </LegalPage>
+  );
 }
