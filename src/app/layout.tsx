@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     title: "Destraflow Tech | Mais tecnologia para vender mais Orlando",
     description:
       "CRM especialista em Orlando com inteligência artificial integrada. Agende uma vídeo conferência com nosso time.",
-    images: [{ url: "/images/hero.jpg", width: 1200, height: 630, alt: "Destraflow Tech - Orlando" }],
+    images: [{ url: "/images/hero.png", width: 1200, height: 630, alt: "Destraflow Tech - Orlando" }],
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
