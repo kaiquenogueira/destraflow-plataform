@@ -71,7 +71,7 @@ function HeroSection() {
             <figure className="overflow-hidden rounded-3xl border border-white/[0.12] bg-[#121417] shadow-2xl">
               <div className="relative aspect-[4/4.5] w-full overflow-hidden">
                 <Image
-                  src="/images/hero.jpg"
+                  src="/images/hero.png"
                   alt="Eduardo e Kaique da Destraflow Tech em Orlando"
                   fill
                   className="object-cover"
@@ -510,7 +510,7 @@ function EquipeSection() {
           <figure className="overflow-hidden rounded-3xl border border-white/[0.1] bg-[#121417] shadow-xl">
             <div className="relative aspect-[4/4.8] w-full overflow-hidden bg-[#16181b]">
               <Image
-                src="/images/eduardo.jpg"
+                src="/images/eduardo.png"
                 alt="Eduardo, fundador da Encantrip Turismo"
                 fill
                 className="object-cover"
@@ -544,7 +544,7 @@ function EquipeSection() {
           <figure className="overflow-hidden rounded-3xl border border-white/[0.1] bg-[#121417] shadow-xl">
             <div className="relative aspect-[4/4.8] w-full overflow-hidden bg-[#16181b]">
               <Image
-                src="/images/kaique.jpg"
+                src="/images/kaique.png"
                 alt="Kaique, Tech Lead e AI Engineer da Destraflow Tech"
                 fill
                 className="object-cover"
