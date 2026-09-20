@@ -1,14 +1,13 @@
 import { ImageResponse } from "next/og";
-import type { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   return new ImageResponse(
     (
       <div
         style={{
-          background: "linear-gradient(135deg, #0d9488 0%, #0a7a6f 100%)",
+          background: "linear-gradient(135deg, #08090a 0%, #15171a 50%, #0f1113 100%)",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -16,6 +15,7 @@ export async function GET(_req: NextRequest) {
           alignItems: "flex-start",
           justifyContent: "center",
           padding: "80px",
+          border: "2px solid rgba(199, 160, 107, 0.3)",
         }}
       >
         <div
@@ -28,39 +28,41 @@ export async function GET(_req: NextRequest) {
         >
           <div
             style={{
-              width: "48px",
-              height: "48px",
-              borderRadius: "12px",
-              background: "rgba(255,255,255,0.2)",
+              width: "56px",
+              height: "56px",
+              borderRadius: "14px",
+              background: "linear-gradient(135deg, #e6c99e 0%, #b98e59 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <div style={{ color: "white", fontSize: "24px", fontWeight: 700 }}>D</div>
+            <div style={{ color: "#14100b", fontSize: "30px", fontWeight: 900 }}>D</div>
           </div>
-          <span style={{ color: "white", fontSize: "36px", fontWeight: 700 }}>Destraflow</span>
+          <span style={{ color: "white", fontSize: "40px", fontWeight: 800 }}>
+            Destraflow <span style={{ color: "#e3c79b", fontSize: "20px", letterSpacing: "0.2em" }}>TECH</span>
+          </span>
         </div>
         <div
           style={{
             color: "white",
-            fontSize: "52px",
+            fontSize: "54px",
             fontWeight: 800,
-            lineHeight: 1.2,
-            maxWidth: "800px",
+            lineHeight: 1.15,
+            maxWidth: "920px",
           }}
         >
-          CRM com IA no WhatsApp para agências de viagem
+          Mais tecnologia para vender mais Orlando.
         </div>
         <div
           style={{
-            color: "rgba(255,255,255,0.8)",
+            color: "#d8d3cb",
             fontSize: "24px",
             marginTop: "24px",
-            maxWidth: "600px",
+            maxWidth: "750px",
           }}
         >
-          Sua agência responde todo lead em segundos, qualifica e chega na cotação.
+          CRM especialista em Orlando com IA integrada no WhatsApp.
         </div>
       </div>
     ),
