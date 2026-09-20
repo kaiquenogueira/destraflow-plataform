@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/footer";
@@ -12,6 +12,13 @@ const inter = Inter({
 });
 
 const siteUrl = "https://destraflow.com.br";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#08090a",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -38,10 +45,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={inter.variable}>
-      <body className={`${inter.className} bg-brand-black text-white antialiased selection:bg-[#c7a06b]/30 selection:text-white`}>
+    <html lang="pt-BR" className={`${inter.variable} overflow-x-hidden`}>
+      <body className={`${inter.className} bg-brand-black text-white antialiased overflow-x-hidden selection:bg-[#c7a06b]/30 selection:text-white`}>
         <Header />
-        <main>{children}</main>
+        <main className="w-full max-w-full overflow-x-clip">{children}</main>
         <Footer />
         <script
           type="application/ld+json"

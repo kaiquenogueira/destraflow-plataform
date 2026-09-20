@@ -513,10 +513,10 @@ export function BookingFunnel() {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-5xl rounded-[24px] sm:rounded-[32px] border border-[#c7a06b]/25 bg-gradient-to-br from-[#15171a] via-[#0f1113] to-[#08090a] p-4 sm:p-8 lg:p-12 shadow-2xl overflow-hidden">
-      {/* Decorative ambient glow */}
-      <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-[#c7a06b]/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[#c7a06b]/5 blur-3xl" />
+    <div className="relative mx-auto w-full max-w-5xl rounded-[24px] sm:rounded-[32px] border border-[#c7a06b]/25 bg-gradient-to-br from-[#15171a] via-[#0f1113] to-[#08090a] p-4 sm:p-8 lg:p-12 shadow-2xl overflow-hidden isolate">
+      {/* Decorative ambient glow (contained to avoid iOS lateral overflow) */}
+      <div className="pointer-events-none absolute -right-10 -top-10 sm:-right-24 sm:-top-24 h-64 w-64 sm:h-96 sm:w-96 rounded-full bg-[#c7a06b]/10 blur-2xl sm:blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-10 -left-10 sm:-bottom-24 sm:-left-24 h-64 w-64 sm:h-96 sm:w-96 rounded-full bg-[#c7a06b]/5 blur-2xl sm:blur-3xl" />
 
       {/* Toast Notification (above mobile sticky bar) */}
       {toastMsg && (
@@ -818,7 +818,7 @@ export function BookingFunnel() {
                 <span className="block text-[11px] font-bold uppercase tracking-widest text-[#8d8880] mb-2.5">
                   1. Escolha o dia
                 </span>
-                <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none touch-pan-x">
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none touch-pan-x">
                   {availableDays.map((d) => {
                     const isSelected = lead.data === d.iso;
                     return (
