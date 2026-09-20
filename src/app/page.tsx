@@ -1,326 +1,485 @@
-import {
-  MessageCircle,
-  Clock,
-  Users,
-  FileSearch,
-  ArrowRight,
-  Phone,
-  Brain,
-  BarChart3,
-  Shield,
-  Headphones,
-  Send,
-  BookOpen,
-  Mic,
-  Megaphone,
-  UserCheck,
-} from "lucide-react";
-import { WhatsAppMockup } from "@/components/whatsapp-mockup";
+import Image from "next/image";
+import { Check, Phone, Laptop } from "lucide-react";
+import { BookingFunnel } from "@/components/booking-funnel";
 import { FaqSection } from "@/components/faq-section";
 
 export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <PainSection />
-      <HowItWorksSection />
-      <FeaturesSection />
-      <HumanInSection />
-      <ForWhomSection />
-      <SecuritySection />
+      <CredibilityBar />
+      <ProblemaSection />
+      <SolucaoSection />
+      <EntregasSection />
+      <ComoFuncionaSection />
+      <HumanoNoControleSection />
+      <EquipeSection />
+      <AgendarSection />
       <FaqSection />
-      <FinalCtaSection />
+      <CtaFinalSection />
+      <MobileStickyBar />
     </>
   );
 }
 
+/* =====================================================================
+   HERO SECTION
+   ===================================================================== */
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-muted to-background py-16 sm:py-24">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
-        <div className="animate-fade-in">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
-            <MessageCircle className="h-3.5 w-3.5" />
-            IA no WhatsApp para agências de viagem
-          </p>
-          <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-            Todo lead de viagem{" "}
-            <span className="text-primary">respondido em segundos</span>, qualificado e pronto pra cotação
-          </h1>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground">
-            Sua agência atende 24/7 no WhatsApp com uma IA que conversa como gente, entende destino, datas, crianças e
-            orçamento — e entrega o lead pronto pro seu time fechar.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <a
-              href="#agendar-demo"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-dark"
-            >
-              Agendar demonstração
-              <ArrowRight className="h-4 w-4" />
-            </a>
-            <a
-              href="https://crm.destraflow.com.br/login"
-              className="inline-flex items-center rounded-lg border border-border bg-white px-6 py-3 text-base font-semibold text-foreground transition-colors hover:bg-muted"
-            >
-              Entrar
-            </a>
+    <section className="relative overflow-hidden pt-32 pb-16 sm:pt-40 sm:pb-24 lg:pt-44 lg:pb-32 bg-[#08090a]">
+      {/* Background ambient radial glow */}
+      <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/3 h-[640px] w-[900px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(199,160,107,0.18)_0%,rgba(199,160,107,0.03)_50%,transparent_75%)] blur-3xl" />
+
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
+          <div className="animate-fade-in space-y-6">
+            <div className="kicker">
+              Tecnologia para agências de viagens
+            </div>
+
+            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-[66px] lg:leading-[1.03]">
+              Mais tecnologia para <span className="gold-gradient-text">vender mais Orlando.</span>
+            </h1>
+
+            <p className="max-w-xl text-base sm:text-lg leading-relaxed text-[#d8d3cb]">
+              Implantamos um CRM especialista em Orlando com inteligência artificial integrada: atendimento automatizado no WhatsApp, cotações mais rápidas e uma operação que para de depender de esforço manual.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3.5 pt-2">
+              <a href="#agendar" className="btn-gold text-sm sm:text-base">
+                Agendar vídeo conferência →
+              </a>
+              <a href="#solucao" className="btn-ghost text-sm sm:text-base">
+                Ver como funciona
+              </a>
+            </div>
+
+            <div className="flex items-center gap-2.5 pt-2 text-xs sm:text-sm text-[#8d8880]">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4ade80] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#4ade80]" />
+              </span>
+              <span>Conversas de 45 minutos, das 14h às 20h — escolha seu horário no formulário.</span>
+            </div>
           </div>
-        </div>
-        <div className="animate-slide-up">
-          <WhatsAppMockup />
+
+          <div className="relative animate-slide-up">
+            {/* Soft decorative glow container */}
+            <div className="absolute -inset-2 rounded-[32px] bg-gradient-to-tr from-[#c7a06b]/20 to-transparent blur-xl -z-10" />
+
+            <figure className="overflow-hidden rounded-3xl border border-white/[0.12] bg-[#121417] shadow-2xl">
+              <div className="relative aspect-[4/4.5] w-full overflow-hidden">
+                <Image
+                  src="/images/hero.jpg"
+                  alt="Eduardo e Kaique da Destraflow Tech em Orlando"
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 500px"
+                />
+              </div>
+              <figcaption className="flex items-center justify-between border-t border-[#c7a06b]/25 bg-gradient-to-b from-[#0e1012] to-[#08090a] px-5 py-3.5">
+                <div>
+                  <b className="block text-sm font-bold text-white">Eduardo</b>
+                  <span className="text-xs text-[#8d8880]">Turismo · Estratégia</span>
+                </div>
+                <div className="text-right">
+                  <b className="block text-sm font-bold text-white">Kaique</b>
+                  <span className="text-xs text-[#8d8880]">Tecnologia · IA</span>
+                </div>
+              </figcaption>
+            </figure>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function PainSection() {
+/* =====================================================================
+   CREDIBILITY BAR
+   ===================================================================== */
+function CredibilityBar() {
+  const metrics = [
+    { value: "+1.000", label: "clientes atendidos" },
+    { value: "15 anos", label: "de mercado e operação" },
+    { value: "Orlando", label: "especialização real" },
+    { value: "IA + CRM", label: "integrados ao processo" },
+  ];
+
+  return (
+    <div className="border-y border-white/[0.08] bg-[#0b0c0e] py-7">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 text-center">
+          {metrics.map((item) => (
+            <div key={item.label} className="space-y-1">
+              <strong className="block text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
+                {item.value}
+              </strong>
+              <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#8d8880]">
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================================
+   PROBLEMA SECTION (Warm Cream / Off-White Contrast)
+   ===================================================================== */
+function ProblemaSection() {
   const pains = [
     {
-      icon: Clock,
-      title: "Lead que chega às 23h e esfria",
-      description:
-        "O cliente manda mensagem fora do horário e, quando alguém responde no dia seguinte, já está falando com outra agência.",
+      symbol: "◌",
+      title: "Atendimento que não para",
+      description: "WhatsApp lotado, mesmas perguntas todo dia sobre parques e ingressos, e respostas que dependem de alguém estar livre.",
     },
     {
-      icon: Users,
-      title: "Time preso respondendo as mesmas perguntas",
-      description:
-        "Seus melhores vendedores gastam horas repetindo informações sobre destino, pacote e preço em vez de fechar venda.",
+      symbol: "▤",
+      title: "Cotação demorada",
+      description: "Informação espalhada em planilha, print e conversas antigas. Cada nova oportunidade para cotação de Orlando custa horas preciosas.",
     },
     {
-      icon: FileSearch,
-      title: "Cotação enviada sem follow-up",
-      description:
-        "A proposta sai, mas ninguém cobra retorno. O lead esfria, vai para o concorrente e a venda não acontece.",
+      symbol: "⚙",
+      title: "Follow-up que se perde",
+      description: "Lead que esfria, orçamento enviado sem retorno ativo e reserva sem acompanhamento contínuo — sem o time perceber a perda.",
     },
   ];
 
   return (
-    <section className="bg-white py-20">
+    <section id="problema" className="bg-[#f6f1e8] py-20 sm:py-28 text-[#16181b]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className="text-center text-3xl font-bold text-foreground sm:text-4xl">
-          Sua agência perde venda por isso?
-        </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
-          Quem vende viagem pelo WhatsApp sabe: lead que demora esfria, pergunta repetida cansa o time, e cotação sem
-          follow-up não fecha.
-        </p>
+        <div className="max-w-2xl space-y-3">
+          <div className="kicker-cream">O desafio das agências hoje</div>
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-[#14100b]">
+            Muito trabalho para dar conta de tudo?
+          </h2>
+          <p className="text-base sm:text-lg leading-relaxed text-[#5d5952]">
+            Vender Orlando exige detalhe: parque, ingresso, hotel, transfer, seguro e roteiro. O problema começa quando a operação consome o tempo que deveria estar sendo usado exclusivamente para vender.
+          </p>
+        </div>
+
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {pains.map((pain) => (
-            <div
-              key={pain.title}
-              className="rounded-2xl border border-border bg-card p-6 transition-shadow hover:shadow-md"
+          {pains.map((p) => (
+            <article
+              key={p.title}
+              className="rounded-3xl border border-black/[0.08] bg-white/70 p-7 shadow-sm transition-transform hover:-translate-y-1"
             >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <pain.icon className="h-6 w-6" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#111315] text-[#e3c79b] text-xl font-extrabold mb-5 border border-[#c7a06b]/30">
+                {p.symbol}
               </div>
-              <h3 className="text-lg font-bold text-foreground">{pain.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{pain.description}</p>
-            </div>
+              <h3 className="text-lg font-bold text-[#14100b] mb-2">{p.title}</h3>
+              <p className="text-sm leading-relaxed text-[#5d5952]">{p.description}</p>
+            </article>
           ))}
+        </div>
+
+        <div className="mt-10">
+          <a href="#agendar" className="btn-gold">
+            Quero resolver isso na minha agência →
+          </a>
         </div>
       </div>
     </section>
   );
 }
 
-function HowItWorksSection() {
+/* =====================================================================
+   SOLUÇÃO SECTION
+   ===================================================================== */
+function SolucaoSection() {
+  const checks = [
+    {
+      title: "Atendimento automático e inteligente",
+      desc: "A IA responde no WhatsApp 24/7, qualifica datas, grupo e orçamento, entregando o lead pronto para o vendedor fechar.",
+    },
+    {
+      title: "Cotações rápidas e personalizadas",
+      desc: "Menos digitação repetitiva, mais proposta estruturada na mão do passageiro no mesmo dia.",
+    },
+    {
+      title: "Organização e acompanhamento de clientes",
+      desc: "Cada lead com etapa, consultor responsável e próximo passo de contato visíveis no funil.",
+    },
+    {
+      title: "Integração com parques, hotéis, transfer e seguro",
+      desc: "O CRM entende o produto que você vende — não é um software genérico adaptado às pressas.",
+    },
+  ];
+
+  return (
+    <section id="solucao" className="bg-[#08090a] py-20 sm:py-28 border-t border-white/[0.08]">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+          <div className="space-y-6">
+            <div className="kicker">A solução Destraflow</div>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Inteligência artificial a favor <span className="gold-gradient-text">da sua agência.</span>
+            </h2>
+            <p className="text-base text-[#a8a39b] leading-relaxed">
+              Automatizamos processos, organizamos informação e deixamos sua equipe focada no que realmente importa: vender e encantar clientes com viagens inesquecíveis.
+            </p>
+
+            <div className="space-y-4 pt-2">
+              {checks.map((item) => (
+                <div key={item.title} className="flex items-start gap-3.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111315] text-[#e3c79b] border border-[#c7a06b]/40 text-xs mt-0.5">
+                    <Check className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-sm font-bold text-white mb-0.5">{item.title}</strong>
+                    <span className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">{item.desc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4">
+              <a href="#agendar" className="btn-gold">
+                Quero entender a solução →
+              </a>
+            </div>
+          </div>
+
+          <div className="relative">
+            <figure className="overflow-hidden rounded-3xl border border-white/[0.1] bg-[#121417] shadow-2xl">
+              <div className="relative aspect-[9/14] w-full overflow-hidden">
+                <Image
+                  src="/images/solucao.jpg"
+                  alt="Atendimento da IA da Destraflow no WhatsApp para agências de Orlando"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 480px"
+                />
+              </div>
+              <figcaption className="p-3 text-center text-xs tracking-wider uppercase text-[#7c776f] bg-[#0c0d0f] border-t border-white/[0.06]">
+                Atendimento da IA no WhatsApp · imagem ilustrativa
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* =====================================================================
+   ENTREGAS SECTION (Cream Light Contrast)
+   ===================================================================== */
+function EntregasSection() {
+  const deliveries = [
+    {
+      ico: "◈",
+      title: "Briefing de cotação em 2 minutos",
+      desc: "A IA extrai datas, parques Disney e Universal, idades exatas das crianças (regras de gratuidade), hotel e carro. O consultor só copia e emite na operadora parceira.",
+    },
+    {
+      ico: "✦",
+      title: "Fila inteligente por prioridade",
+      desc: "Classificação em 4 eixos (viagens urgentes ≤ 7 dias, clientes comparadores com cotação na mão e leads premium no topo da fila para bater a concorrência).",
+    },
+    {
+      ico: "⌁",
+      title: "O 'Eco' no WhatsApp (Híbrido Real)",
+      desc: "Seu consultor pode responder pelo aplicativo comum do WhatsApp no celular. O CRM detecta, assume o atendimento e pausa a IA instantaneamente.",
+    },
+    {
+      ico: "▦",
+      title: "Debounce de rajadas, áudios e prints",
+      desc: "A IA aguarda o cliente terminar de falar (~12s), transcreve múltiplos áudios, lê prints de orçamentos concorrentes e responde em um único turno coeso.",
+    },
+    {
+      ico: "◧",
+      title: "Cadências automáticas de follow-up",
+      desc: "Retomadas inteligentes e não invasivas (+2h, +1d, +3d, +7d...) para orçamentos enviados, reativando leads frios antes que comprem em outra agência.",
+    },
+    {
+      ico: "⟐",
+      title: "Escalonamento ativo no WhatsApp",
+      desc: "Alertas automáticos no WhatsApp do consultor quando o cliente pede link de pagamento, tem dúvidas fora da base ou está pronto para fechar.",
+    },
+  ];
+
+  return (
+    <section id="entregas" className="bg-[#f6f1e8] py-20 sm:py-28 text-[#16181b] border-y border-black/[0.06]">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="max-w-2xl space-y-3">
+          <div className="kicker-cream">O que entra na implantação</div>
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-[#14100b]">
+            Não é só uma ferramenta. <span className="text-[#9a7549]">É a operação montada.</span>
+          </h2>
+          <p className="text-base sm:text-lg leading-relaxed text-[#5d5952]">
+            A Destraflow apoia a implantação ponta a ponta: configuramos, treinamos a IA com as regras da sua agência e acompanhamos os resultados.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {deliveries.map((item) => (
+            <article
+              key={item.title}
+              className="rounded-3xl border border-black/[0.08] bg-white/70 p-7 shadow-sm transition-transform hover:-translate-y-1"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#111315] text-[#e3c79b] text-xl font-extrabold mb-5 border border-[#c7a06b]/30">
+                {item.ico}
+              </div>
+              <h3 className="text-lg font-bold text-[#14100b] mb-2">{item.title}</h3>
+              <p className="text-sm leading-relaxed text-[#5d5952]">{item.desc}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-10">
+          <a href="#agendar" className="btn-gold">
+            Agendar uma conversa sobre a implantação →
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* =====================================================================
+   COMO FUNCIONA SECTION
+   ===================================================================== */
+function ComoFuncionaSection() {
   const steps = [
     {
-      step: "1",
-      title: "Conecte o WhatsApp da agência",
-      description:
-        "Use o número que sua agência já tem ou conecte um novo. A integração usa a API oficial do WhatsApp Business.",
+      num: "1",
+      title: "Entendemos sua realidade",
+      desc: "Mapeamos os processos atuais, gargalos e o jeito que a sua agência atende e vende hoje.",
     },
     {
-      step: "2",
-      title: "Ensine a IA sobre seus pacotes",
-      description:
-        "Cadastre destinos, roteiros, políticas e materiais (fotos, vídeos, PDFs). A IA aprende o tom da sua agência.",
+      num: "2",
+      title: "Implantamos a solução",
+      desc: "CRM especialista, automações, IA treinada e integrações configuradas para a sua operação.",
     },
     {
-      step: "3",
-      title: "A IA atende, qualifica e entrega o lead pronto",
-      description:
-        "Ela responde o lead, pergunta destino, datas, quantas pessoas e orçamento. Quando o lead está qualificado, seu time assume.",
+      num: "3",
+      title: "Treinamos sua equipe",
+      desc: "Seu time aprende o fluxo e se torna apto a operar a ferramenta e converter muito mais.",
+    },
+    {
+      num: "4",
+      title: "Acompanhamos os resultados",
+      desc: "Ajuste contínuo das abordagens e métricas com base no que os dados de vendas mostram.",
     },
   ];
 
   return (
-    <section id="como-funciona" className="bg-muted py-20">
+    <section id="como" className="bg-[#0f1113] py-20 sm:py-28 text-white">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className="text-center text-3xl font-bold text-foreground sm:text-4xl">Como funciona</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
-          Três passos para sua agência nunca mais perder um lead.
-        </p>
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {steps.map((item) => (
-            <div key={item.step} className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
-                {item.step}
+        <div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
+          <div className="order-2 lg:order-1">
+            <figure className="overflow-hidden rounded-3xl border border-white/[0.1] bg-[#121417] shadow-2xl">
+              <div className="relative aspect-[16/13.5] w-full overflow-hidden">
+                <Image
+                  src="/images/comofunciona.jpg"
+                  alt="Painel do CRM Destraflow com métricas de agências de Orlando"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 520px"
+                />
               </div>
-              <h3 className="mt-5 text-lg font-bold text-foreground">{item.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+              <figcaption className="p-3 text-center text-xs tracking-wider uppercase text-[#7c776f] bg-[#0c0d0f] border-t border-white/[0.06]">
+                Painel do CRM · imagem ilustrativa
+              </figcaption>
+            </figure>
+          </div>
+
+          <div className="order-1 lg:order-2 space-y-6">
+            <div className="kicker">Como funciona</div>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Tecnologia na prática, <span className="gold-gradient-text">do seu lado.</span>
+            </h2>
+            <p className="text-base text-[#a8a39b] leading-relaxed">
+              Quatro etapas claras, do diagnóstico inicial ao acompanhamento contínuo — com a nossa equipe junto em todas elas.
+            </p>
+
+            <div className="space-y-4 pt-2">
+              {steps.map((s) => (
+                <div key={s.num} className="flex items-start gap-4 rounded-2xl border border-white/[0.06] bg-[#141618] p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1c1f24] text-[#e3c79b] font-extrabold text-base border border-[#c7a06b]/30">
+                    {s.num}
+                  </div>
+                  <div>
+                    <strong className="block text-sm sm:text-base font-bold text-white mb-0.5">{s.title}</strong>
+                    <span className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">{s.desc}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+
+            <div className="pt-2">
+              <a href="#agendar" className="btn-gold">
+                Começar pelo diagnóstico →
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function FeaturesSection() {
-  const groups = [
-    {
-      title: "Atendimento",
-      items: [
-        {
-          icon: MessageCircle,
-          title: "IA no WhatsApp 24/7",
-          description:
-            "Atendente de IA pela API oficial do WhatsApp Business, respondendo com o tom da sua agência a qualquer hora.",
-        },
-        {
-          icon: Brain,
-          title: "Qualificação automática",
-          description: "Destino, datas, número de viajantes e crianças, orçamento. O lead avança sozinho no funil.",
-        },
-        {
-          icon: Mic,
-          title: "Áudio em ambos os lados",
-          description: "A IA entende áudio do cliente e o time pode gravar nota de voz pelo inbox.",
-        },
-        {
-          icon: BookOpen,
-          title: "Base de conhecimento editável",
-          description:
-            "Roteiros, pacotes, políticas, materiais (fotos, vídeos, PDFs) que a IA envia no momento certo.",
-        },
-      ],
-    },
-    {
-      title: "Vendas",
-      items: [
-        {
-          icon: Send,
-          title: "Cotações e acompanhamento",
-          description: "Proposta enviada, negociação, fechamento — tudo acompanhado pelo CRM.",
-        },
-        {
-          icon: Megaphone,
-          title: "Campanhas e Click-to-WhatsApp",
-          description: "Leads vindos de anúncios direto no WhatsApp, com campanhas segmentadas por etapa do funil.",
-        },
-        {
-          icon: BarChart3,
-          title: "Follow-up automático",
-          description:
-            "Cadências por etapa do funil, respeitando a janela de 24h e os modelos aprovados pela Meta.",
-        },
-      ],
-    },
-    {
-      title: "Controle",
-      items: [
-        {
-          icon: Headphones,
-          title: "Inbox do time",
-          description: "Todas as conversas num lugar, com filtro por etapa e por quem está atendendo.",
-        },
-        {
-          icon: UserCheck,
-          title: "Passagem IA ↔ humano",
-          description:
-            "O time assume pelo CRM ou pelo celular e devolve para a IA quando quiser.",
-        },
-        {
-          icon: Shield,
-          title: "Relatórios do funil",
-          description: "Veja quantos leads entraram, quantos foram qualificados e quantos viraram cotação.",
-        },
-      ],
-    },
-  ];
-
+/* =====================================================================
+   HUMANO NO CONTROLE & META API (Technical Security & Hybrid Operation)
+   ===================================================================== */
+function HumanoNoControleSection() {
   return (
-    <section id="recursos" className="bg-white py-20">
+    <section className="bg-[#08090a] py-20 sm:py-24 border-t border-white/[0.08]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className="text-center text-3xl font-bold text-foreground sm:text-4xl">Tudo que sua agência precisa</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
-          Do primeiro contato ao fechamento, sem ferramenta extra.
-        </p>
-        {groups.map((group) => (
-          <div key={group.title} className="mt-12">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-primary">{group.title}</h3>
-            <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {group.items.map((item) => (
-                <div key={item.title} className="rounded-xl border border-border p-5">
-                  <item.icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                  <h4 className="mt-3 font-semibold text-foreground">{item.title}</h4>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function HumanInSection() {
-  return (
-    <section className="bg-muted py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
-          <div>
-            <h2 className="text-3xl font-bold text-foreground sm:text-4xl">O humano sempre no controle</h2>
-            <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              A IA atende e qualifica, mas a decisão é sempre sua. Seu time pode assumir qualquer conversa pelo CRM ou
-              respondendo direto pelo celular — e devolver para a IA quando não precisar mais de atenção humana.
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          <div className="space-y-5">
+            <div className="kicker">Segurança & Autonomia</div>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              O atendente humano <span className="gold-gradient-text">sempre no comando.</span>
+            </h2>
+            <p className="text-base text-[#a8a39b] leading-relaxed">
+              A IA não é uma caixa preta incontrolável. Ela atende no primeiro segundo, qualifica o passageiro e entrega a cotação pronta. A qualquer momento, seu vendedor assume o contato pelo computador ou diretamente pelo celular, com ferramentas de proteção ativa.
             </p>
-            <ul className="mt-6 space-y-3">
-              {[
-                "Assuma a conversa a qualquer momento, sem o cliente perceber",
-                "Responda pelo CRM ou pelo próprio WhatsApp no celular",
-                "Devolve para a IA quando o atendimento humano terminar",
-                "Acompanhe tudo em tempo real na inbox",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-3">
-                  <svg
-                    className="mt-0.5 h-5 w-5 shrink-0 text-primary"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-sm text-foreground">{item}</span>
-                </li>
-              ))}
+            <ul className="space-y-3 text-sm text-[#d8d3cb] pt-2">
+              <li className="flex items-center gap-3">
+                <Check className="h-4 w-4 text-[#e3c79b] shrink-0" />
+                <span>Mecanismo de Eco: responda pelo app do WhatsApp no celular e a IA pausa na hora</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Check className="h-4 w-4 text-[#e3c79b] shrink-0" />
+                <span>Shadow Mode: aprove rascunhos da IA em 1 clique antes do envio aos clientes</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Check className="h-4 w-4 text-[#e3c79b] shrink-0" />
+                <span>Escalonamento: alertas no WhatsApp do vendedor quando o cliente pede link de pagamento</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Check className="h-4 w-4 text-[#e3c79b] shrink-0" />
+                <span>Conexão oficial Meta Cloud API: isolamento de dados, LGPD e zero risco de banimento</span>
+              </li>
             </ul>
           </div>
-          <div className="flex justify-center">
-            <div className="relative w-full max-w-sm rounded-2xl border border-border bg-white p-6 shadow-lg">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Phone className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">Seu celular</p>
-                  <p className="text-xs text-muted-foreground">Responda como sempre fez</p>
-                </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl border border-white/[0.08] bg-[#121417] p-6 space-y-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#c7a06b]/10 text-[#e3c79b] border border-[#c7a06b]/20">
+                <Phone className="h-5 w-5" />
               </div>
-              <div className="mt-4 space-y-2">
-                <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-                  O lead pergunta sobre preço do pacote → a IA avisa seu time → você responde pelo celular → devolve
-                  para a IA continuar o follow-up.
-                </div>
+              <h3 className="text-base font-bold text-white">Mecanismo de Eco</h3>
+              <p className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">
+                Seu consultor responde pelo próprio celular no WhatsApp tradicional. O CRM detecta a fala humana e pausa a IA na mesma transação.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-white/[0.08] bg-[#121417] p-6 space-y-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#c7a06b]/10 text-[#e3c79b] border border-[#c7a06b]/20">
+                <Laptop className="h-5 w-5" />
               </div>
+              <h3 className="text-base font-bold text-white">Shadow Mode & Inbox</h3>
+              <p className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">
+                Opção de operar com rascunhos assistidos: a IA gera a resposta perfeita e seu time só aprova ou edita em um toque.
+              </p>
             </div>
           </div>
         </div>
@@ -329,93 +488,153 @@ function HumanInSection() {
   );
 }
 
-function ForWhomSection() {
-  const segments = [
-    "Agências de lazer e férias",
-    "Pacotes internacionais",
-    "Parques temáticos (Disney, Universal)",
-    "Cruzeiros",
-    "Grupos e viagens familiares",
-    "Destinos nacionais e internacionais",
-  ];
-
+/* =====================================================================
+   EQUIPE / QUEM SOMOS SECTION
+   ===================================================================== */
+function EquipeSection() {
   return (
-    <section className="bg-white py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center">
-        <h2 className="text-3xl font-bold text-foreground sm:text-4xl">Para quem é a Destraflow</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-          Para agências de viagem pequenas e médias que vendem pelo WhatsApp e não querem mais perder lead por demora,
-          fora do horário ou por falta de follow-up.
-        </p>
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
-          {segments.map((seg) => (
-            <span
-              key={seg}
-              className="rounded-full border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground"
-            >
-              {seg}
-            </span>
-          ))}
+    <section id="equipe" className="bg-[#0b0c0e] py-20 sm:py-28 border-t border-white/[0.08]">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="max-w-2xl space-y-3">
+          <div className="kicker">Quem está por trás</div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Turismo e tecnologia na <span className="gold-gradient-text">mesma direção.</span>
+          </h2>
+          <p className="text-base sm:text-lg leading-relaxed text-[#a8a39b]">
+            A união de quem vive a operação diária de uma agência de Orlando com quem constrói arquitetura de software e inteligência artificial de ponta.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-8 sm:grid-cols-2">
+          {/* Eduardo */}
+          <figure className="overflow-hidden rounded-3xl border border-white/[0.1] bg-[#121417] shadow-xl">
+            <div className="relative aspect-[4/4.8] w-full overflow-hidden bg-[#16181b]">
+              <Image
+                src="/images/eduardo.jpg"
+                alt="Eduardo, fundador da Encantrip Turismo"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 450px"
+              />
+            </div>
+            <figcaption className="p-6 sm:p-7 space-y-3">
+              <div>
+                <h3 className="text-2xl font-extrabold text-white">Eduardo</h3>
+                <p className="text-xs uppercase font-bold tracking-wider text-[#e3c79b]">
+                  Turismo • Estratégia • Orlando
+                </p>
+              </div>
+              <p className="text-sm text-[#a8a39b] leading-relaxed">
+                Mais de 15 anos de mercado, hoje 100% dedicado ao turismo. Fundador da Encantrip Turismo, agência especializada em Orlando associada à Visit Orlando e com selo Cadastur, com mais de 1.000 clientes atendidos. O EncantripCRM foi forjado e validado na prática em mais de 5.400 linhas de diálogos reais de atendimento e vendas de parques.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {["Fundador Encantrip", "+1.000 clientes", "Visit Orlando & Cadastur", "Validação em Produção"].map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-[#c7a06b]/30 bg-[#c7a06b]/10 px-3 py-1 text-xs font-semibold text-[#e3c79b]"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </figcaption>
+          </figure>
+
+          {/* Kaique */}
+          <figure className="overflow-hidden rounded-3xl border border-white/[0.1] bg-[#121417] shadow-xl">
+            <div className="relative aspect-[4/4.8] w-full overflow-hidden bg-[#16181b]">
+              <Image
+                src="/images/kaique.jpg"
+                alt="Kaique, Tech Lead e AI Engineer da Destraflow Tech"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 450px"
+              />
+            </div>
+            <figcaption className="p-6 sm:p-7 space-y-3">
+              <div>
+                <h3 className="text-2xl font-extrabold text-white">Kaique</h3>
+                <p className="text-xs uppercase font-bold tracking-wider text-[#e3c79b]">
+                  Tecnologia • Automação • Inteligência Artificial
+                </p>
+              </div>
+              <p className="text-sm text-[#a8a39b] leading-relaxed">
+                Tech Lead e AI Engineer, com sólida experiência em engenharia de software e inteligência artificial aplicada. Constrói as integrações, as automações e a arquitetura que sustentam a operação — tecnologia feita para resolver problemas reais de conversão de leads.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {["Tech Lead | AI Engineer", "Integrações & API", "Inteligência Artificial", "Arquitetura de Soluções"].map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-[#c7a06b]/30 bg-[#c7a06b]/10 px-3 py-1 text-xs font-semibold text-[#e3c79b]"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </figcaption>
+          </figure>
+        </div>
+
+        <div className="mt-10">
+          <a href="#agendar" className="btn-gold">
+            Falar com a gente por vídeo →
+          </a>
         </div>
       </div>
     </section>
   );
 }
 
-function SecuritySection() {
+/* =====================================================================
+   AGENDAR SECTION (Funil Interativo de Conversão)
+   ===================================================================== */
+function AgendarSection() {
   return (
-    <section className="bg-muted py-20">
-      <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-        <Shield className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
-        <h2 className="mt-4 text-3xl font-bold text-foreground sm:text-4xl">Segurança e privacidade</h2>
-        <p className="mt-4 text-muted-foreground">
-          Os dados de cada agência ficam isolados. A Destraflow usa a API oficial do WhatsApp Business e segue a LGPD.
-          Não vendemos nem usamos seus dados para publicidade.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm">
-          <a href="/politica-de-privacidade" className="font-medium text-primary hover:underline">
-            Política de Privacidade
-          </a>
-          <span className="text-muted-foreground">·</span>
-          <a href="/termos-de-uso" className="font-medium text-primary hover:underline">
-            Termos de Uso
-          </a>
-          <span className="text-muted-foreground">·</span>
-          <a href="/exclusao-de-dados" className="font-medium text-primary hover:underline">
-            Exclusão de Dados
-          </a>
+    <section id="agendar" className="bg-[#08090a] py-20 sm:py-28 border-t border-white/[0.08]">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <BookingFunnel />
+      </div>
+    </section>
+  );
+}
+
+/* =====================================================================
+   CTA FINAL SECTION (Warm Off-White Gradient)
+   ===================================================================== */
+function CtaFinalSection() {
+  return (
+    <section className="bg-gradient-to-br from-[#f7f2e9] via-[#f1e7d6] to-[#e8dcc8] py-20 sm:py-28 text-[#14100b]">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+          <div className="space-y-3 max-w-2xl">
+            <div className="kicker-cream">Próximo passo</div>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-[#14100b]">
+              Sua agência pode ter mais fluxo, mais tecnologia e menos complexidade.
+            </h2>
+            <p className="text-base sm:text-lg text-[#5d5952]">
+              Escolha um horário entre 14h e 20h e vamos conversar por vídeo conferência.
+            </p>
+          </div>
+          <div>
+            <a href="#agendar" className="btn-gold text-base !py-4 !px-8">
+              Agendar vídeo conferência →
+            </a>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function FinalCtaSection() {
+/* =====================================================================
+   MOBILE STICKY BAR
+   ===================================================================== */
+function MobileStickyBar() {
   return (
-    <section id="agendar-demo" className="bg-white py-20">
-      <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-        <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-          Pronto para sua agência responder todo lead em segundos?
-        </h2>
-        <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
-          Agende uma demonstração e veja a Destraflow funcionando com o perfil da sua agência.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <a
-            href="https://wa.me/5511994188429?text=Quero%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20Destraflow"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-dark"
-          >
-            Agendar demonstração
-            <ArrowRight className="h-4 w-4" />
-          </a>
-          <a
-            href="https://crm.destraflow.com.br/login"
-            className="inline-flex items-center rounded-lg border border-border bg-white px-8 py-3.5 text-base font-semibold text-foreground transition-colors hover:bg-muted"
-          >
-            Entrar
-          </a>
-        </div>
-      </div>
-    </section>
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.1] bg-[#08090a]/90 p-3.5 backdrop-blur-lg sm:hidden">
+      <a href="#agendar" className="btn-gold w-full text-center !py-3 !text-sm">
+        Agendar vídeo conferência →
+      </a>
+    </div>
   );
 }
