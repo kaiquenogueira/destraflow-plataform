@@ -27,9 +27,9 @@ export default function HomePage() {
    ===================================================================== */
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-28 pb-12 sm:pt-36 sm:pb-20 lg:pt-44 lg:pb-32 bg-[#08090a]">
-      {/* Background ambient radial glow (constrained width to prevent mobile horizontal overflow) */}
-      <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/3 h-[400px] sm:h-[640px] w-full max-w-[900px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(199,160,107,0.18)_0%,rgba(199,160,107,0.03)_50%,transparent_75%)] blur-3xl" />
+    <section className="relative overflow-hidden isolate pt-28 pb-12 sm:pt-36 sm:pb-20 lg:pt-44 lg:pb-32 bg-[#08090a]">
+      {/* Background ambient radial glow (contained and centered to prevent iOS horizontal overflow) */}
+      <div className="pointer-events-none absolute inset-x-0 -top-20 mx-auto h-[320px] sm:h-[640px] w-full max-w-[800px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(199,160,107,0.18)_0%,rgba(199,160,107,0.03)_50%,transparent_75%)] blur-2xl sm:blur-3xl" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid items-center gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
@@ -65,8 +65,8 @@ function HeroSection() {
           </div>
 
           <div className="relative animate-slide-up">
-            {/* Soft decorative glow container */}
-            <div className="absolute -inset-2 rounded-[28px] sm:rounded-[32px] bg-gradient-to-tr from-[#c7a06b]/20 to-transparent blur-xl -z-10" />
+            {/* Soft decorative glow container (contained within element bounds) */}
+            <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-[#c7a06b]/20 to-transparent blur-md sm:blur-xl -z-10" />
 
             <figure className="overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.12] bg-[#121417] shadow-2xl">
               <div className="relative aspect-[4/3] sm:aspect-[4/4] lg:aspect-[4/4.5] w-full overflow-hidden">
