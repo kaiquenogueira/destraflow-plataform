@@ -48,31 +48,31 @@ export function FaqSection() {
   ];
 
   return (
-    <section id="faq" className="border-t border-white/[0.08] bg-[#08090a] py-20 sm:py-28">
+    <section id="faq" className="border-t border-white/[0.08] bg-[#08090a] py-12 sm:py-20 lg:py-28">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         <div className="text-center">
           <div className="kicker">Dúvidas Frequentes</div>
-          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h2 className="mt-2.5 sm:mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             Tudo o que você precisa saber <span className="gold-gradient-text">antes de agendar</span>
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-[#a8a39b] max-w-2xl mx-auto">
+          <p className="mt-3 sm:mt-4 text-xs sm:text-base text-[#a8a39b] max-w-2xl mx-auto leading-relaxed">
             Transparência total sobre como a tecnologia opera e como a implantação acontece na sua agência.
           </p>
         </div>
 
-        <div className="mt-12 space-y-4">
+        <div className="mt-8 sm:mt-12 space-y-3 sm:space-y-4">
           {faqs.map((faq) => (
             <details
               key={faq.question}
-              className="group rounded-2xl border border-white/[0.08] bg-[#121417]/70 p-5 transition-all hover:border-[#c7a06b]/40 open:border-[#c7a06b]/40 open:bg-[#121417]"
+              className="group rounded-xl sm:rounded-2xl border border-white/[0.08] bg-[#121417]/70 p-4 sm:p-5 transition-all hover:border-[#c7a06b]/40 open:border-[#c7a06b]/40 open:bg-[#121417]"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-bold text-white text-base sm:text-lg">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-white text-sm sm:text-lg">
                 <span>{faq.question}</span>
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-sm text-[#e3c79b] transition-transform group-open:rotate-45">
+                <span className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-xs sm:text-sm text-[#e3c79b] transition-transform group-open:rotate-45">
                   +
                 </span>
               </summary>
-              <p className="mt-4 text-sm leading-relaxed text-[#a8a39b] border-t border-white/[0.06] pt-3">
+              <p className="mt-3 sm:mt-4 text-xs sm:text-sm leading-relaxed text-[#a8a39b] border-t border-white/[0.06] pt-3">
                 {faq.answer}
               </p>
             </details>

@@ -98,22 +98,26 @@ body {
 
 /* ---------- Luxury Buttons ---------- */
 
+/* ---------- Luxury Buttons (Mobile-First) ---------- */
+
 .btn-gold {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  text-align: center;
+  gap: 8px;
   border-radius: 9999px;
-  padding: 14px 26px;
+  padding: 12px 20px;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.25;
   cursor: pointer;
   background: linear-gradient(135deg, #e6c99e 0%, #b98e59 100%);
   color: #14100b;
-  box-shadow: 0 14px 38px rgba(199, 160, 107, 0.28);
+  box-shadow: 0 10px 28px rgba(199, 160, 107, 0.22);
   transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
-  white-space: nowrap;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 100%;
 }
 
 .btn-gold:hover {
@@ -126,21 +130,33 @@ body {
   transform: translateY(0);
 }
 
+@media (min-width: 640px) {
+  .btn-gold {
+    padding: 14px 26px;
+    font-size: 15px;
+    gap: 10px;
+    white-space: nowrap;
+    box-shadow: 0 14px 38px rgba(199, 160, 107, 0.28);
+  }
+}
+
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  text-align: center;
+  gap: 8px;
   border-radius: 9999px;
-  padding: 14px 24px;
+  padding: 12px 20px;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.25;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.04);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.18);
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-  white-space: nowrap;
+  max-width: 100%;
 }
 
 .btn-ghost:hover {
@@ -149,25 +165,49 @@ body {
   transform: translateY(-2px);
 }
 
+@media (min-width: 640px) {
+  .btn-ghost {
+    padding: 14px 24px;
+    font-size: 15px;
+    gap: 10px;
+    white-space: nowrap;
+  }
+}
+
 .btn-ghost-cream {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  text-align: center;
+  gap: 8px;
   border-radius: 9999px;
-  padding: 14px 24px;
+  padding: 12px 20px;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.25;
   cursor: pointer;
   background: rgba(0, 0, 0, 0.03);
   color: #16181b;
   border: 1px solid rgba(0, 0, 0, 0.16);
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-  white-space: nowrap;
+  max-width: 100%;
 }
 
 .btn-ghost-cream:hover {
   border-color: #9a7549;
   background: rgba(0, 0, 0, 0.06);
   transform: translateY(-2px);
+}
+
+@media (min-width: 640px) {
+  .btn-ghost-cream {
+    padding: 14px 24px;
+    font-size: 15px;
+    gap: 10px;
+    white-space: nowrap;
+  }
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }

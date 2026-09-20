@@ -513,22 +513,22 @@ export function BookingFunnel() {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-5xl rounded-[32px] border border-[#c7a06b]/25 bg-gradient-to-br from-[#15171a] via-[#0f1113] to-[#08090a] p-6 shadow-2xl sm:p-10 lg:p-12 overflow-hidden">
+    <div className="relative mx-auto w-full max-w-5xl rounded-[24px] sm:rounded-[32px] border border-[#c7a06b]/25 bg-gradient-to-br from-[#15171a] via-[#0f1113] to-[#08090a] p-4 sm:p-8 lg:p-12 shadow-2xl overflow-hidden">
       {/* Decorative ambient glow */}
       <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-[#c7a06b]/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[#c7a06b]/5 blur-3xl" />
 
-      {/* Toast Notification */}
+      {/* Toast Notification (above mobile sticky bar) */}
       {toastMsg && (
-        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-2xl border border-[#c7a06b] bg-[#15171a] px-5 py-3 text-sm font-medium text-white shadow-2xl transition-all">
+        <div className="fixed bottom-24 sm:bottom-10 left-1/2 z-50 -translate-x-1/2 max-w-[90vw] text-center rounded-2xl border border-[#c7a06b] bg-[#15171a] px-4 py-3 text-xs sm:text-sm font-medium text-white shadow-2xl transition-all">
           {toastMsg}
         </div>
       )}
 
       {/* 1-Click Calendar Modal for Destraflow Team (from URL ?agenda=...) */}
       {modalAgendaData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-3xl border border-[#c7a06b]/30 bg-[#121417] p-7 text-white shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-2xl sm:rounded-3xl border border-[#c7a06b]/30 bg-[#121417] p-5 sm:p-7 text-white shadow-2xl relative">
             <button
               onClick={() => setModalAgendaData(null)}
               className="absolute right-4 top-4 text-gray-400 hover:text-white"
@@ -579,39 +579,39 @@ export function BookingFunnel() {
         </div>
       )}
 
-      <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14 items-start">
+      <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14 items-start">
         {/* Left column: Context & Guarantee */}
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           <div className="kicker">Vamos conversar?</div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
             Agende sua <span className="gold-gradient-text">vídeo conferência.</span>
           </h2>
-          <p className="text-base text-[#a8a39b] leading-relaxed">
+          <p className="text-sm sm:text-base text-[#a8a39b] leading-relaxed">
             Quatro perguntas rápidas, você escolhe dia e horário entre 14h e 20h, e deixa seus dados. Ao final abrimos o WhatsApp com tudo resumido para o nosso time confirmar.
           </p>
 
-          <ul className="space-y-3.5 text-sm text-[#d8d3cb]">
+          <ul className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm text-[#d8d3cb]">
             <li className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c7a06b]/15 text-xs text-[#e3c79b]">
-                <Clock className="h-3.5 w-3.5" />
+              <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-[#c7a06b]/15 text-xs text-[#e3c79b]">
+                <Clock className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
               <span>45 minutos, por vídeo chamada</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c7a06b]/15 text-xs text-[#e3c79b]">
-                <ShieldCheck className="h-3.5 w-3.5" />
+              <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-[#c7a06b]/15 text-xs text-[#e3c79b]">
+                <ShieldCheck className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
               <span>Diagnóstico da sua operação, sem compromisso</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c7a06b]/15 text-xs text-[#e3c79b]">
-                <Check className="h-3.5 w-3.5" />
+              <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-[#c7a06b]/15 text-xs text-[#e3c79b]">
+                <Check className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
               <span>Você fala direto com quem desenha e implanta o sistema</span>
             </li>
           </ul>
 
-          <div className="rounded-2xl border border-[#c7a06b]/20 bg-[#c7a06b]/[0.06] p-4 text-xs leading-relaxed text-[#c9c5be]">
+          <div className="rounded-xl sm:rounded-2xl border border-[#c7a06b]/20 bg-[#c7a06b]/[0.06] p-3.5 sm:p-4 text-xs leading-relaxed text-[#c9c5be]">
             <strong className="text-[#e3c79b]">Sem custo e sem obrigação comercial.</strong>
             <br />
             Se avaliarmos que a solução não faz sentido para a sua agência hoje, a gente fala com total transparência na própria reunião.
@@ -619,9 +619,9 @@ export function BookingFunnel() {
         </div>
 
         {/* Right column: Interactive Funnel Card */}
-        <div className="rounded-3xl border border-white/[0.08] bg-[#0e1012]/80 p-6 sm:p-8 backdrop-blur-md">
+        <div className="rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-[#0e1012]/80 p-4 sm:p-7 backdrop-blur-md">
           {/* Progress bar */}
-          <div className="mb-6 space-y-2">
+          <div className="mb-5 sm:mb-6 space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-[#8d8880]">
               <span>{isSuccess ? "Concluído" : `Etapa ${stepIndex + 1} de ${path.length}`}</span>
               <span className="text-[#e3c79b]">{progressPercent}%</span>
@@ -818,7 +818,7 @@ export function BookingFunnel() {
                 <span className="block text-[11px] font-bold uppercase tracking-widest text-[#8d8880] mb-2.5">
                   1. Escolha o dia
                 </span>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none touch-pan-x">
                   {availableDays.map((d) => {
                     const isSelected = lead.data === d.iso;
                     return (
@@ -826,14 +826,14 @@ export function BookingFunnel() {
                         key={d.iso}
                         type="button"
                         onClick={() => setLead((prev) => ({ ...prev, data: d.iso, horario: "" }))}
-                        className={`flex flex-col items-center justify-center min-w-[72px] shrink-0 rounded-xl border py-2.5 px-3 transition-all ${
+                        className={`flex flex-col items-center justify-center min-w-[64px] sm:min-w-[72px] shrink-0 rounded-xl border py-2 sm:py-2.5 px-2.5 sm:px-3 transition-all ${
                           isSelected
                             ? "border-[#e3c79b] bg-[#c7a06b]/20 text-white"
                             : "border-white/[0.08] bg-[#141618] text-[#8d8880] hover:border-[#c7a06b]/40 hover:text-white"
                         }`}
                       >
                         <span className="text-[10px] uppercase font-bold tracking-wider">{d.dow}</span>
-                        <span className="text-lg font-extrabold text-white my-0.5">{d.day}</span>
+                        <span className="text-base sm:text-lg font-extrabold text-white my-0.5">{d.day}</span>
                         <span className="text-[10px] uppercase tracking-wider">{d.month}</span>
                       </button>
                     );
@@ -846,7 +846,7 @@ export function BookingFunnel() {
                   2. Escolha o horário (14:00 às 20:00)
                 </span>
                 {lead.data ? (
-                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {availableHours.map((hr) => {
                       const isSelected = lead.horario === hr;
                       return (
@@ -854,9 +854,9 @@ export function BookingFunnel() {
                           key={hr}
                           type="button"
                           onClick={() => setLead((prev) => ({ ...prev, horario: hr }))}
-                          className={`rounded-xl border py-2.5 text-center text-sm font-semibold transition-all ${
+                          className={`min-h-[44px] flex items-center justify-center rounded-xl border py-2 text-center text-xs sm:text-sm font-semibold transition-all ${
                             isSelected
-                              ? "btn-gold !py-2.5 !shadow-none !border-transparent"
+                              ? "btn-gold !py-2 !shadow-none !border-transparent"
                               : "border-white/[0.08] bg-[#141618] text-[#d8d3cb] hover:border-[#c7a06b]/40 hover:text-white"
                           }`}
                         >
@@ -916,7 +916,7 @@ export function BookingFunnel() {
                   placeholder="Seu nome completo"
                   value={lead.nome}
                   onChange={(e) => setLead((prev) => ({ ...prev, nome: e.target.value }))}
-                  className="w-full rounded-xl border border-white/[0.12] bg-[#141618] px-4 py-3 text-sm text-white placeholder:text-[#6d6961] focus:border-[#c7a06b] focus:outline-none"
+                  className="w-full min-h-[46px] rounded-xl border border-white/[0.12] bg-[#141618] px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-white placeholder:text-[#6d6961] focus:border-[#c7a06b] focus:outline-none"
                 />
               </div>
 
@@ -931,7 +931,7 @@ export function BookingFunnel() {
                   placeholder="voce@suaagencia.com.br"
                   value={lead.email}
                   onChange={(e) => setLead((prev) => ({ ...prev, email: e.target.value }))}
-                  className="w-full rounded-xl border border-white/[0.12] bg-[#141618] px-4 py-3 text-sm text-white placeholder:text-[#6d6961] focus:border-[#c7a06b] focus:outline-none"
+                  className="w-full min-h-[46px] rounded-xl border border-white/[0.12] bg-[#141618] px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-white placeholder:text-[#6d6961] focus:border-[#c7a06b] focus:outline-none"
                 />
               </div>
 
@@ -946,7 +946,7 @@ export function BookingFunnel() {
                   placeholder="(11) 99999-9999"
                   value={lead.whatsapp}
                   onChange={(e) => handlePhoneChange(e.target.value)}
-                  className="w-full rounded-xl border border-white/[0.12] bg-[#141618] px-4 py-3 text-sm text-white placeholder:text-[#6d6961] focus:border-[#c7a06b] focus:outline-none"
+                  className="w-full min-h-[46px] rounded-xl border border-white/[0.12] bg-[#141618] px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-white placeholder:text-[#6d6961] focus:border-[#c7a06b] focus:outline-none"
                 />
               </div>
 
@@ -976,7 +976,7 @@ export function BookingFunnel() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-gold !py-3 !px-6 !text-sm"
+                  className="btn-gold !py-3 !px-5 sm:!px-6 !text-xs sm:!text-sm"
                 >
                   {isSubmitting ? "Agendando..." : "Finalizar e agendar →"}
                 </button>
