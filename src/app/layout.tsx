@@ -25,7 +25,12 @@ export const metadata: Metadata = {
   title: "Destraflow Tech | CRM especialista em Orlando com IA integrada",
   description:
     "A Destraflow Tech implanta CRM especialista em Orlando com inteligência artificial integrada, atendimento automatizado no WhatsApp, cotações mais rápidas e equipe focada em fechar vendas.",
-  alternates: { canonical: siteUrl },
+  alternates: {
+    canonical: siteUrl,
+    types: {
+      "text/markdown": "/llms.txt",
+    },
+  },
   openGraph: {
     type: "website",
     locale: "pt_BR",
