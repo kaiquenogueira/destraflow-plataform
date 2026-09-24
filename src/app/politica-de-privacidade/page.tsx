@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { LegalPage, H2, H3, P, Ul } from "@/components/legal-page";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidade — Destraflow",
+  title: "Política de Privacidade — Destraflow Tech",
   description: "Política de Privacidade da Destraflow. Como tratamos seus dados e os dados dos seus clientes.",
+  alternates: { canonical: "/politica-de-privacidade" },
 };
 
 export default function PoliticaDePrivacidadePage() {

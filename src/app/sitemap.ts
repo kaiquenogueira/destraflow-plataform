@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { platformBrand } from "@destraflow/brand";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://www.destraflow.com.br";
+  const baseUrl = platformBrand.siteUrl;
 
   return [
     { url: baseUrl, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },

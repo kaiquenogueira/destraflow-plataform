@@ -21,4 +21,13 @@ const installed = JSON.parse(read("node_modules/@destraflow/brand/package.json")
 assert.equal(installed.name, "@destraflow/brand");
 assert.equal(installed.version, version);
 
+const brandSource = read("node_modules/@destraflow/brand/src/index.ts").toString("utf8");
+const siteUrl = brandSource.match(/siteUrl:\s*'([^']+)'/)?.[1];
+const loginUrl = brandSource.match(/loginUrl:\s*'([^']+)'/)?.[1];
+assert.ok(siteUrl && loginUrl, "URLs da marca não encontradas na fonte instalada");
+const llms = read("public/llms.txt").toString("utf8");
+assert.ok(llms.includes(`[Página inicial](${siteUrl}/)`), "llms.txt difere do siteUrl da marca");
+assert.ok(llms.includes(`[Acesso ao CRM](${loginUrl})`), "llms.txt difere do loginUrl da marca");
+assert.ok(!llms.includes(`https://www.${new URL(siteUrl).host}`), "llms.txt contém o host www não canônico");
+
 console.log(`check-brand-package: @destraflow/brand@${version}, release SHA-256 conferido`);

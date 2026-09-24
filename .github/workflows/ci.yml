@@ -25,6 +25,9 @@ jobs:
       - name: Verify brand release
         run: npm run check:brand
 
+      - name: Verify UI colors
+        run: npm run check:ui
+
       - name: Lint
         run: npm run lint
 

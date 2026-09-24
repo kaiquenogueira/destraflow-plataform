@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "check:brand": "node scripts/check-brand-package.mjs",
+    "check:ui": "node --test scripts/check-ui-literals.test.mjs && node scripts/check-ui-literals.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

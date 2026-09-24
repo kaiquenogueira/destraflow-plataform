@@ -1,6 +1,6 @@
-# Destraflow — Site institucional
+# Destraflow Tech — Site institucional
 
-Landing page e páginas legais da Destraflow, hospedadas na Vercel.
+Landing page e páginas legais da Destraflow Tech, hospedadas na Vercel. A identidade vem de `@destraflow/brand@0.1.0`; veja [docs/s41-f7-consumo-da-marca.md](docs/s41-f7-consumo-da-marca.md) para atualização e rollback da versão fixada.
 
 ## Stack
 
@@ -12,7 +12,9 @@ Landing page e páginas legais da Destraflow, hospedadas na Vercel.
 ## Desenvolvimento
 
 ```bash
-npm install
+npm ci
+npm run check:brand
+npm run check:ui
 npm run dev
 ```
 
@@ -25,22 +27,13 @@ npm start
 
 ## Deploy na Vercel
 
-1. Crie um projeto na Vercel conectado ao repositório.
-2. Adicione o domínio `www.destraflow.com.br` nas configurações do projeto.
-3. O domínio `destraflow.com.br` deve apontar para o deploy via redirect (ver DNS abaixo).
+1. Conecte o repositório ao projeto Vercel e configure os domínios `destraflow.com.br` e `www.destraflow.com.br`.
+2. Configure `destraflow.com.br` como domínio primário. `www.destraflow.com.br` deve redirecionar permanentemente para ele, preservando caminho e query.
+3. Antes do aceite em produção, confirme resolução DNS dos dois hosts, certificado TLS, canonical, sitemap, robots e retorno do login ao CRM.
 
 ## DNS na Cloudflare
 
-Configure os seguintes registros DNS para o domínio `destraflow.com.br`:
-
-| Tipo | Nome  | Conteúdo              | Proxy |
-|------|-------|-----------------------|-------|
-| CNAME | www   | cname.vercel-dns.com  | DNS only (cinza) |
-| A    | @     | 76.76.21.21           | DNS only (cinza) |
-
-Na Vercel, adicione ambos os domínios (`destraflow.com.br` e `www.destraflow.com.br`). A Vercel faz o redirect automático de `destraflow.com.br` para `www.destraflow.com.br`.
-
-> **Importante:** mantenha o proxy do Cloudflare desligado (DNS only) para os registros da Vercel, caso contrário o SSL pode conflitar.
+Use os valores DNS exibidos pela Vercel para cada domínio. O registro de apex (`@`) também precisa existir: o código da landing e a fonte de marca definem `https://destraflow.com.br` como endereço canônico. Mantenha o proxy do Cloudflare desligado (DNS only) para os registros apontados à Vercel.
 
 ## Páginas
 
@@ -49,7 +42,7 @@ Na Vercel, adicione ambos os domínios (`destraflow.com.br` e `www.destraflow.co
 | `/`                        | Landing page               |
 | `/politica-de-privacidade` | Política de Privacidade    |
 | `/termos-de-uso`           | Termos de Uso              |
-| `/termos-de-servico`       | Redirect 301 → /termos-de-uso |
+| `/termos-de-servico`       | Redirect permanente → /termos-de-uso |
 | `/exclusao-de-dados`       | Exclusão de Dados          |
 | `/politica-de-reembolso`   | Política de Reembolso      |
 

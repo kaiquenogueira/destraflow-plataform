@@ -1,265 +1,137 @@
 import Image from "next/image";
-import { Check, Phone, Laptop } from "lucide-react";
+import { ArrowUpRight, MessageSquareText, PanelsTopLeft, Workflow } from "lucide-react";
 import { BookingFunnel } from "@/components/booking-funnel";
+import { CrmPreview } from "@/components/crm-preview";
 import { FaqSection } from "@/components/faq-section";
+
+const capabilities = [
+  {
+    icon: MessageSquareText,
+    title: "Atendimento com contexto",
+    description: "Conversas, mídias e histórico ficam no Inbox. A equipe vê quando a IA respondeu e pode assumir o contato.",
+  },
+  {
+    icon: PanelsTopLeft,
+    title: "Oportunidades à vista",
+    description: "O funil reúne etapas, responsáveis e próximos passos para acompanhar cada pedido de viagem.",
+  },
+  {
+    icon: Workflow,
+    title: "IA dentro do processo",
+    description: "Respostas e rascunhos usam as informações configuradas para a agência, com supervisão humana.",
+  },
+];
+
+const delivery = [
+  { title: "Inbox", description: "Um lugar para ler conversas, revisar respostas e continuar o atendimento." },
+  { title: "Funil", description: "Etapas de trabalho para acompanhar oportunidades e distribuir responsabilidades." },
+  { title: "Cotações", description: "Informações da viagem organizadas para apoiar a preparação de propostas." },
+  { title: "Configuração", description: "Ajustes de equipe, conhecimento e fluxos usados pela operação." },
+];
+
+const process = [
+  { title: "Entender a operação", description: "Conversamos sobre o atendimento atual, os produtos e o trabalho da equipe." },
+  { title: "Configurar a plataforma", description: "Organizamos o CRM, o canal e as informações que orientam os fluxos de IA." },
+  { title: "Preparar a equipe", description: "Apresentamos o Inbox, o funil e as formas de revisão e intervenção humana." },
+  { title: "Acompanhar o uso", description: "Ajustamos a configuração junto da agência conforme a rotina de trabalho." },
+];
 
 export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <CredibilityBar />
-      <ProblemaSection />
-      <SolucaoSection />
-      <EntregasSection />
-      <ComoFuncionaSection />
-      <HumanoNoControleSection />
-      <EquipeSection />
-      <AgendarSection />
+      <SolutionSection />
+      <DeliverySection />
+      <ProcessSection />
+      <TeamSection />
+      <BookingSection />
       <FaqSection />
-      <CtaFinalSection />
+      <FinalSection />
       <MobileStickyBar />
     </>
   );
 }
 
-/* =====================================================================
-   HERO SECTION
-   ===================================================================== */
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden isolate pt-28 pb-12 sm:pt-36 sm:pb-20 lg:pt-44 lg:pb-32 bg-[#08090a]">
-      {/* Background ambient radial glow (contained and centered to prevent iOS horizontal overflow) */}
-      <div className="pointer-events-none absolute inset-x-0 -top-20 mx-auto h-[320px] sm:h-[640px] w-full max-w-[800px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(199,160,107,0.18)_0%,rgba(199,160,107,0.03)_50%,transparent_75%)] blur-2xl sm:blur-3xl" />
-
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
-          <div className="animate-fade-in space-y-5 sm:space-y-6">
-            <div className="kicker">
-              Tecnologia para agências de viagens
-            </div>
-
-            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-[66px] lg:leading-[1.03]">
-              Mais tecnologia para <span className="gold-gradient-text">vender mais Orlando.</span>
-            </h1>
-
-            <p className="max-w-xl text-sm sm:text-lg leading-relaxed text-[#d8d3cb]">
-              Implantamos um CRM especialista em Orlando com inteligência artificial integrada: atendimento automatizado no WhatsApp, cotações mais rápidas e uma operação que para de depender de esforço manual.
-            </p>
-
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
-              <a href="#agendar" className="btn-gold w-full sm:w-auto text-sm sm:text-base">
-                Agendar vídeo conferência →
-              </a>
-              <a href="#solucao" className="btn-ghost w-full sm:w-auto text-sm sm:text-base">
-                Ver como funciona
-              </a>
-            </div>
-
-            <div className="flex items-center gap-2.5 pt-1 text-xs sm:text-sm text-[#8d8880]">
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4ade80] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#4ade80]" />
-              </span>
-              <span>Conversas de 45 minutos, das 14h às 20h — escolha seu horário no formulário.</span>
-            </div>
+    <section className="bg-background pb-20 pt-36 sm:pb-28 sm:pt-44">
+      <div className="site-container grid items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
+        <div className="max-w-2xl">
+          <span className="site-rule" aria-hidden="true" />
+          <p className="mt-7 text-sm font-medium text-gold">CRM para agências que vendem Orlando</p>
+          <h1 className="site-heading mt-5 text-[clamp(2.8rem,5.2vw,5rem)] text-foreground">
+            Orlando exige contexto. Sua operação também.
+          </h1>
+          <p className="mt-7 max-w-[62ch] text-base leading-8 text-muted sm:text-lg">
+            A Destraflow Tech reúne atendimento no WhatsApp, inteligência artificial,
+            cotações e acompanhamento em uma plataforma feita para a rotina da agência.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href="#agendar" className="site-button site-button-primary">
+              Agendar conversa <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+            <a href="#solucao" className="site-button site-button-secondary">Conhecer a solução</a>
           </div>
-
-          <div className="relative animate-slide-up">
-            {/* Soft decorative glow container (contained within element bounds) */}
-            <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-[#c7a06b]/20 to-transparent blur-md sm:blur-xl -z-10" />
-
-            <figure className="overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.12] bg-[#121417] shadow-2xl">
-              <div className="relative aspect-[4/3] sm:aspect-[4/4] lg:aspect-[4/4.5] w-full overflow-hidden">
-                <Image
-                  src="/images/hero.png"
-                  alt="Eduardo e Kaique da Destraflow Tech em Orlando"
-                  fill
-                  className="object-cover object-top"
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 500px"
-                />
-              </div>
-              <figcaption className="flex items-center justify-between border-t border-[#c7a06b]/25 bg-gradient-to-b from-[#0e1012] to-[#08090a] px-4 py-3 sm:px-5 sm:py-3.5">
-                <div>
-                  <b className="block text-xs sm:text-sm font-bold text-white">Eduardo</b>
-                  <span className="text-[11px] sm:text-xs text-[#8d8880]">Turismo · Estratégia</span>
-                </div>
-                <div className="text-right">
-                  <b className="block text-xs sm:text-sm font-bold text-white">Kaique</b>
-                  <span className="text-[11px] sm:text-xs text-[#8d8880]">Tecnologia · IA</span>
-                </div>
-              </figcaption>
-            </figure>
-          </div>
+          <p className="mt-5 text-sm text-faint">Você escolhe um horário e fala com o time sobre a sua operação.</p>
         </div>
+        <CrmPreview />
       </div>
     </section>
   );
 }
 
-/* =====================================================================
-   CREDIBILITY BAR
-   ===================================================================== */
-function CredibilityBar() {
-  const metrics = [
-    { value: "+1.000", label: "clientes atendidos" },
-    { value: "15 anos", label: "de mercado e operação" },
-    { value: "Orlando", label: "especialização real" },
-    { value: "IA + CRM", label: "integrados ao processo" },
-  ];
-
+function SolutionSection() {
   return (
-    <div className="border-y border-white/[0.08] bg-[#0b0c0e] py-6 sm:py-7">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-4 text-center">
-          {metrics.map((item) => (
-            <div key={item.label} className="space-y-1">
-              <strong className="block text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
-                {item.value}
-              </strong>
-              <span className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-[#8d8880]">
-                {item.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* =====================================================================
-   PROBLEMA SECTION (Warm Cream / Off-White Contrast)
-   ===================================================================== */
-function ProblemaSection() {
-  const pains = [
-    {
-      symbol: "◌",
-      title: "Atendimento que não para",
-      description: "WhatsApp lotado, mesmas perguntas todo dia sobre parques e ingressos, e respostas que dependem de alguém estar livre.",
-    },
-    {
-      symbol: "▤",
-      title: "Cotação demorada",
-      description: "Informação espalhada em planilha, print e conversas antigas. Cada nova oportunidade para cotação de Orlando custa horas preciosas.",
-    },
-    {
-      symbol: "⚙",
-      title: "Follow-up que se perde",
-      description: "Lead que esfria, orçamento enviado sem retorno ativo e reserva sem acompanhamento contínuo — sem o time perceber a perda.",
-    },
-  ];
-
-  return (
-    <section id="problema" className="bg-[#f6f1e8] py-12 sm:py-20 lg:py-28 text-[#16181b]">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="max-w-2xl space-y-2.5 sm:space-y-3">
-          <div className="kicker-cream">O desafio das agências hoje</div>
-          <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-[#14100b]">
-            Muito trabalho para dar conta de tudo?
-          </h2>
-          <p className="text-sm sm:text-lg leading-relaxed text-[#5d5952]">
-            Vender Orlando exige detalhe: parque, ingresso, hotel, transfer, seguro e roteiro. O problema começa quando a operação consome o tempo que deveria estar sendo usado exclusivamente para vender.
+    <section id="solucao" className="border-t border-border bg-surface py-20 sm:py-28">
+      <div className="site-container">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
+          <div>
+            <p className="text-sm font-medium text-gold">A solução</p>
+            <h2 className="site-heading mt-4 max-w-lg text-4xl text-foreground sm:text-5xl">
+              O atendimento ganha continuidade.
+            </h2>
+          </div>
+          <p className="max-w-[66ch] text-base leading-8 text-muted sm:pt-9">
+            Uma venda de Orlando passa por datas, viajantes, ingressos, hospedagem e muitas
+            conversas. O CRM mantém essas informações próximas de quem atende, enquanto a
+            IA ajuda nas etapas configuradas para a agência.
           </p>
         </div>
-
-        <div className="mt-8 sm:mt-12 grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {pains.map((p) => (
-            <article
-              key={p.title}
-              className="rounded-2xl sm:rounded-3xl border border-black/[0.08] bg-white/80 p-5 sm:p-7 shadow-sm transition-transform hover:-translate-y-1"
-            >
-              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-[#111315] text-[#e3c79b] text-lg sm:text-xl font-extrabold mb-4 sm:mb-5 border border-[#c7a06b]/30">
-                {p.symbol}
-              </div>
-              <h3 className="text-base sm:text-lg font-bold text-[#14100b] mb-1.5">{p.title}</h3>
-              <p className="text-xs sm:text-sm leading-relaxed text-[#5d5952]">{p.description}</p>
+        <div className="mt-14 grid gap-8 border-t border-border pt-10 md:grid-cols-3">
+          {capabilities.map((item) => (
+            <article key={item.title} className="max-w-sm">
+              <item.icon className="h-6 w-6 text-gold" strokeWidth={1.5} aria-hidden="true" />
+              <h3 className="mt-6 text-xl font-medium tracking-tight text-foreground">{item.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-muted">{item.description}</p>
             </article>
           ))}
         </div>
-
-        <div className="mt-8 sm:mt-10">
-          <a href="#agendar" className="btn-gold w-full sm:w-auto">
-            Quero resolver isso na minha agência →
-          </a>
-        </div>
       </div>
     </section>
   );
 }
 
-/* =====================================================================
-   SOLUÇÃO SECTION
-   ===================================================================== */
-function SolucaoSection() {
-  const checks = [
-    {
-      title: "Atendimento automático e inteligente",
-      desc: "A IA responde no WhatsApp 24/7, qualifica datas, grupo e orçamento, entregando o lead pronto para o vendedor fechar.",
-    },
-    {
-      title: "Cotações rápidas e personalizadas",
-      desc: "Menos digitação repetitiva, mais proposta estruturada na mão do passageiro no mesmo dia.",
-    },
-    {
-      title: "Organização e acompanhamento de clientes",
-      desc: "Cada lead com etapa, consultor responsável e próximo passo de contato visíveis no funil.",
-    },
-    {
-      title: "Integração com parques, hotéis, transfer e seguro",
-      desc: "O CRM entende o produto que você vende — não é um software genérico adaptado às pressas.",
-    },
-  ];
-
+function DeliverySection() {
   return (
-    <section id="solucao" className="bg-[#08090a] py-12 sm:py-20 lg:py-28 border-t border-white/[0.08]">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-          <div className="space-y-5 sm:space-y-6">
-            <div className="kicker">A solução Destraflow</div>
-            <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Inteligência artificial a favor <span className="gold-gradient-text">da sua agência.</span>
-            </h2>
-            <p className="text-sm sm:text-base text-[#a8a39b] leading-relaxed">
-              Automatizamos processos, organizamos informação e deixamos sua equipe focada no que realmente importa: vender e encantar clientes com viagens inesquecíveis.
+    <section id="entregas" data-theme="dark" className="bg-background py-20 text-foreground sm:py-28">
+      <div className="site-container">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
+          <div>
+            <span className="site-rule" aria-hidden="true" />
+            <h2 className="site-heading mt-7 max-w-lg text-4xl sm:text-5xl">A plataforma acompanha o trabalho real.</h2>
+            <p className="mt-6 max-w-md text-base leading-8 text-muted">
+              As telas reúnem o que a equipe precisa para atender, preparar propostas e
+              acompanhar oportunidades.
             </p>
-
-            <div className="space-y-3 sm:space-y-4 pt-1">
-              {checks.map((item) => (
-                <div key={item.title} className="flex items-start gap-3 sm:gap-3.5">
-                  <div className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-[#111315] text-[#e3c79b] border border-[#c7a06b]/40 text-xs mt-0.5">
-                    <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  </div>
-                  <div>
-                    <strong className="block text-xs sm:text-sm font-bold text-white mb-0.5">{item.title}</strong>
-                    <span className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">{item.desc}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2 sm:pt-4">
-              <a href="#agendar" className="btn-gold w-full sm:w-auto">
-                Quero entender a solução →
-              </a>
-            </div>
+            <a href="#agendar" className="site-button site-button-primary mt-8">Conversar sobre a implantação</a>
           </div>
-
-          <div className="relative">
-            <figure className="overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.1] bg-[#121417] shadow-2xl">
-              <div className="relative aspect-[16/11] sm:aspect-[4/3] lg:aspect-[9/14] w-full overflow-hidden">
-                <Image
-                  src="/images/solucao.jpg"
-                  alt="Atendimento da IA da Destraflow no WhatsApp para agências de Orlando"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 480px"
-                />
-              </div>
-              <figcaption className="p-3 text-center text-[11px] sm:text-xs tracking-wider uppercase text-[#7c776f] bg-[#0c0d0f] border-t border-white/[0.06]">
-                Atendimento da IA no WhatsApp · imagem ilustrativa
-              </figcaption>
-            </figure>
+          <div className="grid gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-2">
+            {delivery.map((item) => (
+              <article key={item.title} className="min-h-44 bg-surface p-7">
+                <h3 className="text-xl font-medium tracking-tight text-foreground">{item.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-muted">{item.description}</p>
+              </article>
+            ))}
           </div>
         </div>
       </div>
@@ -267,374 +139,112 @@ function SolucaoSection() {
   );
 }
 
-/* =====================================================================
-   ENTREGAS SECTION (Cream Light Contrast)
-   ===================================================================== */
-function EntregasSection() {
-  const deliveries = [
-    {
-      ico: "◈",
-      title: "Briefing de cotação em 2 minutos",
-      desc: "A IA extrai datas, parques Disney e Universal, idades exatas das crianças (regras de gratuidade), hotel e carro. O consultor só copia e emite na operadora parceira.",
-    },
-    {
-      ico: "✦",
-      title: "Fila inteligente por prioridade",
-      desc: "Classificação em 4 eixos (viagens urgentes ≤ 7 dias, clientes comparadores com cotação na mão e leads premium no topo da fila para bater a concorrência).",
-    },
-    {
-      ico: "⌁",
-      title: "O 'Eco' no WhatsApp (Híbrido Real)",
-      desc: "Seu consultor pode responder pelo aplicativo comum do WhatsApp no celular. O CRM detecta, assume o atendimento e pausa a IA instantaneamente.",
-    },
-    {
-      ico: "▦",
-      title: "Debounce de rajadas, áudios e prints",
-      desc: "A IA aguarda o cliente terminar de falar (~12s), transcreve múltiplos áudios, lê prints de orçamentos concorrentes e responde em um único turno coeso.",
-    },
-    {
-      ico: "◧",
-      title: "Cadências automáticas de follow-up",
-      desc: "Retomadas inteligentes e não invasivas (+2h, +1d, +3d, +7d...) para orçamentos enviados, reativando leads frios antes que comprem em outra agência.",
-    },
-    {
-      ico: "⟐",
-      title: "Escalonamento ativo no WhatsApp",
-      desc: "Alertas automáticos no WhatsApp do consultor quando o cliente pede link de pagamento, tem dúvidas fora da base ou está pronto para fechar.",
-    },
-  ];
-
+function ProcessSection() {
   return (
-    <section id="entregas" className="bg-[#f6f1e8] py-12 sm:py-20 lg:py-28 text-[#16181b] border-y border-black/[0.06]">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="max-w-2xl space-y-2.5 sm:space-y-3">
-          <div className="kicker-cream">O que entra na implantação</div>
-          <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-[#14100b]">
-            Não é só uma ferramenta. <span className="text-[#9a7549]">É a operação montada.</span>
-          </h2>
-          <p className="text-sm sm:text-lg leading-relaxed text-[#5d5952]">
-            A Destraflow apoia a implantação ponta a ponta: configuramos, treinamos a IA com as regras da sua agência e acompanhamos os resultados.
-          </p>
-        </div>
-
-        <div className="mt-8 sm:mt-12 grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {deliveries.map((item) => (
-            <article
-              key={item.title}
-              className="rounded-2xl sm:rounded-3xl border border-black/[0.08] bg-white/80 p-5 sm:p-7 shadow-sm transition-transform hover:-translate-y-1"
-            >
-              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-[#111315] text-[#e3c79b] text-lg sm:text-xl font-extrabold mb-4 sm:mb-5 border border-[#c7a06b]/30">
-                {item.ico}
-              </div>
-              <h3 className="text-base sm:text-lg font-bold text-[#14100b] mb-1.5">{item.title}</h3>
-              <p className="text-xs sm:text-sm leading-relaxed text-[#5d5952]">{item.desc}</p>
+    <section id="como" className="bg-background py-20 sm:py-28">
+      <div className="site-container">
+        <p className="text-sm font-medium text-gold">Como funciona</p>
+        <h2 className="site-heading mt-4 max-w-2xl text-4xl text-foreground sm:text-5xl">
+          Da primeira conversa ao uso diário.
+        </h2>
+        <div className="mt-12 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
+          {process.map((step, index) => (
+            <article key={step.title} className="border-t border-border-strong pt-5">
+              <span className="text-sm font-medium text-gold">{String(index + 1).padStart(2, "0")}</span>
+              <h3 className="mt-5 text-xl font-medium tracking-tight text-foreground">{step.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-muted">{step.description}</p>
             </article>
           ))}
         </div>
-
-        <div className="mt-8 sm:mt-10">
-          <a href="#agendar" className="btn-gold w-full sm:w-auto">
-            Agendar uma conversa sobre a implantação →
-          </a>
-        </div>
       </div>
     </section>
   );
 }
 
-/* =====================================================================
-   COMO FUNCIONA SECTION
-   ===================================================================== */
-function ComoFuncionaSection() {
-  const steps = [
-    {
-      num: "1",
-      title: "Entendemos sua realidade",
-      desc: "Mapeamos os processos atuais, gargalos e o jeito que a sua agência atende e vende hoje.",
-    },
-    {
-      num: "2",
-      title: "Implantamos a solução",
-      desc: "CRM especialista, automações, IA treinada e integrações configuradas para a sua operação.",
-    },
-    {
-      num: "3",
-      title: "Treinamos sua equipe",
-      desc: "Seu time aprende o fluxo e se torna apto a operar a ferramenta e converter muito mais.",
-    },
-    {
-      num: "4",
-      title: "Acompanhamos os resultados",
-      desc: "Ajuste contínuo das abordagens e métricas com base no que os dados de vendas mostram.",
-    },
-  ];
-
+function TeamSection() {
   return (
-    <section id="como" className="bg-[#0f1113] py-12 sm:py-20 lg:py-28 text-white">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
-          <div className="order-2 lg:order-1">
-            <figure className="overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.1] bg-[#121417] shadow-2xl">
-              <div className="relative aspect-[16/11] sm:aspect-[16/13.5] w-full overflow-hidden">
-                <Image
-                  src="/images/comofunciona.jpg"
-                  alt="Painel do CRM Destraflow com métricas de agências de Orlando"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 520px"
-                />
-              </div>
-              <figcaption className="p-3 text-center text-[11px] sm:text-xs tracking-wider uppercase text-[#7c776f] bg-[#0c0d0f] border-t border-white/[0.06]">
-                Painel do CRM · imagem ilustrativa
-              </figcaption>
-            </figure>
-          </div>
-
-          <div className="order-1 lg:order-2 space-y-5 sm:space-y-6">
-            <div className="kicker">Como funciona</div>
-            <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Tecnologia na prática, <span className="gold-gradient-text">do seu lado.</span>
-            </h2>
-            <p className="text-sm sm:text-base text-[#a8a39b] leading-relaxed">
-              Quatro etapas claras, do diagnóstico inicial ao acompanhamento contínuo — com a nossa equipe junto em todas elas.
-            </p>
-
-            <div className="space-y-3 sm:space-y-4 pt-1">
-              {steps.map((s) => (
-                <div key={s.num} className="flex items-start gap-3 sm:gap-4 rounded-xl sm:rounded-2xl border border-white/[0.06] bg-[#141618] p-3.5 sm:p-4">
-                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-[#1c1f24] text-[#e3c79b] font-extrabold text-sm sm:text-base border border-[#c7a06b]/30">
-                    {s.num}
-                  </div>
-                  <div>
-                    <strong className="block text-sm sm:text-base font-bold text-white mb-0.5">{s.title}</strong>
-                    <span className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">{s.desc}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2">
-              <a href="#agendar" className="btn-gold w-full sm:w-auto">
-                Começar pelo diagnóstico →
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* =====================================================================
-   HUMANO NO CONTROLE & META API (Technical Security & Hybrid Operation)
-   ===================================================================== */
-function HumanoNoControleSection() {
-  return (
-    <section className="bg-[#08090a] py-12 sm:py-20 lg:py-24 border-t border-white/[0.08]">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-          <div className="space-y-5">
-            <div className="kicker">Segurança & Autonomia</div>
-            <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
-              O atendente humano <span className="gold-gradient-text">sempre no comando.</span>
-            </h2>
-            <p className="text-sm sm:text-base text-[#a8a39b] leading-relaxed">
-              A IA não é uma caixa preta incontrolável. Ela atende no primeiro segundo, qualifica o passageiro e entrega a cotação pronta. A qualquer momento, seu vendedor assume o contato pelo computador ou diretamente pelo celular, com ferramentas de proteção ativa.
-            </p>
-            <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm text-[#d8d3cb] pt-1">
-              <li className="flex items-start sm:items-center gap-3">
-                <Check className="h-4 w-4 text-[#e3c79b] shrink-0 mt-0.5 sm:mt-0" />
-                <span>Mecanismo de Eco: responda pelo app do WhatsApp no celular e a IA pausa na hora</span>
-              </li>
-              <li className="flex items-start sm:items-center gap-3">
-                <Check className="h-4 w-4 text-[#e3c79b] shrink-0 mt-0.5 sm:mt-0" />
-                <span>Shadow Mode: aprove rascunhos da IA em 1 clique antes do envio aos clientes</span>
-              </li>
-              <li className="flex items-start sm:items-center gap-3">
-                <Check className="h-4 w-4 text-[#e3c79b] shrink-0 mt-0.5 sm:mt-0" />
-                <span>Escalonamento: alertas no WhatsApp do vendedor quando o cliente pede link de pagamento</span>
-              </li>
-              <li className="flex items-start sm:items-center gap-3">
-                <Check className="h-4 w-4 text-[#e3c79b] shrink-0 mt-0.5 sm:mt-0" />
-                <span>Conexão oficial Meta Cloud API: isolamento de dados, LGPD e zero risco de banimento</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-[#121417] p-5 sm:p-6 space-y-2.5 sm:space-y-3">
-              <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-[#c7a06b]/10 text-[#e3c79b] border border-[#c7a06b]/20">
-                <Phone className="h-5 w-5" />
-              </div>
-              <h3 className="text-base font-bold text-white">Mecanismo de Eco</h3>
-              <p className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">
-                Seu consultor responde pelo próprio celular no WhatsApp tradicional. O CRM detecta a fala humana e pausa a IA na mesma transação.
-              </p>
-            </div>
-
-            <div className="rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-[#121417] p-5 sm:p-6 space-y-2.5 sm:space-y-3">
-              <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-[#c7a06b]/10 text-[#e3c79b] border border-[#c7a06b]/20">
-                <Laptop className="h-5 w-5" />
-              </div>
-              <h3 className="text-base font-bold text-white">Shadow Mode & Inbox</h3>
-              <p className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">
-                Opção de operar com rascunhos assistidos: a IA gera a resposta perfeita e seu time só aprova ou edita em um toque.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* =====================================================================
-   EQUIPE / QUEM SOMOS SECTION
-   ===================================================================== */
-function EquipeSection() {
-  return (
-    <section id="equipe" className="bg-[#0b0c0e] py-12 sm:py-20 lg:py-28 border-t border-white/[0.08]">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="max-w-2xl space-y-2.5 sm:space-y-3">
-          <div className="kicker">Quem está por trás</div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Turismo e tecnologia na <span className="gold-gradient-text">mesma direção.</span>
-          </h2>
-          <p className="text-sm sm:text-lg leading-relaxed text-[#a8a39b]">
-            A união de quem vive a operação diária de uma agência de Orlando com quem constrói arquitetura de software e inteligência artificial de ponta.
+    <section id="equipe" className="border-y border-border bg-surface-raised py-20 sm:py-28">
+      <div className="site-container">
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium text-gold">Quem está por trás</p>
+          <h2 className="site-heading mt-4 text-4xl text-foreground sm:text-5xl">Turismo e tecnologia na mesma conversa.</h2>
+          <p className="mt-5 text-base leading-8 text-muted">
+            A plataforma combina a experiência de operação de uma agência com o trabalho
+            de engenharia de software e inteligência artificial.
           </p>
         </div>
-
-        <div className="mt-8 sm:mt-12 grid gap-6 sm:gap-8 sm:grid-cols-2">
-          {/* Eduardo */}
-          <figure className="overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.1] bg-[#121417] shadow-xl">
-            <div className="relative aspect-[4/3.5] sm:aspect-[4/4.8] w-full overflow-hidden bg-[#16181b]">
-              <Image
-                src="/images/eduardo.png"
-                alt="Eduardo, fundador da Encantrip Turismo"
-                fill
-                className="object-cover object-top"
-                sizes="(max-width: 768px) 100vw, 450px"
-              />
-            </div>
-            <figcaption className="p-5 sm:p-7 space-y-3">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-white">Eduardo</h3>
-                <p className="text-[11px] sm:text-xs uppercase font-bold tracking-wider text-[#e3c79b]">
-                  Turismo • Estratégia • Orlando
-                </p>
-              </div>
-              <p className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">
-                Mais de 15 anos de mercado, hoje 100% dedicado ao turismo. Fundador da Encantrip Turismo, agência especializada em Orlando associada à Visit Orlando e com selo Cadastur, com mais de 1.000 clientes atendidos. O EncantripCRM foi forjado e validado na prática em mais de 5.400 linhas de diálogos reais de atendimento e vendas de parques.
-              </p>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1 sm:pt-2">
-                {["Fundador Encantrip", "+1.000 clientes", "Visit Orlando & Cadastur", "Validação em Produção"].map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-[#c7a06b]/30 bg-[#c7a06b]/10 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-[#e3c79b]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </figcaption>
-          </figure>
-
-          {/* Kaique */}
-          <figure className="overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.1] bg-[#121417] shadow-xl">
-            <div className="relative aspect-[4/3.5] sm:aspect-[4/4.8] w-full overflow-hidden bg-[#16181b]">
-              <Image
-                src="/images/kaique.png"
-                alt="Kaique, Tech Lead e AI Engineer da Destraflow Tech"
-                fill
-                className="object-cover object-top"
-                sizes="(max-width: 768px) 100vw, 450px"
-              />
-            </div>
-            <figcaption className="p-5 sm:p-7 space-y-3">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-white">Kaique</h3>
-                <p className="text-[11px] sm:text-xs uppercase font-bold tracking-wider text-[#e3c79b]">
-                  Tecnologia • Automação • Inteligência Artificial
-                </p>
-              </div>
-              <p className="text-xs sm:text-sm text-[#a8a39b] leading-relaxed">
-                Tech Lead e AI Engineer, com sólida experiência em engenharia de software e inteligência artificial aplicada. Constrói as integrações, as automações e a arquitetura que sustentam a operação — tecnologia feita para resolver problemas reais de conversão de leads.
-              </p>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1 sm:pt-2">
-                {["Tech Lead | AI Engineer", "Integrações & API", "Inteligência Artificial", "Arquitetura de Soluções"].map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-[#c7a06b]/30 bg-[#c7a06b]/10 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-[#e3c79b]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </figcaption>
-          </figure>
-        </div>
-
-        <div className="mt-8 sm:mt-10">
-          <a href="#agendar" className="btn-gold w-full sm:w-auto">
-            Falar com a gente por vídeo →
-          </a>
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          <TeamMember
+            image="/images/eduardo.png"
+            name="Eduardo"
+            role="Turismo e estratégia"
+            alt="Eduardo, fundador da Encantrip Turismo"
+            bio="Fundador da Encantrip Turismo, atua na operação de viagens para Orlando e traz essa experiência para a configuração do produto."
+          />
+          <TeamMember
+            image="/images/kaique.png"
+            name="Kaique"
+            role="Tecnologia e inteligência artificial"
+            alt="Kaique, responsável pela tecnologia da Destraflow Tech"
+            bio="Trabalha na arquitetura do CRM, nas integrações e nos fluxos de inteligência artificial da Destraflow Tech."
+          />
         </div>
       </div>
     </section>
   );
 }
 
-/* =====================================================================
-   AGENDAR SECTION (Funil Interativo de Conversão)
-   ===================================================================== */
-function AgendarSection() {
+function TeamMember({ image, name, role, alt, bio }: { image: string; name: string; role: string; alt: string; bio: string }) {
   return (
-    <section id="agendar" className="bg-[#08090a] py-12 sm:py-20 lg:py-28 border-t border-white/[0.08]">
-      <div className="mx-auto max-w-6xl px-3 sm:px-6">
+    <figure className="grid overflow-hidden rounded-card border border-border bg-surface sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+      <div className="relative aspect-[4/3] min-h-52 sm:aspect-auto">
+        <Image src={image} alt={alt} fill className="object-cover object-top" sizes="(max-width: 640px) 100vw, 260px" />
+      </div>
+      <figcaption className="flex flex-col justify-center p-6 sm:p-8">
+        <h3 className="text-2xl font-medium tracking-tight text-foreground">{name}</h3>
+        <p className="mt-1 text-sm font-medium text-gold">{role}</p>
+        <p className="mt-5 text-sm leading-7 text-muted">{bio}</p>
+      </figcaption>
+    </figure>
+  );
+}
+
+function BookingSection() {
+  return (
+    <section id="agendar" data-theme="dark" className="bg-background py-20 text-foreground sm:py-28">
+      <div className="site-container">
+        <div className="mb-12 max-w-2xl">
+          <span className="site-rule" aria-hidden="true" />
+          <h2 className="site-heading mt-7 text-4xl sm:text-5xl">Vamos conversar sobre a sua agência.</h2>
+          <p className="mt-5 text-base leading-8 text-muted">
+            Responda às perguntas, escolha um horário e prepare a mensagem para o time no WhatsApp.
+            A reunião depende da confirmação da equipe.
+          </p>
+        </div>
         <BookingFunnel />
       </div>
     </section>
   );
 }
 
-/* =====================================================================
-   CTA FINAL SECTION (Warm Off-White Gradient)
-   ===================================================================== */
-function CtaFinalSection() {
+function FinalSection() {
   return (
-    <section className="bg-gradient-to-br from-[#f7f2e9] via-[#f1e7d6] to-[#e8dcc8] py-12 sm:py-20 lg:py-28 text-[#14100b]">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 sm:gap-8">
-          <div className="space-y-2.5 sm:space-y-3 max-w-2xl">
-            <div className="kicker-cream">Próximo passo</div>
-            <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-[#14100b]">
-              Sua agência pode ter mais fluxo, mais tecnologia e menos complexidade.
-            </h2>
-            <p className="text-sm sm:text-lg text-[#5d5952]">
-              Escolha um horário entre 14h e 20h e vamos conversar por vídeo conferência.
-            </p>
-          </div>
-          <div>
-            <a href="#agendar" className="btn-gold w-full sm:w-auto text-sm sm:text-base !py-3.5 sm:!py-4 !px-6 sm:!px-8">
-              Agendar vídeo conferência →
-            </a>
-          </div>
+    <section className="border-t border-border bg-surface py-20 sm:py-24">
+      <div className="site-container flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-2xl">
+          <span className="site-rule" aria-hidden="true" />
+          <h2 className="site-heading mt-6 text-4xl text-foreground sm:text-5xl">Veja como a Destraflow se encaixa na sua operação.</h2>
         </div>
+        <a href="#agendar" className="site-button site-button-primary shrink-0">Agendar conversa</a>
       </div>
     </section>
   );
 }
 
-/* =====================================================================
-   MOBILE STICKY BAR
-   ===================================================================== */
 function MobileStickyBar() {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.1] bg-[#08090a]/95 px-4 pt-3 pb-[max(0.875rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
-      <a href="#agendar" className="btn-gold w-full text-center !py-3 !text-sm">
-        Agendar vídeo conferência →
-      </a>
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md sm:hidden">
+      <a href="#agendar" className="site-button site-button-primary w-full">Agendar conversa</a>
     </div>
   );
 }

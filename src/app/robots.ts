@@ -1,13 +1,14 @@
 import type { MetadataRoute } from "next";
+import { platformBrand } from "@destraflow/brand";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://www.destraflow.com.br";
+  const baseUrl = platformBrand.siteUrl;
 
   return {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: ["/", "/api/og"],
         disallow: ["/api/"],
       },
       // Motores de busca tradicionais (Google, Bing)
@@ -19,7 +20,7 @@ export default function robots(): MetadataRoute.Robots {
           "GoogleOther",
           "Bingbot",
         ],
-        allow: "/",
+        allow: ["/", "/api/og"],
         disallow: ["/api/"],
       },
       // Provedores de IA, Agentes e LLM Search (OpenAI, Anthropic, Perplexity, Google Gemini, Apple Intelligence, Meta AI, Cohere)
@@ -39,7 +40,7 @@ export default function robots(): MetadataRoute.Robots {
           "Meta-ExternalFetcher",
           "cohere-ai",
         ],
-        allow: "/",
+        allow: ["/", "/api/og"],
         disallow: ["/api/"],
       },
     ],

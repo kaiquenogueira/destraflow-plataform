@@ -1,10 +1,19 @@
 import type { NextConfig } from "next";
+import { platformBrand } from "@destraflow/brand";
+
+const siteHost = new URL(platformBrand.siteUrl).host;
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@destraflow/brand"],
 
   async redirects() {
     return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: `www.${siteHost}` }],
+        destination: `${platformBrand.siteUrl}/:path*`,
+        permanent: true,
+      },
       { source: "/termos-de-servico", destination: "/termos-de-uso", permanent: true },
     ];
   },
