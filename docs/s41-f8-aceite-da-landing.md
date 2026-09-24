@@ -106,8 +106,10 @@ republicar a versão anterior; a PR #51 e o artefato `brand-v0.1.0` permanecem.
 Se for necessário voltar também a F7, o procedimento versionado está no
 documento da F7. O deployment anterior não foi removido.
 
-O preview do commit publicado já havia demonstrado visualmente site → login
-do CRM sem fornecer credenciais. O percurso autenticado dentro do CRM não foi
+Depois que o cache DNS local expirou, o Chrome abriu o apex em produção. O
+clique em “Entrar” chegou a `https://crm.destraflow.com.br/login`, com o mesmo
+símbolo, nome Destraflow Tech, composição clara e ação preta/dourada. Nenhuma
+credencial foi inserida. O percurso autenticado dentro do CRM não foi
 executado nesta fatia; pertence ao aceite integrado `P3-224`. A validação em
 Safari de iPhone e Chrome de Android com toque físico fica como `P3-232` no
 backlog do produtor. Nenhuma interação de teste enviou dados a contato real.
