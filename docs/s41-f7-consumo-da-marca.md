@@ -9,6 +9,8 @@ A preparação da distribuição foi integrada na
 commit `e9199d9c984aeffdeeec73494b5c59b1f6b4405e`. A versão aprovada é
 `@destraflow/brand@0.1.0`, publicada na release privada
 [`brand-v0.1.0`](https://github.com/plataformaencantrip-stack/ai-crm/releases/tag/brand-v0.1.0).
+A integração da landing é a
+[PR #51](https://github.com/kaiquenogueira/destraflow-plataform/pull/51).
 
 O arquivo `vendor/destraflow-brand-0.1.0.tgz` foi baixado dessa release; seu
 SHA-256 é `8aacc72cd70894fd84e949eb0ffbafff0a1d13555453b17f31ef08d59d2a5ab1`.
@@ -56,3 +58,8 @@ No produtor, `pnpm install --frozen-lockfile`, lint/typecheck/test do pacote
 passaram localmente. O job de CI da PR #504 não iniciou: o GitHub indicou
 pagamento recente falhado ou limite de gastos da conta. Isso é limitação de
 runner, não resultado de teste de código.
+
+Também foram repetidos em **clones limpos** da tag `brand-v0.1.0` e da branch
+da PR #51: `pnpm install --frozen-lockfile`, testes do pacote, 72/72 AA e
+build do CRM; `npm ci`, `npm run check:brand`, lint e build da landing. A CI e
+o preview Vercel da PR #51 passaram.
