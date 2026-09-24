@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { LegalPage, H2, P, Ul } from "@/components/legal-page";
 
 export const metadata: Metadata = {
-  title: "Termos de Uso — Destraflow",
+  title: "Termos de Uso — Destraflow Tech",
   description: "Termos de Uso da plataforma Destraflow.",
+  alternates: { canonical: "/termos-de-uso" },
 };
 
 export default function TermosDeUsoPage() {

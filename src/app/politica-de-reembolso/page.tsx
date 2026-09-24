@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { LegalPage, H2, P, Ul } from "@/components/legal-page";
 
 export const metadata: Metadata = {
-  title: "Política de Reembolso — Destraflow",
+  title: "Política de Reembolso — Destraflow Tech",
   description: "Política de Reembolso da plataforma Destraflow.",
+  alternates: { canonical: "/politica-de-reembolso" },
 };
 
 export default function PoliticaDeReembolsoPage() {

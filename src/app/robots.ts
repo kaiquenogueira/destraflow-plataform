@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { platformBrand } from "@destraflow/brand";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://www.destraflow.com.br";
+  const baseUrl = platformBrand.siteUrl;
 
   return {
     rules: [

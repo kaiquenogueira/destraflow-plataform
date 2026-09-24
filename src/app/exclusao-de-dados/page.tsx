@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { LegalPage, H2, H3, P, Ul } from "@/components/legal-page";
 
 export const metadata: Metadata = {
-  title: "Exclusão de Dados — Destraflow",
+  title: "Exclusão de Dados — Destraflow Tech",
   description: "Como solicitar a exclusão dos seus dados na plataforma Destraflow.",
+  alternates: { canonical: "/exclusao-de-dados" },
 };
 
 export default function ExclusaoDeDadosPage() {

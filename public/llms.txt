@@ -1,36 +1,22 @@
 # Destraflow Tech
 
-> CRM especialista em agências de viagens que vendem Orlando com Inteligência Artificial integrada no WhatsApp.
+> CRM e inteligência artificial para agências de viagens que vendem Orlando.
 
-Destraflow Tech é uma plataforma de tecnologia e CRM desenvolvida exclusivamente para agências de turismo e vendas de pacotes, ingressos e hospedagem em Orlando/Flórida. O sistema integra atendimento inteligente automatizado via WhatsApp (API Oficial da Meta / Cloud API), acelerando cotações, organizando o funil de vendas e mantendo supervisão humana em todas as etapas críticas.
+A Destraflow Tech reúne atendimento no WhatsApp, conversas e histórico no Inbox, acompanhamento de oportunidades no funil e preparação de cotações. A equipe da agência pode revisar respostas e assumir o atendimento. A configuração da plataforma é feita com a agência.
 
-## Principais Recursos e Diferenciais
+## Links oficiais
 
-- **CRM Especialista em Orlando**: Estruturado para o ciclo de vendas de turismo (ingressos Disney/Universal, hotelaria, seguro viagem, locação de veículos).
-- **Atendimento Automatizado com IA no WhatsApp**: IA treinada nas regras e particularidades do destino Orlando, respondendo dúvidas frequentes, qualificando leads e preparando cotações instantâneas.
-- **Humano no Controle (Human-in-the-Loop)**: O atendente humano pode intervir a qualquer momento no WhatsApp. A IA auxilia nos cálculos e respostas, enquanto o consultor finaliza o fechamento.
-- **Conexão Oficial Meta / WhatsApp Business Platform**: Integração homologada via Cloud API oficial da Meta, garantindo alta estabilidade, segurança e conformidade contra bloqueios de número.
-- **Funil Visual e Métricas**: Acompanhamento em tempo real de novos leads, orçamentos em aberto, cotações enviadas e vendas fechadas.
+- [Página inicial](https://destraflow.com.br/)
+- [Acesso ao CRM](https://crm.destraflow.com.br/login)
+- [Política de Privacidade](https://destraflow.com.br/politica-de-privacidade)
+- [Termos de Uso](https://destraflow.com.br/termos-de-uso)
+- [Política de Reembolso](https://destraflow.com.br/politica-de-reembolso)
+- [Exclusão de Dados](https://destraflow.com.br/exclusao-de-dados)
 
-## Segurança e Conformidade (LGPD)
+## Contato
 
-- **Controlador**: Kaique Nogueira Meneses Consultoria em Tecnologia da Informação LTDA (CNPJ 59.459.911/0001-24).
-- **Adequação LGPD**: Separação clara de dados cadastrais (Destraflow como controladora) e dados dos passageiros/clientes das agências (Destraflow como operadora).
-- **Isolamento de Dados**: Dados isolados por agência com criptografia em trânsito e em repouso.
-- **Direitos do Titular e Exclusão**: Processo formal de exclusão de dados em até 15 dias corridos.
-
-## Links Oficiais e Documentação
-
-- [Página Inicial / Apresentação](https://www.destraflow.com.br/): Apresentação do produto, demonstração e agendamento de videoconferência.
-- [Política de Privacidade](https://www.destraflow.com.br/politica-de-privacidade): Termos de tratamento de dados, bases legais LGPD e encarregado de dados.
-- [Termos de Uso](https://www.destraflow.com.br/termos-de-uso): Regras de uso, SLA, responsabilidades e política de uso aceitável do WhatsApp.
-- [Instruções de Exclusão de Dados](https://www.destraflow.com.br/exclusao-de-dados): Procedimento para solicitação de deleção de dados e desconexão da API Meta.
-- [Política de Reembolso](https://www.destraflow.com.br/politica-de-reembolso): Diretrizes de cancelamento e reembolso.
-
-## Contato e Agendamento
-
-- **Atendimento Comercial e Demonstração**: https://www.destraflow.com.br/#agendar
-- **E-mail Geral**: contato@destraflow.com.br
-- **Privacidade e DPO**: privacidade@destraflow.com.br
-- **Horário de Atendimento**: Segunda a Sexta, das 14h às 20h (Horário de Brasília).
-- **Sede**: Av. Paulista, 1106, Sala 01 Andar 16, Bela Vista, São Paulo - SP, CEP 01.310-914.
+- Empresa: Kaique Nogueira Meneses Consultoria em Tecnologia da Informação LTDA
+- CNPJ: 59.459.911/0001-24
+- E-mail: contato@destraflow.com.br
+- Privacidade: privacidade@destraflow.com.br
+- Endereço: Av. Paulista, 1106, Sala 01 Andar 16, Bela Vista, São Paulo - SP, CEP 01.310-914.
