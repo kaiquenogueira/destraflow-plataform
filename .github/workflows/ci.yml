@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify brand release
+        run: npm run check:brand
+
       - name: Lint
         run: npm run lint
 

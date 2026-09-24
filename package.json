@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "check:brand": "node scripts/check-brand-package.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@destraflow/brand": "file:vendor/destraflow-brand-0.1.0.tgz",
     "clsx": "^2.1.1",
     "lucide-react": "^1.47.0",
     "next": "^16.3.5",
