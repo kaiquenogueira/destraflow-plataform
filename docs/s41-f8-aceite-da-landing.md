@@ -55,6 +55,8 @@ símbolo da fonte; o favicon antigo foi retirado. `maximumScale: 1` saiu.
   preservou dia, horário e contato digitados. Safari: zoom real de 200%, menu
   e avanço do formulário, sem barra horizontal. A apresentação em 390 × 844
   também foi conferida por captura.
+- Em Chrome com toque emulado, menu, link para `/#faq` e primeira resposta do
+  funil funcionaram; em 390 px, `scrollWidth` ficou em 390 px.
 - `axe-core`, em Chrome, não encontrou violações WCAG A/AA na home em
   1440 × 900 e 390 × 844, na privacidade em 390 × 844 e nos termos em
   1440 × 900. Esta varredura não substitui a verificação manual de leitor de
@@ -78,16 +80,34 @@ Antes da F8, `www.destraflow.com.br` respondia em produção, enquanto o apex
 não tinha registro DNS. O apex foi adicionado ao projeto Vercel de produção;
 no Cloudflare, um CNAME DNS only `@` aponta para o destino exigido pelo Vercel.
 Vercel marca apex e `www` como configuração válida. Resolvedores públicos
-`1.1.1.1` e `8.8.8.8` já retornam os IPs do Vercel para o apex, e o HTTPS do
-apex respondeu 200 com TLS válido. O redirect efetivo de `www` para o apex
-depende da publicação da PR #52 e deve ser conferido após o merge.
+`1.1.1.1` e `8.8.8.8` retornam os IPs do Vercel para o apex.
+
+A PR #52 foi integrada em 24/09/2026 às 16:45 UTC, commit
+`55a3b31103c1910179ee8a77bd20368f266dbd61`. O build do `main` e o
+deployment de produção Vercel
+[`4RDdS9rYh69GxzV3JWkAzXGfA2d9`](https://vercel.com/kaiquenogs-projects/destraflow-plataform/4RDdS9rYh69GxzV3JWkAzXGfA2d9)
+passaram. A inspeção HTTPS do apex usou o endereço Vercel retornado pelo DNS
+público com Host e SNI `destraflow.com.br`, pois o resolvedor do navegador
+local ainda guardava a resposta negativa anterior à criação do registro.
+O conteúdo veio do Vercel de produção com TLS válido.
+
+- Home, `/api/og` (PNG), `/icon` (PNG), robots, sitemap, `llms.txt` e as quatro
+  páginas legais responderam 200 no apex. `/termos-de-servico` respondeu 308
+  para `/termos-de-uso`.
+- `https://www.destraflow.com.br/politica-de-privacidade?x=1` respondeu 308
+  para a mesma rota e query no apex.
+- O HTML publicado traz título Destraflow Tech, canonical do apex e
+  `og:image` em `https://destraflow.com.br/api/og`. Robots permite `/api/og`,
+  e sitemap e `llms.txt` usam o mesmo host. O `llms.txt` mantém o destino do
+  login `https://crm.destraflow.com.br/login`, que respondeu 200.
 
 O retorno da F8 é reverter o commit da PR #52 no repositório da landing e
 republicar a versão anterior; a PR #51 e o artefato `brand-v0.1.0` permanecem.
 Se for necessário voltar também a F7, o procedimento versionado está no
 documento da F7. O deployment anterior não foi removido.
 
-Pendente de aceite operacional após a publicação: verificar os dois hosts,
-redirect, imagem social, links legais e percurso site → login → CRM em
-produção. A validação em Safari de iPhone e Chrome de Android com toque físico
-fica registrada como resíduo da F8 no backlog do produtor.
+O preview do commit publicado já havia demonstrado visualmente site → login
+do CRM sem fornecer credenciais. O percurso autenticado dentro do CRM não foi
+executado nesta fatia; pertence ao aceite integrado `P3-224`. A validação em
+Safari de iPhone e Chrome de Android com toque físico fica como `P3-232` no
+backlog do produtor. Nenhuma interação de teste enviou dados a contato real.
