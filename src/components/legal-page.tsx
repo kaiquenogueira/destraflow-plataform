@@ -6,12 +6,12 @@ interface LegalPageProps {
 
 export function LegalPage({ title, lastUpdated, children }: LegalPageProps) {
   return (
-    <div className="min-h-screen bg-background pb-20 pt-36">
-      <article className="site-container max-w-4xl rounded-card border border-border bg-surface px-6 py-10 sm:px-12 sm:py-14">
+    <div className="min-h-screen bg-background pb-14 pt-24 sm:pb-20 sm:pt-36">
+      <article className="site-container max-w-4xl rounded-card border border-border bg-surface px-4 py-7 sm:px-12 sm:py-14">
         <span className="site-rule" aria-hidden="true" />
-        <h1 className="site-heading mt-6 text-4xl text-foreground sm:text-5xl">{title}</h1>
-        <p className="mt-4 text-sm text-muted">Última atualização: {lastUpdated}</p>
-        <div className="mt-12 space-y-6 text-base leading-7 text-muted">{children}</div>
+        <h1 className="site-heading mt-5 text-2xl text-foreground sm:mt-6 sm:text-4xl lg:text-5xl">{title}</h1>
+        <p className="mt-3 text-xs text-muted sm:mt-4 sm:text-sm">Última atualização: {lastUpdated}</p>
+        <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted sm:mt-12 sm:text-base sm:leading-7">{children}</div>
       </article>
     </div>
   );

@@ -513,11 +513,11 @@ export function BookingFunnel() {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-card border border-border bg-surface p-4 sm:p-8 lg:p-12">
+    <div className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-card border border-border bg-surface p-3.5 sm:p-8 lg:p-12">
 
       {/* Toast Notification (above mobile sticky bar) */}
       {toastMsg && (
-        <div className="fixed bottom-24 sm:bottom-10 left-1/2 z-50 -translate-x-1/2 max-w-[90vw] text-center rounded-card border border-signature bg-surface px-4 py-3 text-xs sm:text-sm font-medium text-foreground shadow-[var(--shadow-md)] transition-all">
+        <div className="fixed bottom-20 sm:bottom-10 left-1/2 z-50 -translate-x-1/2 max-w-[92vw] text-center rounded-card border border-signature bg-surface px-4 py-3 text-xs sm:text-sm font-medium text-foreground shadow-[var(--shadow-md)] transition-all">
           {toastMsg}
         </div>
       )}
@@ -576,29 +576,29 @@ export function BookingFunnel() {
         </div>
       )}
 
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14">
         {/* Left column: context */}
-        <div className="space-y-5 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <span className="site-rule" aria-hidden="true" />
-          <h3 className="site-heading text-3xl text-foreground sm:text-4xl">Escolha um momento para conversar.</h3>
-          <p className="text-sm sm:text-base text-muted leading-relaxed">
+          <h3 className="site-heading text-2xl text-foreground sm:text-3xl lg:text-4xl">Escolha um momento para conversar.</h3>
+          <p className="text-xs sm:text-base text-muted leading-relaxed">
             Responda às perguntas e escolha dia e horário. O site prepara um resumo para o WhatsApp; a equipe confirma a reunião depois.
           </p>
 
-          <ul className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm text-foreground">
-            <li className="flex items-start gap-3">
+          <ul className="space-y-2.5 sm:space-y-3.5 text-xs sm:text-sm text-foreground">
+            <li className="flex items-start gap-2.5 sm:gap-3">
               <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-signature/15 text-xs text-gold">
                 <Clock className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
               <span>45 minutos, por vídeo chamada</span>
             </li>
-            <li className="flex items-start gap-3">
+            <li className="flex items-start gap-2.5 sm:gap-3">
               <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-signature/15 text-xs text-gold">
                 <ShieldCheck className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
               <span>Conversa sobre a rotina da sua agência</span>
             </li>
-            <li className="flex items-start gap-3">
+            <li className="flex items-start gap-2.5 sm:gap-3">
               <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-signature/15 text-xs text-gold">
                 <Check className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
@@ -606,13 +606,13 @@ export function BookingFunnel() {
             </li>
           </ul>
 
-          <div className="rounded-card border border-border bg-background p-3.5 text-xs leading-relaxed text-muted sm:p-4">
+          <div className="rounded-card border border-border bg-background p-3 text-xs leading-relaxed text-muted sm:p-4">
             O horário escolhido é uma preferência. Aguarde a confirmação do time antes de considerar a reunião marcada.
           </div>
         </div>
 
         {/* Right column: Interactive Funnel Card */}
-        <div className="min-w-0 rounded-card border border-border bg-background p-4 sm:p-7">
+        <div className="min-w-0 rounded-card border border-border bg-background p-3.5 sm:p-7">
           {/* Progress bar */}
           <div className="mb-5 sm:mb-6 space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-faint">
@@ -629,16 +629,16 @@ export function BookingFunnel() {
 
           {/* STEP 1: Perfil */}
           {currentStepId === "perfil" && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
-                <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                <h3 className="text-lg font-bold text-foreground sm:text-2xl">
                   Você possui uma agência de viagens especializada em Orlando?
                 </h3>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-xs text-muted sm:text-sm">
                   Queremos entender se o perfil da sua operação combina com a nossa especialidade.
                 </p>
               </div>
-              <div className="grid gap-2.5">
+              <div className="grid gap-2 sm:gap-2.5">
                 {[
                   { value: "Sim, especializada em Orlando", label: "Sim, somos especializados em Orlando" },
                   { value: "Vende Orlando, sem ser o foco", label: "Vendemos Orlando, mas não é o foco único" },
@@ -649,14 +649,14 @@ export function BookingFunnel() {
                     key={opt.value}
                     type="button"
                     onClick={() => handleSelectOption("perfil", opt.value)}
-                    className={`flex w-full items-center justify-between rounded-control border p-4 text-left text-sm font-semibold transition-all ${
+                    className={`flex min-h-[48px] w-full items-center justify-between rounded-control border p-3.5 sm:p-4 text-left text-xs sm:text-sm font-semibold transition-all ${
                       lead.perfil === opt.value
                         ? "border-gold bg-signature/15 text-foreground"
                         : "border-border bg-surface-raised text-foreground hover:border-signature/50 hover:bg-primary-subtle"
                     }`}
                   >
                     <span>{opt.label}</span>
-                    <ArrowRight className="h-4 w-4 text-gold" />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-gold ml-2" />
                   </button>
                 ))}
               </div>
@@ -665,16 +665,16 @@ export function BookingFunnel() {
 
           {/* STEP 2: Tráfego pago */}
           {currentStepId === "trafego" && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
-                <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                <h3 className="text-lg font-bold text-foreground sm:text-2xl">
                   Você tem gestão de tráfego pago na sua agência?
                 </h3>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-xs text-muted sm:text-sm">
                   Isso ajuda a entender o volume de leads que chega hoje no seu WhatsApp.
                 </p>
               </div>
-              <div className="grid gap-2.5">
+              <div className="grid gap-2 sm:gap-2.5">
                 {[
                   { value: "Sim, com agência ou especialista", label: "Sim, com agência ou gestor parceiro" },
                   { value: "Sim, faço por conta própria", label: "Sim, faço os anúncios por conta própria" },
@@ -684,14 +684,14 @@ export function BookingFunnel() {
                     key={opt.value}
                     type="button"
                     onClick={() => handleSelectOption("trafego", opt.value)}
-                    className={`flex w-full items-center justify-between rounded-control border p-4 text-left text-sm font-semibold transition-all ${
+                    className={`flex min-h-[48px] w-full items-center justify-between rounded-control border p-3.5 sm:p-4 text-left text-xs sm:text-sm font-semibold transition-all ${
                       lead.trafego === opt.value
                         ? "border-gold bg-signature/15 text-foreground"
                         : "border-border bg-surface-raised text-foreground hover:border-signature/50 hover:bg-primary-subtle"
                     }`}
                   >
                     <span>{opt.label}</span>
-                    <ArrowRight className="h-4 w-4 text-gold" />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-gold ml-2" />
                   </button>
                 ))}
               </div>
@@ -699,7 +699,7 @@ export function BookingFunnel() {
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
+                  className="inline-flex min-h-11 items-center gap-2 px-3 py-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Voltar
                 </button>
@@ -709,16 +709,16 @@ export function BookingFunnel() {
 
           {/* STEP 2b: Interesse em tráfego (Condicional) */}
           {currentStepId === "trafego_interesse" && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
-                <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                <h3 className="text-lg font-bold text-foreground sm:text-2xl">
                   Você gostaria de ter gestão de tráfego pago?
                 </h3>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-xs text-muted sm:text-sm">
                   Tráfego só compensa quando o atendimento dá conta do volume — é aí que o CRM e a IA entram.
                 </p>
               </div>
-              <div className="grid gap-2.5">
+              <div className="grid gap-2 sm:gap-2.5">
                 {[
                   { value: "Sim, tenho interesse", label: "Sim, tenho interesse em acelerar anúncios" },
                   { value: "Talvez, quero entender melhor", label: "Talvez, quero entender como funciona" },
@@ -728,14 +728,14 @@ export function BookingFunnel() {
                     key={opt.value}
                     type="button"
                     onClick={() => handleSelectOption("trafego_interesse", opt.value)}
-                    className={`flex w-full items-center justify-between rounded-control border p-4 text-left text-sm font-semibold transition-all ${
+                    className={`flex min-h-[48px] w-full items-center justify-between rounded-control border p-3.5 sm:p-4 text-left text-xs sm:text-sm font-semibold transition-all ${
                       lead.trafego_interesse === opt.value
                         ? "border-gold bg-signature/15 text-foreground"
                         : "border-border bg-surface-raised text-foreground hover:border-signature/50 hover:bg-primary-subtle"
                     }`}
                   >
                     <span>{opt.label}</span>
-                    <ArrowRight className="h-4 w-4 text-gold" />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-gold ml-2" />
                   </button>
                 ))}
               </div>
@@ -743,7 +743,7 @@ export function BookingFunnel() {
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
+                  className="inline-flex min-h-11 items-center gap-2 px-3 py-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Voltar
                 </button>
@@ -753,16 +753,16 @@ export function BookingFunnel() {
 
           {/* STEP 3: Interesse na Solução */}
           {currentStepId === "interesse" && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
-                <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                <h3 className="text-lg font-bold text-foreground sm:text-2xl">
                   A Destraflow apoia a implantação de CRM especialista em Orlando com IA integrada. Qual seu interesse?
                 </h3>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-xs text-muted sm:text-sm">
                   É essa tecnologia e operação que vamos apresentar na demonstração ao vivo.
                 </p>
               </div>
-              <div className="grid gap-2.5">
+              <div className="grid gap-2 sm:gap-2.5">
                 {[
                   { value: "Sim, quero implantar na agência", label: "Sim, quero implantar na minha agência" },
                   { value: "Quero entender melhor antes", label: "Quero entender melhor como funciona antes" },
@@ -772,14 +772,14 @@ export function BookingFunnel() {
                     key={opt.value}
                     type="button"
                     onClick={() => handleSelectOption("interesse", opt.value)}
-                    className={`flex w-full items-center justify-between rounded-control border p-4 text-left text-sm font-semibold transition-all ${
+                    className={`flex min-h-[48px] w-full items-center justify-between rounded-control border p-3.5 sm:p-4 text-left text-xs sm:text-sm font-semibold transition-all ${
                       lead.interesse === opt.value
                         ? "border-gold bg-signature/15 text-foreground"
                         : "border-border bg-surface-raised text-foreground hover:border-signature/50 hover:bg-primary-subtle"
                     }`}
                   >
                     <span>{opt.label}</span>
-                    <ArrowRight className="h-4 w-4 text-gold" />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-gold ml-2" />
                   </button>
                 ))}
               </div>
@@ -787,7 +787,7 @@ export function BookingFunnel() {
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
+                  className="inline-flex min-h-11 items-center gap-2 px-3 py-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Voltar
                 </button>
@@ -797,12 +797,12 @@ export function BookingFunnel() {
 
           {/* STEP 4: Agenda (Dias e Horários) */}
           {currentStepId === "agenda" && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
-                <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                <h3 className="text-lg font-bold text-foreground sm:text-2xl">
                   Qual dia e horário você prefere?
                 </h3>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-xs text-muted sm:text-sm">
                   Atendemos das 14h às 20h (horário de Brasília). Selecione a janela ideal para você.
                 </p>
               </div>
@@ -811,7 +811,7 @@ export function BookingFunnel() {
                 <span className="block text-[11px] font-bold uppercase tracking-widest text-faint mb-2.5">
                   1. Escolha o dia
                 </span>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none touch-pan-x">
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 scrollbar-none touch-pan-x sm:mx-0 sm:px-0">
                   {availableDays.map((d) => {
                     const isSelected = lead.data === d.iso;
                     return (
@@ -819,7 +819,7 @@ export function BookingFunnel() {
                         key={d.iso}
                         type="button"
                         onClick={() => setLead((prev) => ({ ...prev, data: d.iso, horario: "" }))}
-                        className={`flex flex-col items-center justify-center min-w-[64px] sm:min-w-[72px] shrink-0 rounded-control border py-2 sm:py-2.5 px-2.5 sm:px-3 transition-all ${
+                        className={`flex min-h-[58px] min-w-[62px] sm:min-w-[72px] shrink-0 flex-col items-center justify-center rounded-control border px-2 sm:px-3 py-2 sm:py-2.5 transition-all ${
                           isSelected
                             ? "border-gold bg-signature/20 text-foreground"
                             : "border-border bg-surface-raised text-faint hover:border-signature/40 hover:text-foreground"
@@ -865,11 +865,11 @@ export function BookingFunnel() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-3">
+              <div className="flex items-center justify-between gap-3 pt-3">
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
+                  className="inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Voltar
                 </button>
@@ -877,7 +877,7 @@ export function BookingFunnel() {
                   type="button"
                   onClick={handleNext}
                   disabled={!lead.data || !lead.horario}
-                  className="site-button site-button-primary !py-2.5 !px-5 !text-xs disabled:opacity-40 disabled:pointer-events-none"
+                  className="site-button site-button-primary min-h-11 flex-1 sm:flex-initial !py-2.5 !px-5 !text-xs disabled:opacity-40 disabled:pointer-events-none"
                 >
                   Continuar
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -890,10 +890,10 @@ export function BookingFunnel() {
           {currentStepId === "dados" && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                <h3 className="text-lg font-bold text-foreground sm:text-2xl">
                   Para fechar, seus dados.
                 </h3>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-xs text-muted sm:text-sm">
                   Eles entram no resumo enviado ao time para confirmar a conversa.
                 </p>
               </div>
@@ -909,7 +909,7 @@ export function BookingFunnel() {
                   placeholder="Seu nome completo"
                   value={lead.nome}
                   onChange={(e) => setLead((prev) => ({ ...prev, nome: e.target.value }))}
-                  className="w-full min-h-[46px] rounded-control border border-border-strong/35 bg-surface-raised px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-foreground placeholder:text-faint focus:border-signature"
+                  className="w-full min-h-[48px] rounded-control border border-border-strong/35 bg-surface-raised px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-foreground placeholder:text-faint focus:border-signature"
                 />
               </div>
 
@@ -924,7 +924,7 @@ export function BookingFunnel() {
                   placeholder="voce@suaagencia.com.br"
                   value={lead.email}
                   onChange={(e) => setLead((prev) => ({ ...prev, email: e.target.value }))}
-                  className="w-full min-h-[46px] rounded-control border border-border-strong/35 bg-surface-raised px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-foreground placeholder:text-faint focus:border-signature"
+                  className="w-full min-h-[48px] rounded-control border border-border-strong/35 bg-surface-raised px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-foreground placeholder:text-faint focus:border-signature"
                 />
               </div>
 
@@ -939,18 +939,18 @@ export function BookingFunnel() {
                   placeholder="(11) 99999-9999"
                   value={lead.whatsapp}
                   onChange={(e) => handlePhoneChange(e.target.value)}
-                  className="w-full min-h-[46px] rounded-control border border-border-strong/35 bg-surface-raised px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-foreground placeholder:text-faint focus:border-signature"
+                  className="w-full min-h-[48px] rounded-control border border-border-strong/35 bg-surface-raised px-3.5 py-2.5 sm:px-4 text-base sm:text-sm text-foreground placeholder:text-faint focus:border-signature"
                 />
               </div>
 
               <div className="pt-1">
-                <label htmlFor={consentId} className="flex items-start gap-2.5 text-xs text-muted cursor-pointer">
+                <label htmlFor={consentId} className="flex min-h-[44px] items-start gap-2.5 py-1 text-xs text-muted cursor-pointer">
                   <input
                     id={consentId}
                     type="checkbox"
                     checked={lead.consent}
                     onChange={(e) => setLead((prev) => ({ ...prev, consent: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 rounded border-border-strong/30 bg-surface-raised text-gold focus:ring-0"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-border-strong/30 bg-surface-raised text-gold focus:ring-0"
                   />
                   <span>
                     Autorizo a Destraflow Tech a usar meus dados de contato exclusivamente para agendar e confirmar esta vídeo conferência.
@@ -958,18 +958,18 @@ export function BookingFunnel() {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between pt-3">
+              <div className="flex items-center justify-between gap-3 pt-3">
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
+                  className="inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-semibold text-faint transition-colors hover:text-foreground"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Voltar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="site-button site-button-primary !py-3 !px-5 sm:!px-6 !text-xs sm:!text-sm"
+                  className="site-button site-button-primary min-h-[48px] flex-1 sm:flex-initial !py-3 !px-5 sm:!px-6 !text-xs sm:!text-sm"
                 >
                   {isSubmitting ? "Preparando..." : "Continuar no WhatsApp →"}
                 </button>
@@ -985,10 +985,10 @@ export function BookingFunnel() {
               </div>
 
               <div>
-                <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                <h3 className="text-lg font-bold text-foreground sm:text-2xl">
                   Seu resumo está pronto.
                 </h3>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-xs text-muted sm:text-sm">
                   O WhatsApp abre com a mensagem preparada. Envie-a para pedir a confirmação do horário ao time.
                 </p>
               </div>
@@ -1005,17 +1005,17 @@ export function BookingFunnel() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="site-button site-button-primary w-full text-center"
+                className="site-button site-button-primary min-h-[48px] w-full text-center"
               >
                 Abrir WhatsApp com o resumo →
               </a>
 
-              <div className="flex flex-wrap gap-4 pt-1 text-xs">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2 text-xs">
                 {icsDownloadUrl && (
                   <a
                     href={icsDownloadUrl}
                     download="destraflow-reuniao.ics"
-                    className="flex items-center gap-1.5 text-gold hover:underline"
+                    className="inline-flex min-h-11 items-center gap-1.5 text-gold hover:underline"
                   >
                     <Download className="h-3.5 w-3.5" />
                     Adicionar à agenda (Zoho, Outlook, Apple)
@@ -1025,7 +1025,7 @@ export function BookingFunnel() {
                   href={googleCalendarUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-gold hover:underline"
+                  className="inline-flex min-h-11 items-center gap-1.5 text-gold hover:underline"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Adicionar ao Google Agenda

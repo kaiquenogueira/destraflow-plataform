@@ -35,21 +35,21 @@ const faqs = [
 
 export function FaqSection() {
   return (
-    <section id="faq" className="border-t border-border bg-background py-20 sm:py-28">
+    <section id="faq" className="border-t border-border bg-background py-14 sm:py-20 lg:py-28">
       <div className="site-container max-w-4xl">
         <span className="site-rule" aria-hidden="true" />
-        <h2 className="site-heading mt-6 text-4xl text-foreground sm:text-5xl">Perguntas frequentes.</h2>
-        <p className="mt-5 max-w-2xl text-base text-muted">
+        <h2 className="site-heading mt-6 text-2xl text-foreground sm:text-4xl lg:text-5xl">Perguntas frequentes.</h2>
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted sm:mt-5 sm:text-base">
           O que a plataforma faz e como a equipe participa do atendimento.
         </p>
-        <div className="mt-10 space-y-3">
+        <div className="mt-8 space-y-3 sm:mt-10">
           {faqs.map((faq) => (
-            <details key={faq.question} className="group rounded-card border border-border bg-surface px-5 py-4 open:border-border-strong sm:px-7">
-              <summary className="flex cursor-pointer list-none items-start justify-between gap-5 text-base font-medium text-foreground marker:hidden">
+            <details key={faq.question} className="group rounded-card border border-border bg-surface px-4 py-3.5 open:border-border-strong sm:px-7 sm:py-4">
+              <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-foreground marker:hidden sm:text-base">
                 <span>{faq.question}</span>
-                <span aria-hidden="true" className="shrink-0 text-xl leading-none text-gold group-open:rotate-45">+</span>
+                <span aria-hidden="true" className="shrink-0 text-xl leading-none text-gold transition-transform duration-200 group-open:rotate-45">+</span>
               </summary>
-              <p className="mt-4 max-w-2xl border-t border-border pt-4 text-sm leading-7 text-muted">{faq.answer}</p>
+              <p className="mt-3 border-t border-border pt-3 text-xs leading-relaxed text-muted sm:mt-4 sm:pt-4 sm:text-sm sm:leading-7">{faq.answer}</p>
             </details>
           ))}
         </div>
