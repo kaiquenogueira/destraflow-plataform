@@ -183,6 +183,7 @@ function TeamSection() {
             role="Turismo e estratégia"
             alt="Eduardo, fundador da Encantrip Turismo"
             bio="Fundador da Encantrip Turismo, atua na operação de viagens para Orlando e traz essa experiência para a configuração do produto."
+            objectPosition="center 42%"
           />
           <TeamMember
             image="/images/kaique.png"
@@ -190,6 +191,7 @@ function TeamSection() {
             role="Tecnologia e inteligência artificial"
             alt="Kaique, responsável pela tecnologia da Destraflow Tech"
             bio="Trabalha na arquitetura do CRM, nas integrações e nos fluxos de inteligência artificial da Destraflow Tech."
+            objectPosition="center 25%"
           />
         </div>
       </div>
@@ -197,11 +199,32 @@ function TeamSection() {
   );
 }
 
-function TeamMember({ image, name, role, alt, bio }: { image: string; name: string; role: string; alt: string; bio: string }) {
+function TeamMember({
+  image,
+  name,
+  role,
+  alt,
+  bio,
+  objectPosition = "center",
+}: {
+  image: string;
+  name: string;
+  role: string;
+  alt: string;
+  bio: string;
+  objectPosition?: string;
+}) {
   return (
     <figure className="grid overflow-hidden rounded-card border border-border bg-surface sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-      <div className="relative aspect-[4/3] sm:aspect-auto sm:min-h-52">
-        <Image src={image} alt={alt} fill className="object-cover object-top" sizes="(max-width: 640px) 100vw, 260px" />
+      <div className="relative aspect-[4/5] sm:aspect-auto sm:min-h-52">
+        <Image
+          src={image}
+          alt={alt}
+          fill
+          className="object-cover"
+          style={{ objectPosition }}
+          sizes="(max-width: 640px) 100vw, 260px"
+        />
       </div>
       <figcaption className="flex flex-col justify-center p-5 sm:p-8">
         <h3 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl">{name}</h3>
