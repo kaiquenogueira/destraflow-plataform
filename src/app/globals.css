@@ -46,6 +46,7 @@ body {
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
 
 main {
@@ -85,9 +86,20 @@ section[id] {
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background var(--motion-micro) var(--motion-ease),
     color var(--motion-micro) var(--motion-ease),
     border-color var(--motion-micro) var(--motion-ease);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .site-button-primary {

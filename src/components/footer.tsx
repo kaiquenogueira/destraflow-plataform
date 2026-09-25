@@ -18,9 +18,9 @@ const legal = [
 
 export function Footer() {
   return (
-    <footer data-theme="dark" className="border-t border-border bg-background pb-28 pt-16 text-foreground sm:pb-16">
+    <footer data-theme="dark" className="border-t border-border bg-background pb-28 pt-12 text-foreground sm:pb-16 sm:pt-16">
       <div className="site-container">
-        <div className="grid gap-12 border-b border-border pb-14 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.2fr]">
+        <div className="grid gap-8 border-b border-border pb-10 sm:gap-12 sm:pb-14 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.2fr]">
           <div className="max-w-sm">
             <Link href="/" aria-label="Destraflow Tech — início" className="inline-flex text-foreground">
               <BrandMark />

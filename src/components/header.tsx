@@ -36,6 +36,17 @@ export function Header() {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
       <div className="site-container flex min-h-[72px] items-center justify-between gap-3">
@@ -74,23 +85,47 @@ export function Header() {
       </div>
 
       {isOpen && (
-        <nav id="site-mobile-nav" aria-label="Menu móvel" className="max-h-[calc(100dvh-72px)] overflow-y-auto border-t border-border bg-background px-4 pb-6 pt-3 shadow-md md:hidden">
-          <div className="mx-auto flex max-w-xl flex-col gap-1">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="rounded-control px-3 py-3 text-base text-foreground hover:bg-primary-subtle" onClick={() => setIsOpen(false)}>
-                {link.label}
-              </Link>
-            ))}
-            <div className="mt-3 grid gap-2 border-t border-border pt-4">
-              <a href={platformBrand.loginUrl} className="site-button site-button-secondary" onClick={() => setIsOpen(false)}>
-                Entrar no CRM
-              </a>
-              <Link href="/#agendar" className="site-button site-button-primary" onClick={() => setIsOpen(false)}>
-                Agendar conversa
-              </Link>
+        <>
+          <div
+            className="fixed inset-0 top-[72px] z-40 bg-background/60 backdrop-blur-xs md:hidden"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+          <nav
+            id="site-mobile-nav"
+            aria-label="Menu móvel"
+            className="relative z-50 max-h-[calc(100dvh-72px)] overflow-y-auto border-t border-border bg-background px-4 pb-8 pt-3 shadow-md md:hidden"
+          >
+            <div className="mx-auto flex max-w-xl flex-col gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex min-h-[44px] items-center rounded-control px-4 py-3 text-base font-medium text-foreground hover:bg-primary-subtle"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="mt-3 grid gap-2.5 border-t border-border pt-4">
+                <a
+                  href={platformBrand.loginUrl}
+                  className="site-button site-button-secondary w-full"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Entrar no CRM
+                </a>
+                <Link
+                  href="/#agendar"
+                  className="site-button site-button-primary w-full"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Agendar conversa
+                </Link>
+              </div>
             </div>
-          </div>
-        </nav>
+          </nav>
+        </>
       )}
     </header>
   );
