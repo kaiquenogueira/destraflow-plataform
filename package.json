@@ -14,7 +14,7 @@
     "@destraflow/brand": "file:vendor/destraflow-brand-0.1.0.tgz",
     "clsx": "^2.1.1",
     "lucide-react": "^1.47.0",
-    "next": "^16.3.5",
+    "next": "^16.3.6",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.6.0"
@@ -25,7 +25,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "eslint": "^9",
-    "eslint-config-next": "^16.3.5",
+    "eslint-config-next": "^16.3.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
