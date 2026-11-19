@@ -1,55 +1,45 @@
 const faqs = [
   {
-    question: "A Destraflow é só uma ferramenta de CRM?",
-    answer: "O CRM organiza atendimento, oportunidades e acompanhamento. A implantação também inclui a configuração da IA e dos fluxos de trabalho junto à equipe da agência.",
+    question: "O que a IA entrega para o consultor cotar?",
+    answer: "A IA confirma o pedido e organiza datas, viajantes, produtos e itens dispensados em um briefing. Seu consultor usa esse resumo para consultar fornecedores, definir valores e enviar a proposta.",
   },
   {
-    question: "O que acontece com áudios e imagens enviados no WhatsApp?",
-    answer: "A plataforma recebe mídias pelo canal conectado e pode usá-las no contexto do atendimento. A equipe acompanha a conversa no Inbox e assume quando necessário.",
+    question: "Minha equipe consegue assumir o atendimento?",
+    answer: "Sim. O consultor pode assumir a conversa no CRM e devolver o atendimento à IA depois. Com a coexistência habilitada para o número, uma resposta da equipe pelo app WhatsApp Business também pausa a IA naquela conversa.",
   },
   {
-    question: "A equipe pode assumir uma conversa?",
-    answer: "Sim. O Inbox permite atendimento humano e supervisão das respostas. O modo assistido oferece rascunhos para revisão antes do envio, conforme a configuração da operação.",
+    question: "Posso testar as respostas da IA antes de ativar?",
+    answer: "Sim. O simulador permite testar cenários sem enviar mensagens aos viajantes. No modo assistido, seu time pode revisar, editar e aprovar os rascunhos da IA antes do envio.",
   },
   {
-    question: "Como as conversas são organizadas?",
-    answer: "O CRM reúne conversas, responsáveis e etapas do funil. A equipe pode acompanhar o contexto de cada oportunidade e definir o próximo passo.",
+    question: "Como funciona o follow-up no WhatsApp?",
+    answer: "As cadências são configuradas por etapa do funil. Para retomar uma conversa fora da janela de atendimento, o WhatsApp exige um modelo de mensagem aprovado pela Meta.",
   },
   {
-    question: "Funciona para uma agência que vende outros destinos?",
-    answer: "A especialidade da plataforma é a venda de Orlando. Na conversa inicial, avaliamos com a agência como esse fluxo se encaixa na sua operação.",
+    question: "Posso usar o CRM se também vendo outros destinos?",
+    answer: "A implantação é voltada a agências que vendem Orlando, inclusive as que trabalham com outros destinos. Na demonstração, avaliamos quais produtos e etapas do seu atendimento fazem sentido levar para o CRM.",
   },
   {
-    question: "A integração usa a API oficial do WhatsApp?",
-    answer: "O canal usa a WhatsApp Business Platform da Meta. A conexão e as regras de uso dependem da conta e das políticas aplicáveis à agência.",
-  },
-  {
-    question: "Quanto tempo dura a conversa inicial?",
-    answer: "O formulário oferece horários para uma vídeo conferência de 45 minutos, de segunda a sexta-feira, no horário de Brasília.",
-  },
-  {
-    question: "O que acontece depois de preencher o formulário?",
-    answer: "O site prepara uma mensagem no WhatsApp com os dados informados e oferece opções de calendário. O horário só fica combinado depois da confirmação pelo time da Destraflow.",
+    question: "Como confirmo a demonstração?",
+    answer: "Escolha um horário no formulário e envie a mensagem preparada no WhatsApp. Nossa equipe confirma o horário e envia o link da videochamada. A demonstração dura 45 minutos e é gratuita.",
   },
 ];
 
 export function FaqSection() {
   return (
-    <section id="faq" className="border-t border-border bg-background py-14 sm:py-20 lg:py-28">
-      <div className="site-container max-w-4xl">
-        <span className="site-rule" aria-hidden="true" />
-        <h2 className="site-heading mt-6 text-2xl text-foreground sm:text-4xl lg:text-5xl">Perguntas frequentes.</h2>
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted sm:mt-5 sm:text-base">
-          O que a plataforma faz e como a equipe participa do atendimento.
-        </p>
-        <div className="mt-8 space-y-3 sm:mt-10">
-          {faqs.map((faq) => (
-            <details key={faq.question} className="group rounded-card border border-border bg-surface px-4 py-3.5 open:border-border-strong sm:px-7 sm:py-4">
-              <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-foreground marker:hidden sm:text-base">
-                <span>{faq.question}</span>
-                <span aria-hidden="true" className="shrink-0 text-xl leading-none text-gold transition-transform duration-200 group-open:rotate-45">+</span>
+    <section id="faq" className="border-t border-border bg-background py-16 text-foreground sm:py-24">
+      <div className="site-container grid gap-7 lg:grid-cols-[minmax(0,0.65fr)_minmax(0,1.35fr)] lg:gap-16">
+        <div>
+          <h2 className="landing-heading">Perguntas frequentes</h2>
+        </div>
+        <div className="border-t border-border">
+          {faqs.map(({ question, answer }) => (
+            <details key={question} className="group border-b border-border">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3.5 text-base font-semibold transition-colors hover:text-gold">
+                {question}
+                <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border text-lg font-normal text-gold transition-transform group-open:rotate-45">+</span>
               </summary>
-              <p className="mt-3 border-t border-border pt-3 text-xs leading-relaxed text-muted sm:mt-4 sm:pt-4 sm:text-sm sm:leading-7">{faq.answer}</p>
+              <p className="max-w-2xl pb-5 text-base leading-relaxed text-muted">{answer}</p>
             </details>
           ))}
         </div>
