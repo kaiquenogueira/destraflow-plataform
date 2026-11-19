@@ -24,10 +24,10 @@ export function GET() {
       </div>
       <div style={{ display: "flex", width: 70, height: 4, marginTop: 56, background: lightPalette.brandSignature }} />
       <div style={{ display: "flex", maxWidth: 960, marginTop: 34, fontSize: 66, fontWeight: 400, lineHeight: 1.08, letterSpacing: -3 }}>
-        Orlando exige contexto. Sua operação também.
+        Do WhatsApp ao briefing de cotação.
       </div>
       <div style={{ display: "flex", maxWidth: 860, marginTop: 32, fontSize: 24, color: lightPalette.textMuted }}>
-        CRM e inteligência artificial para agências de viagens.
+        CRM com IA para agências de viagens que vendem Orlando.
       </div>
       <div style={{ display: "flex", marginTop: "auto", borderTop: `1px solid ${lightPalette.border}`, paddingTop: 18, fontSize: 18, color: lightPalette.brandGold }}>
         {new URL(platformBrand.siteUrl).host}

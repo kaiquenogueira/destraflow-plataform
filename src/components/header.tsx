@@ -2,131 +2,91 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
 import { platformBrand } from "@destraflow/brand";
 import { BrandMark } from "@/components/brand-mark";
+import { Menu, X } from "lucide-react";
 
-const navLinks = [
-  { href: "/#solucao", label: "Solução" },
-  { href: "/#entregas", label: "O que fazemos" },
-  { href: "/#como", label: "Como funciona" },
-  { href: "/#equipe", label: "Equipe" },
+const links = [
+  { href: "/#solucao", label: "O CRM" },
+  { href: "/#entregas", label: "Recursos" },
+  { href: "/#como", label: "Implantação" },
   { href: "/#faq", label: "Dúvidas" },
 ];
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const menuButton = useRef<HTMLButtonElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isOpen) {
-        setIsOpen(false);
-        menuButton.current?.focus();
-      }
-    };
-    const onResize = () => {
-      if (window.innerWidth >= 768) setIsOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [isOpen]);
+    if (!isOpen) return;
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+    const desktop = window.matchMedia("(min-width: 64rem)");
+
+    function closeOnDesktop(event: MediaQueryListEvent) {
+      if (event.matches) setIsOpen(false);
     }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setIsOpen(false);
+      toggle.current?.focus();
+    }
+
+    desktop.addEventListener("change", closeOnDesktop);
+    window.addEventListener("keydown", closeOnEscape);
+
     return () => {
-      document.body.style.overflow = "";
+      desktop.removeEventListener("change", closeOnDesktop);
+      window.removeEventListener("keydown", closeOnEscape);
     };
   }, [isOpen]);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
-      <div className="site-container flex min-h-[72px] items-center justify-between gap-3">
-        <Link href="/" className="shrink-0 text-foreground" aria-label={`${platformBrand.name} — início`} onClick={() => setIsOpen(false)}>
-          <BrandMark />
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-xl">
+      <div className="site-container flex min-h-[4.5rem] items-center justify-between gap-2 sm:gap-6">
+        <Link href="/" onClick={() => setIsOpen(false)} className="flex min-h-11 items-center text-foreground" aria-label={`${platformBrand.name} — início`}>
+          <BrandMark className="max-sm:gap-1.5 max-sm:[&_span]:text-sm max-sm:[&_svg]:size-6" />
         </Link>
 
-        <nav aria-label="Navegação principal" className="hidden items-center gap-5 lg:flex">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="text-sm text-muted hover:text-foreground">
-              {link.label}
-            </Link>
+        <nav className="hidden items-center gap-7 text-sm text-muted lg:flex" aria-label="Navegação principal">
+          {links.map(({ href, label }) => (
+            <Link key={href} href={href} className="flex min-h-11 items-center transition-colors hover:text-foreground">{label}</Link>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <a href={platformBrand.loginUrl} className="site-button text-foreground hover:bg-primary-subtle">
-            Entrar
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+          <a href={platformBrand.loginUrl} className="hidden min-h-11 items-center text-sm font-semibold text-muted hover:text-foreground lg:inline-flex">
+            Entrar no CRM
           </a>
-          <Link href="/#agendar" className="site-button site-button-primary">
-            Agendar conversa
+          <Link href="/#agendar" onClick={() => setIsOpen(false)} className="site-button site-button-primary px-2! py-2! text-xs! sm:px-5! sm:text-sm!">
+            <span className="min-[360px]:hidden">Agendar</span>
+            <span className="hidden min-[360px]:inline sm:hidden">Agendar demo</span>
+            <span className="hidden sm:inline">Agendar demonstração</span>
           </Link>
+          <button
+            ref={toggle}
+            type="button"
+            className="flex size-11 cursor-pointer items-center justify-center rounded-control border border-border-strong text-foreground hover:bg-primary-subtle lg:hidden"
+            aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
+            aria-controls="mobile-navigation"
+            aria-expanded={isOpen}
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
+          </button>
         </div>
-
-        <button
-          ref={menuButton}
-          type="button"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-control border border-border-strong text-foreground md:hidden"
-          aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
-          aria-expanded={isOpen}
-          aria-controls="site-mobile-nav"
-          onClick={() => setIsOpen((current) => !current)}
-        >
-          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
       </div>
 
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 top-[72px] z-40 bg-background/60 backdrop-blur-xs md:hidden"
-            onClick={() => setIsOpen(false)}
-            aria-hidden="true"
-          />
-          <nav
-            id="site-mobile-nav"
-            aria-label="Menu móvel"
-            className="relative z-50 max-h-[calc(100dvh-72px)] overflow-y-auto border-t border-border bg-background px-4 pb-8 pt-3 shadow-md md:hidden"
-          >
-            <div className="mx-auto flex max-w-xl flex-col gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex min-h-[44px] items-center rounded-control px-4 py-3 text-base font-medium text-foreground hover:bg-primary-subtle"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="mt-3 grid gap-2.5 border-t border-border pt-4">
-                <a
-                  href={platformBrand.loginUrl}
-                  className="site-button site-button-secondary w-full"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Entrar no CRM
-                </a>
-                <Link
-                  href="/#agendar"
-                  className="site-button site-button-primary w-full"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Agendar conversa
-                </Link>
-              </div>
-            </div>
-          </nav>
-        </>
-      )}
+      <nav id="mobile-navigation" aria-label="Navegação móvel" hidden={!isOpen} className="border-t border-border bg-background px-4 py-3 sm:px-8 lg:hidden">
+        {links.map(({ href, label }) => (
+          <Link key={href} href={href} onClick={() => setIsOpen(false)} className="flex min-h-11 items-center rounded-control px-2 font-medium text-foreground hover:bg-primary-subtle">
+            {label}
+          </Link>
+        ))}
+        <a href={platformBrand.loginUrl} className="flex min-h-11 items-center rounded-control px-2 font-medium text-gold hover:bg-primary-subtle">
+          Entrar no CRM
+        </a>
+      </nav>
     </header>
   );
 }

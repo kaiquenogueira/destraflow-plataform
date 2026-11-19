@@ -2,9 +2,9 @@ import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 
 const navigation = [
-  { href: "/#solucao", label: "Solução" },
-  { href: "/#entregas", label: "O que fazemos" },
-  { href: "/#como", label: "Como funciona" },
+  { href: "/#solucao", label: "O CRM" },
+  { href: "/#entregas", label: "Recursos" },
+  { href: "/#como", label: "Implantação" },
   { href: "/#equipe", label: "Equipe" },
   { href: "/#faq", label: "Dúvidas" },
 ];
@@ -18,7 +18,7 @@ const legal = [
 
 export function Footer() {
   return (
-    <footer data-theme="dark" className="border-t border-border bg-background pb-28 pt-12 text-foreground sm:pb-16 sm:pt-16">
+    <footer data-theme="dark" className="border-t border-border bg-background pb-12 pt-12 text-foreground sm:pb-16 sm:pt-16">
       <div className="site-container">
         <div className="grid gap-8 border-b border-border pb-10 sm:gap-12 sm:pb-14 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.2fr]">
           <div className="max-w-sm">
@@ -26,8 +26,7 @@ export function Footer() {
               <BrandMark />
             </Link>
             <p className="mt-5 text-sm leading-relaxed text-muted">
-              CRM e inteligência artificial para agências de viagens que vendem Orlando.
-              A equipe acompanha a configuração e o uso da plataforma.
+              CRM com IA no WhatsApp para agências de viagens que vendem Orlando.
             </p>
             <span className="site-rule mt-6" aria-hidden="true" />
           </div>
@@ -53,12 +52,12 @@ export function Footer() {
           <div>
             <h2 className="text-sm font-semibold text-foreground">Contato oficial</h2>
             <ul className="mt-4 space-y-2.5 text-sm text-muted">
-              <li>contato@destraflow.com.br</li>
-              <li>privacidade@destraflow.com.br</li>
+              <li><a href="mailto:contato@destraflow.com.br" className="hover:text-foreground">contato@destraflow.com.br</a></li>
+              <li><a href="mailto:privacidade@destraflow.com.br" className="hover:text-foreground">privacidade@destraflow.com.br</a></li>
               <li>Atendimento: Seg à Sex das 14h às 20h (horário de Brasília).</li>
             </ul>
             <Link href="/#agendar" className="mt-5 inline-flex min-h-11 items-center text-sm text-gold underline decoration-signature underline-offset-4">
-              Agendar conversa
+              Agendar demonstração
             </Link>
           </div>
         </div>

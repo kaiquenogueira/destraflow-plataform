@@ -1,22 +1,33 @@
 # Destraflow Tech
 
-> CRM e inteligência artificial para agências de viagens que vendem Orlando.
+> CRM com IA no WhatsApp para agências de viagens que vendem Orlando.
 
-A Destraflow Tech reúne atendimento no WhatsApp, conversas e histórico no Inbox, acompanhamento de oportunidades no funil e preparação de cotações. A equipe da agência pode revisar respostas e assumir o atendimento. A configuração da plataforma é feita com a agência.
+A Destraflow automatiza o atendimento inicial e a qualificação de pedidos. O CRM organiza o briefing de cotação e as próximas ações. O consultor consulta fornecedores, monta a proposta, registra o envio e conduz a negociação.
+
+## Recursos da plataforma
+
+- **Atendimento no WhatsApp.** O agente responde dúvidas e coleta informações conforme o playbook da agência, com integração pela WhatsApp Business Platform (Cloud API oficial da Meta).
+- **Briefing de cotação.** Datas, viajantes, produtos solicitados e itens dispensados ficam reunidos no pedido. A fila ajuda a equipe a priorizar e acompanhar cotações pendentes, enviadas e canceladas.
+- **Funil e follow-up.** Visualização em quadro ou lista, filtros, próximo passo sugerido e cadências configuráveis por etapa. Envios fora da janela de atendimento exigem um modelo aprovado pela Meta.
+- **Atendimento humano.** O consultor pode assumir e devolver a conversa à IA pelo CRM. Em canais com coexistência, uma resposta pelo app WhatsApp Business também pausa a IA naquela conversa.
+- **Playbook, simulador e modo assistido.** Regras e produtos por agência, testes de conversa e aprovação de rascunhos da IA antes do envio.
+- **Campanhas e indicadores.** Revisão de público e conteúdo antes do disparo, acompanhamento de oportunidades e indicadores de vendas, atendimento e custos.
+- **Agendamento de vídeo.** Integração com Google Agenda para eventos, links do Meet e lembretes quando configurada.
 
 ## Links oficiais
 
-- [Página inicial](https://destraflow.com.br/)
-- [Acesso ao CRM](https://crm.destraflow.com.br/login)
-- [Política de Privacidade](https://destraflow.com.br/politica-de-privacidade)
-- [Termos de Uso](https://destraflow.com.br/termos-de-uso)
-- [Política de Reembolso](https://destraflow.com.br/politica-de-reembolso)
-- [Exclusão de Dados](https://destraflow.com.br/exclusao-de-dados)
+- [Acesso ao CRM](https://crm.destraflow.com.br/login).
+- Recursos, telas e implantação. [Página inicial](https://destraflow.com.br/).
+- Videochamada gratuita de 45 minutos, com horário confirmado pela equipe no WhatsApp. [Agendamento da demonstração](https://destraflow.com.br/#agendar).
+- Tratamento de dados e contato de privacidade. [Política de Privacidade](https://destraflow.com.br/politica-de-privacidade).
+- Regras de uso e responsabilidades. [Termos de Uso](https://destraflow.com.br/termos-de-uso).
+- Instruções para solicitar a exclusão de dados. [Exclusão de Dados](https://destraflow.com.br/exclusao-de-dados).
+- Condições de cancelamento e reembolso. [Política de Reembolso](https://destraflow.com.br/politica-de-reembolso).
 
 ## Contato
 
-- Empresa: Kaique Nogueira Meneses Consultoria em Tecnologia da Informação LTDA
-- CNPJ: 59.459.911/0001-24
-- E-mail: contato@destraflow.com.br
-- Privacidade: privacidade@destraflow.com.br
-- Endereço: Av. Paulista, 1106, Sala 01 Andar 16, Bela Vista, São Paulo - SP, CEP 01.310-914.
+- E-mail comercial em contato@destraflow.com.br.
+- E-mail de privacidade em privacidade@destraflow.com.br.
+- Atendimento de segunda a sexta, das 14h às 20h (horário de Brasília).
+- Kaique Nogueira Meneses Consultoria em Tecnologia da Informação LTDA (CNPJ 59.459.911/0001-24).
+- Av. Paulista, 1106, Sala 01 Andar 16, Bela Vista, São Paulo - SP, CEP 01.310-914.

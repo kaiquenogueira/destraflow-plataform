@@ -12,6 +12,9 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const title = `${platformBrand.name} | CRM com IA para agências que vendem Orlando`;
+const description = "Qualifique viajantes no WhatsApp, organize briefings de cotação por prioridade e acompanhe propostas no CRM da sua agência de viagens.";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -21,9 +24,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(platformBrand.siteUrl),
-  title: `${platformBrand.name} | CRM para agências que vendem Orlando`,
-  description:
-    "CRM e inteligência artificial para agências de viagens que vendem Orlando. Atendimento no WhatsApp, cotações e acompanhamento em uma plataforma.",
+  title,
+  description,
   alternates: {
     canonical: platformBrand.siteUrl,
     types: { "text/markdown": "/llms.txt" },
@@ -33,9 +35,9 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: platformBrand.siteUrl,
     siteName: platformBrand.name,
-    title: `${platformBrand.name} | CRM para agências que vendem Orlando`,
-    description: "Atendimento, cotações e acompanhamento no mesmo fluxo.",
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Destraflow Tech — CRM para agências que vendem Orlando" }],
+    title,
+    description,
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Destraflow Tech. Do WhatsApp ao briefing de cotação." }],
   },
   twitter: {
     card: "summary_large_image",
@@ -77,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 name: platformBrand.name,
                 applicationCategory: "BusinessApplication",
                 operatingSystem: "Web",
-                description: "CRM e inteligência artificial para agências de viagens que vendem Orlando.",
+                description,
                 url: platformBrand.siteUrl,
               },
             ]),

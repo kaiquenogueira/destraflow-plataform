@@ -39,8 +39,8 @@ const CONFIG = {
   daysOffered: 8,
   includeWeekends: false,
   minHoursAhead: 3,
-  eventTitle: "Destraflow Tech · Vídeo conferência",
-  eventLocation: "Vídeo conferência (link enviado por WhatsApp)",
+  eventTitle: "Destraflow Tech · Demonstração do CRM",
+  eventLocation: "Videochamada (link enviado por WhatsApp)",
   organizerEmail: "contato@destraflow.com.br",
   bookingEndpoint: "",
   leadWebhook: "",
@@ -379,7 +379,7 @@ export function BookingFunnel() {
     if (!eventDetails) return "#";
     const oneTouchLink = addToCalendarLink();
     const text = [
-      "Olá, Destraflow! Acabei de preencher o formulário para uma vídeo conferência.",
+      "Olá, Destraflow! Gostaria de agendar uma demonstração do CRM.",
       "",
       `Nome: ${lead.nome}`,
       `E-mail: ${lead.email}`,
@@ -579,10 +579,9 @@ export function BookingFunnel() {
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14">
         {/* Left column: context */}
         <div className="space-y-4 sm:space-y-6">
-          <span className="site-rule" aria-hidden="true" />
-          <h3 className="site-heading text-2xl text-foreground sm:text-3xl lg:text-4xl">Escolha um momento para conversar.</h3>
-          <p className="text-xs sm:text-base text-muted leading-relaxed">
-            Responda às perguntas e escolha dia e horário. O site prepara um resumo para o WhatsApp; a equipe confirma a reunião depois.
+          <h2 id="booking-title" className="landing-heading text-foreground">Agende uma demonstração.</h2>
+          <p className="text-base leading-relaxed text-muted">
+            Escolha um horário e envie a mensagem preparada no WhatsApp. Nossa equipe confirma a demonstração por lá.
           </p>
 
           <ul className="space-y-2.5 sm:space-y-3.5 text-xs sm:text-sm text-foreground">
@@ -590,25 +589,21 @@ export function BookingFunnel() {
               <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-signature/15 text-xs text-gold">
                 <Clock className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
-              <span>45 minutos, por vídeo chamada</span>
+              <span>Videochamada de 45 minutos</span>
             </li>
             <li className="flex items-start gap-2.5 sm:gap-3">
               <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-signature/15 text-xs text-gold">
                 <ShieldCheck className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
-              <span>Conversa sobre a rotina da sua agência</span>
+              <span>Demonstração gratuita e sem compromisso</span>
             </li>
             <li className="flex items-start gap-2.5 sm:gap-3">
               <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-signature/15 text-xs text-gold">
                 <Check className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
               </span>
-              <span>Resumo e opções de calendário ao final</span>
+              <span>Segunda a sexta, das 14h às 20h (Brasília)</span>
             </li>
           </ul>
-
-          <div className="rounded-card border border-border bg-background p-3 text-xs leading-relaxed text-muted sm:p-4">
-            O horário escolhido é uma preferência. Aguarde a confirmação do time antes de considerar a reunião marcada.
-          </div>
         </div>
 
         {/* Right column: Interactive Funnel Card */}
@@ -953,7 +948,7 @@ export function BookingFunnel() {
                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-border-strong/30 bg-surface-raised text-gold focus:ring-0"
                   />
                   <span>
-                    Autorizo a Destraflow Tech a usar meus dados de contato exclusivamente para agendar e confirmar esta vídeo conferência.
+                    Autorizo a Destraflow Tech a usar meus dados de contato exclusivamente para agendar e confirmar esta demonstração.
                   </span>
                 </label>
               </div>
@@ -971,7 +966,7 @@ export function BookingFunnel() {
                   disabled={isSubmitting}
                   className="site-button site-button-primary min-h-[48px] flex-1 sm:flex-initial !py-3 !px-5 sm:!px-6 !text-xs sm:!text-sm"
                 >
-                  {isSubmitting ? "Preparando..." : "Continuar no WhatsApp →"}
+                  {isSubmitting ? "Preparando..." : "Solicitar demonstração"}
                 </button>
               </div>
             </form>
@@ -986,17 +981,17 @@ export function BookingFunnel() {
 
               <div>
                 <h3 className="text-lg font-bold text-foreground sm:text-2xl">
-                  Seu resumo está pronto.
+                  Envie sua solicitação no WhatsApp
                 </h3>
                 <p className="mt-1 text-xs text-muted sm:text-sm">
-                  O WhatsApp abre com a mensagem preparada. Envie-a para pedir a confirmação do horário ao time.
+                  A mensagem está pronta. Envie para nossa equipe confirmar o horário e compartilhar o link da videochamada.
                 </p>
               </div>
 
               <div className="rounded-card border border-signature/20 bg-signature/10 p-4 text-xs leading-relaxed text-foreground space-y-1">
                 <p><b className="text-foreground">{lead.nome}</b></p>
                 <p>Dia e horário: <b className="text-gold">{eventDetails?.humanDateStr} às {lead.horario}</b> (Brasília)</p>
-                <p>Duração: 45 minutos, por vídeo conferência</p>
+                <p>Duração: 45 minutos, por videochamada</p>
                 <p>Perfil da agência: {lead.perfil}</p>
                 <p>Tráfego pago: {lead.trafego}</p>
               </div>
@@ -1007,7 +1002,7 @@ export function BookingFunnel() {
                 rel="noopener noreferrer"
                 className="site-button site-button-primary min-h-[48px] w-full text-center"
               >
-                Abrir WhatsApp com o resumo →
+                Abrir WhatsApp
               </a>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2 text-xs">

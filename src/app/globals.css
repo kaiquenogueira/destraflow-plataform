@@ -157,3 +157,25 @@ section[id] {
     transition-duration: 0.01ms !important;
   }
 }
+
+.landing-hero {
+  background:
+    radial-gradient(ellipse at 76% 44%, var(--primary-subtle) 0%, transparent 54%),
+    var(--background);
+}
+
+.landing-eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.landing-heading {
+  font-size: clamp(2rem, 4.6vw, 3.625rem);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
